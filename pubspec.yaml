@@ -57,8 +57,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - img/logo_wch_sin_fondo.png
-    - img/mundial_2026-estadios.webp
+    - assets/img/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

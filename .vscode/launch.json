@@ -8,7 +8,7 @@
             "name": "frontend_proyecto",
             "request": "launch",
             "type": "dart",
-            "program": "lib/login.dart"
+            "program": "lib/main.dart"
 
         },
         {
@@ -16,7 +16,7 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile",
-            "program": "lib/login.dart"
+            "program": "lib/main.dart"
 
         },
         {
@@ -24,7 +24,7 @@
             "request": "launch",
             "type": "dart",
             "flutterMode": "release",
-            "program": "lib/login.dart"
+            "program": "lib/main.dart"
 
         }
     ]
