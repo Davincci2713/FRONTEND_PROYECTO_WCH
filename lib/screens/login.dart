@@ -1,172 +1,198 @@
 import 'package:flutter/material.dart';
-import 'package:frontend_proyecto/screens/RecuperarContrasena.dart';
-import 'package:frontend_proyecto/screens/inicio.dart';
-import 'package:frontend_proyecto/screens/registro_de_usuario.dart';
+import 'package:go_router/go_router.dart';
+import 'package:frontend_proyecto/utils/responsive.dart';
 
 class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ResponsiveLayout(
+      mobile: LoginMobile(),
+      web: LoginWeb(),
+    );
+  }
+}
+
+class LoginWeb extends StatelessWidget {
+  const LoginWeb({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.colorScheme.background,
+      body: Row(
+        children: [
+          // Left side: Image or branding
+          Expanded(
+            child: Container(
+              color: theme.colorScheme.primary,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.sports_soccer, size: 100, color: Colors.white),
+                    const SizedBox(height: 24),
+                    Text(
+                      'World Cup Hub',
+                      style: theme.textTheme.displaySmall?.copyWith(color: Colors.white),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Tu compañero digital para la Copa del Mundo',
+                      style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          // Right side: Login form
+          Container(
+            width: 450,
+            padding: const EdgeInsets.all(48.0),
+            child: const LoginForm(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class LoginMobile extends StatelessWidget {
+  const LoginMobile({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/img/fondo_login.png'),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.5),
-                  BlendMode.darken,
-                ),
-        ),
-      ),
-      child: Center(
-        child: Container(
-          width: 400,
-          height: 600,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsetsGeometry.all(24.0  ),
-            child:  Column(
-              mainAxisSize: MainAxisSize.min, 
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                EncabezadoLogin(),
-                SizedBox(height: 100),
-                UserField(),
-                SizedBox(height: 5),
-                PasswdField(),
-                SizedBox(height: 7),
-                RecuperarContrasenaLink(context),
-                SizedBox(height: 25),
-                IniciarSesionButton(context),
-                SizedBox(height: 5),
-                RegistroLink(context)
-              ],
-            ),
-          )
-          ),
-        ),
-      )
-    );
-  }
-
-
-    Widget EncabezadoLogin(){
-      return Column(
-        children: [
-          Icon(
-            Icons.sports_soccer,
-            size: 36,
-            color: Colors.black,
-          ),
-          Text(
-            'Iniciar Sesión',
-            style: TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          Text(
-            'Ingresa a tu cuenta de mundial 2026 hub'
-          )
-        ],
-      );
-    }
-    Widget UserField(){
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Correo Electronioc'),
-        TextField(
-          decoration: InputDecoration(
-          labelText: 'Tu@correo.com',
-          border: OutlineInputBorder(),
-          prefixIcon: Icon(Icons.email)
-          )
-        ) 
-      ],
-    );
-  }
-
-    Widget PasswdField(){
-     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Contraseña'),
-        TextField(
-          decoration: InputDecoration(
-          labelText: '******',
-          border: OutlineInputBorder(),
-          prefixIcon: Icon(Icons.lock)
-          )
-        ) 
-      ],
-    );
-  }
-
-  Widget RecuperarContrasenaLink(BuildContext context){
-    return TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Recuperarcontrasena()),
-            );
-            },
-            child: Text(
-              '¿Olvide mi contraseña?',
-              style: TextStyle(
-                color: Colors.black,
-                decoration: TextDecoration.underline,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 40),
+              const Center(
+                child: Icon(Icons.sports_soccer, size: 64, color: Color(0xFF00341C)),
               ),
-            ),
-          );
-  }
-
-Widget IniciarSesionButton(BuildContext context) {
-  return ElevatedButton(
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => Inicio()),
-      );
-    },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Colors.red,
-      foregroundColor: Colors.white,
-      padding: EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+              const SizedBox(height: 24),
+              const LoginForm(),
+            ],
+          ),
+        ),
       ),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-      Text('Iniciar sesión'),
-      SizedBox(width: 8),
-      Icon(Icons.arrow_forward, size: 18),
-  ],
-),
-  );
+    );
+  }
 }
 
-  Widget RegistroLink(BuildContext context) {
-    return TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RegistroDeUsuario()),
-            );
-            },
-            child: Text(
-              '¿No tienes cuenta?, Registrate aqui',
-              style: TextStyle(
-                color: Colors.blue,
-                decoration: TextDecoration.underline,
-              ),
+class LoginForm extends StatefulWidget {
+  const LoginForm({super.key});
+
+  @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm> {
+  bool _obscurePassword = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Iniciar Sesión',
+          style: theme.textTheme.headlineLarge,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Ingresa a tu cuenta de World Cup Hub',
+          style: theme.textTheme.bodyMedium,
+        ),
+        const SizedBox(height: 32),
+        const Text(
+          'Correo Electrónico',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          decoration: InputDecoration(
+            hintText: 'tu@correo.com',
+            prefixIcon: const Icon(Icons.email_outlined),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
             ),
-          );
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Contraseña',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          obscureText: _obscurePassword,
+          decoration: InputDecoration(
+            hintText: '******',
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscurePassword ? Icons.visibility_off : Icons.visibility,
+              ),
+              onPressed: () {
+                setState(() {
+                  _obscurePassword = !_obscurePassword;
+                });
+              },
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton(
+            onPressed: () {},
+            child: const Text('¿Olvidaste tu contraseña?'),
+          ),
+        ),
+        const SizedBox(height: 24),
+        ElevatedButton(
+          onPressed: () => context.go('/home'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: theme.colorScheme.secondary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Iniciar Sesión'),
+              SizedBox(width: 8),
+              Icon(Icons.arrow_forward, size: 20),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('¿No tienes cuenta?'),
+            TextButton(
+              onPressed: () => context.go('/register'),
+              child: const Text('Regístrate aquí'),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
