@@ -17,7 +17,7 @@ class AppScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveLayout(
       mobile: Scaffold(
-        body: child,
+        body: SafeArea(child: child),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: currentIndex,
           type: BottomNavigationBarType.fixed,
