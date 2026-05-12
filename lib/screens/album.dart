@@ -9,12 +9,15 @@ class AlbumScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text('Álbum Digital', style: theme.textTheme.headlineMedium),
               ElevatedButton.icon(
@@ -30,14 +33,31 @@ class AlbumScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           // Statistics
-          Row(
-            children: [
-              _buildStatCard(context, 'Completado', '45%', Colors.green),
-              const SizedBox(width: 16),
-              _buildStatCard(context, 'Láminas', '250/600', Colors.blue),
-              const SizedBox(width: 16),
-              _buildStatCard(context, 'Repetidas', '12', Colors.orange),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth > 600) {
+                return Row(
+                  children: [
+                    Expanded(child: _buildStatCard(context, 'Completado', '45%', Colors.green)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildStatCard(context, 'Láminas', '250/600', Colors.blue)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildStatCard(context, 'Repetidas', '12', Colors.orange)),
+                  ],
+                );
+              } else {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildStatCard(context, 'Completado', '45%', Colors.green),
+                    const SizedBox(height: 16),
+                    _buildStatCard(context, 'Láminas', '250/600', Colors.blue),
+                    const SizedBox(height: 16),
+                    _buildStatCard(context, 'Repetidas', '12', Colors.orange),
+                  ],
+                );
+              }
+            },
           ),
           const SizedBox(height: 32),
           Text('Mis Colecciones', style: theme.textTheme.titleLarge),
@@ -79,21 +99,19 @@ class AlbumScreen extends StatelessWidget {
   }
 
   Widget _buildStatCard(BuildContext context, String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.5)),
-        ),
-        child: Column(
-          children: [
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: color)),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Column(
+        children: [
+          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: color)),
+        ],
       ),
     );
   }

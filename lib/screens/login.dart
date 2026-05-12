@@ -21,7 +21,7 @@ class LoginWeb extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
+      backgroundColor: theme.colorScheme.surface,
       body: Row(
         children: [
           // Left side: Image or branding

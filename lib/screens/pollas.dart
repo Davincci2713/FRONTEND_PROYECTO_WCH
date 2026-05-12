@@ -7,7 +7,7 @@ class PollasScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -27,8 +27,11 @@ class PollasScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             const Text('Pollas Activas', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ElevatedButton.icon(
@@ -73,24 +76,28 @@ class PollasScreen extends StatelessWidget {
 
   Widget _buildRankingTable(BuildContext context) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[300]!),
       ),
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('Pos')),
-          DataColumn(label: Text('Usuario')),
-          DataColumn(label: Text('Puntos')),
-        ],
-        rows: List.generate(5, (index) => DataRow(
-          cells: [
-            DataCell(Text('${index + 1}')),
-            DataCell(Text('Usuario ${index + 1}')),
-            DataCell(Text('${100 - index * 10}')),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('Pos')),
+            DataColumn(label: Text('Usuario')),
+            DataColumn(label: Text('Puntos')),
           ],
-        )),
+          rows: List.generate(5, (index) => DataRow(
+            cells: [
+              DataCell(Text('${index + 1}')),
+              DataCell(Text('Usuario ${index + 1}')),
+              DataCell(Text('${100 - index * 10}')),
+            ],
+          )),
+        ),
       ),
     );
   }

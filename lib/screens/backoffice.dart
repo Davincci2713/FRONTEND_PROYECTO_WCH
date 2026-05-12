@@ -34,33 +34,48 @@ class BackofficePanel extends StatelessWidget {
   }
 
   Widget _buildAdminStats() {
-    return Row(
-      children: [
-        _statCard('Entradas Reservadas', '1,250', Colors.blue),
-        const SizedBox(width: 16),
-        _statCard('Alertas de Fraude', '14', Colors.red),
-        const SizedBox(width: 16),
-        _statCard('Soporte Pendiente', '8', Colors.orange),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth > 600) {
+          return Row(
+            children: [
+              Expanded(child: _statCard('Entradas Reservadas', '1,250', Colors.blue)),
+              const SizedBox(width: 16),
+              Expanded(child: _statCard('Alertas de Fraude', '14', Colors.red)),
+              const SizedBox(width: 16),
+              Expanded(child: _statCard('Soporte Pendiente', '8', Colors.orange)),
+            ],
+          );
+        } else {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _statCard('Entradas Reservadas', '1,250', Colors.blue),
+              const SizedBox(height: 16),
+              _statCard('Alertas de Fraude', '14', Colors.red),
+              const SizedBox(height: 16),
+              _statCard('Soporte Pendiente', '8', Colors.orange),
+            ],
+          );
+        }
+      },
     );
   }
 
   Widget _statCard(String label, String value, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.5)),
-        ),
-        child: Column(
-          children: [
-            Text(label, textAlign: TextAlign.center, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
-            const SizedBox(height: 8),
-            Text(value, style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold)),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Column(
+        children: [
+          Text(label, textAlign: TextAlign.center, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 12)),
+          const SizedBox(height: 8),
+          Text(value, style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }
