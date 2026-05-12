@@ -7,20 +7,25 @@ class Inicio extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Bienvenido de nuevo, Fanático', style: theme.textTheme.headlineMedium),
           const SizedBox(height: 24),
-          const Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              SizedBox(width: 300, child: DashboardCard(title: 'Próximos Partidos', icon: Icons.calendar_month)),
-              SizedBox(width: 300, child: DashboardCard(title: 'Mi Álbum', icon: Icons.book)),
-              SizedBox(width: 300, child: DashboardCard(title: 'Mis Pollas', icon: Icons.group)),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              double cardWidth = constraints.maxWidth < 300 ? constraints.maxWidth : 300;
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  SizedBox(width: cardWidth, child: const DashboardCard(title: 'Próximos Partidos', icon: Icons.calendar_month)),
+                  SizedBox(width: cardWidth, child: const DashboardCard(title: 'Mi Álbum', icon: Icons.book)),
+                  SizedBox(width: cardWidth, child: const DashboardCard(title: 'Mis Pollas', icon: Icons.group)),
+                ],
+              );
+            }
           ),
           const SizedBox(height: 32),
           Text('Noticias del Mundial', style: theme.textTheme.titleLarge),
@@ -97,7 +102,7 @@ class AppTopBar extends StatelessWidget {
             child: Icon(Icons.person, color: Colors.white),
           ),
           const SizedBox(width: 12),
-          const Text('Usuario Ejemplo', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Flexible(child: Text('Usuario Ejemplo', style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
         ],
       ),
     );

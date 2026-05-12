@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final GoRouter _router = GoRouter(
+    final GoRouter router = GoRouter(
       navigatorKey: _rootNavigatorKey,
       initialLocation: '/login',
       routes: [
@@ -44,8 +44,9 @@ class MyApp extends StatelessWidget {
           navigatorKey: _shellNavigatorKey,
           builder: (context, state, child) {
             int index = 0;
-            if (state.fullPath == '/home') index = 0;
-            else if (state.fullPath == '/album') index = 1;
+            if (state.fullPath == '/home') {
+              index = 0;
+            } else if (state.fullPath == '/album') index = 1;
             else if (state.fullPath == '/pollas') index = 2;
             else if (state.fullPath == '/tickets') index = 3;
             else if (state.fullPath == '/profile') index = 4;
@@ -84,7 +85,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'World Cup Hub',
       theme: AppTheme.lightTheme,
-      routerConfig: _router,
+      routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
   }

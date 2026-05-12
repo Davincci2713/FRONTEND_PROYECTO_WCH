@@ -7,7 +7,7 @@ class TicketsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -63,15 +63,26 @@ class TicketsScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     const Text('Colombia vs Alemania', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
-                    Row(
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 8,
                       children: [
-                        const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        const Text('Estadio Azteca, CDMX', style: TextStyle(color: Colors.grey)),
-                        const SizedBox(width: 16),
-                        const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        const Text('15 Jun 2026 - 18:00', style: TextStyle(color: Colors.grey)),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.location_on, size: 16, color: Colors.grey),
+                            SizedBox(width: 4),
+                            Text('Estadio Azteca, CDMX', style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                            SizedBox(width: 4),
+                            Text('15 Jun 2026 - 18:00', style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
                       ],
                     ),
                   ],
