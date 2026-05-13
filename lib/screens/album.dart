@@ -38,6 +38,17 @@ class AlbumScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                 ),
               ),
+                            ElevatedButton.icon(
+                onPressed: () => context.go('/intercambio'),
+                icon: const Icon(Icons.style, size: 18),
+                label: const Text('INTERCAMBIAR', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 12)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentGreen,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 28),

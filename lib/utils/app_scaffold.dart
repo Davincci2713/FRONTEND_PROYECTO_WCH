@@ -112,21 +112,7 @@ class AppSidebar extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ESPACIO PARA LOGO WCH (imagen)
-                // Reemplaza este Container con: Image.asset('assets/logo_wch.png', height: 48)
-                Container(
-                  height: 48,
-                  width: 48,
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceElevated,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.divider),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.sports_soccer, color: AppTheme.accentRed, size: 28),
-                  ),
-                ),
-                // NOTA: ↑ Reemplaza con Image.asset('assets/logo_wch.png')
+                Image.asset('assets/img/logo_wch_sin_fondo.png', height: 100),
                 const SizedBox(height: 12),
                 const Text(
                   'WORLD CUP\nHUB',

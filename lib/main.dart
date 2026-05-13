@@ -12,6 +12,7 @@ import 'package:frontend_proyecto/screens/tickets.dart';
 import 'package:frontend_proyecto/screens/open_pack.dart';
 import 'package:frontend_proyecto/screens/RecuperarContrasena.dart';
 import 'package:frontend_proyecto/screens/backoffice.dart';
+import 'package:frontend_proyecto/screens/intercambio.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,6 +50,13 @@ class MyApp extends StatelessWidget {
         GoRoute(
           path: '/backoffice',
           builder: (context, state) => const BackofficePanel(),
+        ),
+         GoRoute(
+          path: '/intercambio',
+          builder: (context, state) => const AppScaffold(
+            currentIndex: 1,
+            child: Intercambio(),
+          ),
         ),
 
         // ── Shell con navegación principal ────────────────────────────────
