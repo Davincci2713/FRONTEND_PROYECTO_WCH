@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../services/auth/auth.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -11,7 +13,20 @@ class ProfileScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Mi Perfil', style: theme.textTheme.headlineMedium),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Mi Perfil', style: theme.textTheme.headlineMedium),
+              IconButton(
+                icon: const Icon(Icons.logout, color: Colors.red),
+                tooltip: 'Cerrar Sesión',
+                onPressed: () {
+                  AuthService().logout();
+                  context.go('/login');
+                },
+              ),
+            ],
+          ),
           const SizedBox(height: 32),
           const ProfileForm(),
         ],
@@ -20,25 +35,34 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class ProfileForm extends StatelessWidget {
+class ProfileForm extends StatefulWidget {
   const ProfileForm({super.key});
 
   @override
+  State<ProfileForm> createState() => _ProfileFormState();
+}
+
+class _ProfileFormState extends State<ProfileForm> {
+  @override
   Widget build(BuildContext context) {
+    final user = AuthService().currentUser ?? {};
+    final fullName = '${user['firstName'] ?? 'Usuario'} ${user['lastName'] ?? ''}'.trim();
+    final email = user['email'] ?? 'No disponible';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Center(
+        Center(
           child: Column(
             children: [
-              CircleAvatar(
+              const CircleAvatar(
                 radius: 50,
                 backgroundColor: Color(0xFF00341C),
                 child: Icon(Icons.person, size: 50, color: Colors.white),
               ),
-              SizedBox(height: 16),
-              Text('Usuario Ejemplo', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              Text('usuario@ejemplo.com', style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 16),
+              Text(fullName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text(email, style: const TextStyle(color: Colors.grey)),
             ],
           ),
         ),
@@ -46,9 +70,8 @@ class ProfileForm extends StatelessWidget {
         const Text('Información Personal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const Divider(),
         const SizedBox(height: 16),
-        _buildProfileField('Nombre', 'Usuario Ejemplo'),
-        _buildProfileField('Correo', 'usuario@ejemplo.com'),
-        _buildProfileField('País Favorito', 'Colombia'),
+        _buildProfileField('Nombre Completo', fullName),
+        _buildProfileField('Correo', email),
         const SizedBox(height: 32),
         const Text('Preferencias', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const Divider(),

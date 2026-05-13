@@ -1,11 +1,46 @@
 import 'package:flutter/material.dart';
+import '../services/ticket_service.dart';
+import '../services/auth/auth.dart';
 
-class TicketsScreen extends StatelessWidget {
+class TicketsScreen extends StatefulWidget {
   const TicketsScreen({super.key});
+
+  @override
+  State<TicketsScreen> createState() => _TicketsScreenState();
+}
+
+class _TicketsScreenState extends State<TicketsScreen> {
+  final TicketService _ticketService = TicketService();
+  List<dynamic> _tickets = [];
+  bool _isLoading = true;
+
+  int get _currentUserId => AuthService().currentUserId ?? 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTickets();
+  }
+
+  Future<void> _fetchTickets() async {
+    try {
+      final data = await _ticketService.getUserTickets(_currentUserId);
+      setState(() {
+        _tickets = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 24),
       child: Column(
@@ -13,15 +48,22 @@ class TicketsScreen extends StatelessWidget {
         children: [
           Text('Mis Entradas', style: theme.textTheme.headlineMedium),
           const SizedBox(height: 24),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 2,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              return _buildTicketCard(context, index);
-            },
-          ),
+          
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_tickets.isEmpty)
+            const Center(child: Text("No tienes entradas adquiridas."))
+          else
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _tickets.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                return _buildTicketCard(context, _tickets[index]);
+              },
+            ),
+            
           const SizedBox(height: 32),
           Center(
             child: ElevatedButton(
@@ -34,13 +76,13 @@ class TicketsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTicketCard(BuildContext context, int index) {
+  Widget _buildTicketCard(BuildContext context, dynamic ticket) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: IntrinsicHeight(
@@ -48,9 +90,9 @@ class TicketsScreen extends StatelessWidget {
           children: [
             Container(
               width: 10,
-              decoration: const BoxDecoration(
-                color: Color(0xFF00341C),
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
+              decoration: BoxDecoration(
+                color: ticket['status'] == 'Pagada' ? Colors.green : const Color(0xFF00341C),
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), bottomLeft: Radius.circular(16)),
               ),
             ),
             Expanded(
@@ -59,9 +101,9 @@ class TicketsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('PARTIDO 45 - FASE DE GRUPOS', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text('PARTIDO ${ticket['matchId'] ?? ''} - ${ticket['status']?.toUpperCase() ?? ''}', style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
-                    const Text('Colombia vs Alemania', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(ticket['match_details'] ?? 'Partido', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 16,
@@ -69,18 +111,18 @@ class TicketsScreen extends StatelessWidget {
                       children: [
                         Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.location_on, size: 16, color: Colors.grey),
-                            SizedBox(width: 4),
-                            Text('Estadio Azteca, CDMX', style: TextStyle(color: Colors.grey)),
+                          children: [
+                            const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(ticket['stadium'] ?? 'Estadio por confirmar', style: const TextStyle(color: Colors.grey)),
                           ],
                         ),
                         Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.calendar_today, size: 16, color: Colors.grey),
-                            SizedBox(width: 4),
-                            Text('15 Jun 2026 - 18:00', style: TextStyle(color: Colors.grey)),
+                          children: [
+                            const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(ticket['date_display'] ?? 'Fecha por confirmar', style: const TextStyle(color: Colors.grey)),
                           ],
                         ),
                       ],
