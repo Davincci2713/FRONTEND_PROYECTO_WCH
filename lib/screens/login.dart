@@ -679,4 +679,5 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(text, style: const TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5));
   }
+
 }
