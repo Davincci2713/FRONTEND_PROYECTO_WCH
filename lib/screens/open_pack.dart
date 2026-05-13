@@ -1,54 +1,124 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../services/album_service.dart';
+import '../services/auth/auth.dart';
 
-class OpenPackScreen extends StatelessWidget {
+class OpenPackScreen extends StatefulWidget {
   const OpenPackScreen({super.key});
+
+  @override
+  State<OpenPackScreen> createState() => _OpenPackScreenState();
+}
+
+class _OpenPackScreenState extends State<OpenPackScreen> {
+  final AlbumService _albumService = AlbumService();
+  bool _isLoading = true;
+  String? _errorMessage;
+  List<dynamic> _stickers = [];
+
+  int get _currentUserId => AuthService().currentUserId ?? 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _openPack();
+  }
+
+  Future<void> _openPack() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final data = await _albumService.openPack(_currentUserId);
+      if (mounted) {
+        setState(() {
+          _stickers = data['stickers'] ?? [];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
     return Scaffold(
-      appBar: AppBar(title: const Text('¡Sobre Abierto!')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+      appBar: AppBar(title: const Text('¡Apertura de Sobre!')),
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator())
+        : _errorMessage != null
+          ? _buildErrorView(context, theme)
+          : _buildSuccessView(context, theme),
+    );
+  }
+
+  Widget _buildErrorView(BuildContext context, ThemeData theme) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Has obtenido 5 nuevas láminas', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 32),
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              alignment: WrapAlignment.center,
-              children: [
-                _buildCard(context, 'L. Messi', 'Argentina', true, false),
-                _buildCard(context, 'A. Davies', 'Canadá', true, false),
-                _buildCard(context, 'H. Lozano', 'México', false, true),
-                _buildCard(context, 'C. Pulisic', 'USA', true, false),
-                _buildCard(context, 'Trofeo Oficial', 'Especial', true, false, isSpecial: true),
-              ],
-            ),
-            const SizedBox(height: 48),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.style),
-              label: const Text('ABRIR OTRO SOBRE'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.secondary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              ),
-            ),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
+            Text('No se pudo abrir el sobre', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(_errorMessage!, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+            const SizedBox(height: 32),
+            ElevatedButton(
               onPressed: () => context.go('/album'),
-              icon: const Icon(Icons.auto_stories),
-              label: const Text('IR AL ÁLBUM'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              ),
+              child: const Text('VOLVER AL ÁLBUM'),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessView(BuildContext context, ThemeData theme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Text('Has obtenido ${_stickers.length} nuevas láminas', style: theme.textTheme.headlineSmall),
+          const SizedBox(height: 32),
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.center,
+            children: _stickers.map((s) => _buildCard(context, s['name'], s['team'], true, false)).toList(),
+          ),
+          const SizedBox(height: 48),
+          ElevatedButton.icon(
+            onPressed: _openPack,
+            icon: const Icon(Icons.style),
+            label: const Text('ABRIR OTRO SOBRE'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.secondary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            ),
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => context.go('/album'),
+            icon: const Icon(Icons.auto_stories),
+            label: const Text('IR AL ÁLBUM'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -61,7 +131,7 @@ class OpenPackScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8, offset: const Offset(0, 4)),
         ],
         border: isSpecial ? Border.all(color: Colors.amber, width: 2) : null,
       ),
