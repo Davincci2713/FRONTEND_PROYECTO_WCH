@@ -1,13 +1,57 @@
 import 'package:flutter/material.dart';
-
 import 'package:go_router/go_router.dart';
+import '../services/album_service.dart';
+import '../services/auth/auth.dart';
 
-class AlbumScreen extends StatelessWidget {
+class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
+
+  @override
+  State<AlbumScreen> createState() => _AlbumScreenState();
+}
+
+class _AlbumScreenState extends State<AlbumScreen> {
+  final AlbumService _albumService = AlbumService();
+  Map<String, dynamic>? _albumData;
+  bool _isLoading = true;
+
+  int get _currentUserId => AuthService().currentUserId ?? 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAlbum();
+  }
+
+  Future<void> _fetchAlbum() async {
+    try {
+      final data = await _albumService.getUserAlbum(_currentUserId);
+      setState(() {
+        _albumData = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (_albumData == null) {
+      return const Center(child: Text("Error cargando el álbum"));
+    }
+
+    final collections = _albumData!['collections'] as List<dynamic>? ?? [];
+
     return SingleChildScrollView(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 24),
       child: Column(
@@ -38,22 +82,22 @@ class AlbumScreen extends StatelessWidget {
               if (constraints.maxWidth > 600) {
                 return Row(
                   children: [
-                    Expanded(child: _buildStatCard(context, 'Completado', '45%', Colors.green)),
+                    Expanded(child: _buildStatCard(context, 'Completado', '${_albumData!['completion_percentage']}%', Colors.green)),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildStatCard(context, 'Láminas', '250/600', Colors.blue)),
+                    Expanded(child: _buildStatCard(context, 'Láminas', '${_albumData!['total_stickers']}/${_albumData!['max_stickers']}', Colors.blue)),
                     const SizedBox(width: 16),
-                    Expanded(child: _buildStatCard(context, 'Repetidas', '12', Colors.orange)),
+                    Expanded(child: _buildStatCard(context, 'Repetidas', '${_albumData!['repeated_stickers']}', Colors.orange)),
                   ],
                 );
               } else {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildStatCard(context, 'Completado', '45%', Colors.green),
+                    _buildStatCard(context, 'Completado', '${_albumData!['completion_percentage']}%', Colors.green),
                     const SizedBox(height: 16),
-                    _buildStatCard(context, 'Láminas', '250/600', Colors.blue),
+                    _buildStatCard(context, 'Láminas', '${_albumData!['total_stickers']}/${_albumData!['max_stickers']}', Colors.blue),
                     const SizedBox(height: 16),
-                    _buildStatCard(context, 'Repetidas', '12', Colors.orange),
+                    _buildStatCard(context, 'Repetidas', '${_albumData!['repeated_stickers']}', Colors.orange),
                   ],
                 );
               }
@@ -71,8 +115,9 @@ class AlbumScreen extends StatelessWidget {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
             ),
-            itemCount: 8,
+            itemCount: collections.length,
             itemBuilder: (context, index) {
+              final col = collections[index];
               return Card(
                 clipBehavior: Clip.antiAlias,
                 child: Column(
@@ -86,7 +131,7 @@ class AlbumScreen extends StatelessWidget {
                     ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Text('Selección ${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(col['name'] ?? 'Selección', style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -102,9 +147,9 @@ class AlbumScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Column(
         children: [

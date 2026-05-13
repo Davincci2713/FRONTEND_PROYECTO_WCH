@@ -1,17 +1,49 @@
 import 'package:flutter/material.dart';
+import '../services/auth/auth.dart';
+import '../services/match_service.dart';
 
-class Inicio extends StatelessWidget {
+class Inicio extends StatefulWidget {
   const Inicio({super.key});
+
+  @override
+  State<Inicio> createState() => _InicioState();
+}
+
+class _InicioState extends State<Inicio> {
+  final MatchService _matchService = MatchService();
+  int _upcomingMatchesCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDashboardData();
+  }
+
+  Future<void> _fetchDashboardData() async {
+    try {
+      final matches = await _matchService.getAllMatches();
+      if (mounted) {
+        setState(() {
+          _upcomingMatchesCount = matches.length;
+        });
+      }
+    } catch (e) {
+      // Ignorar error de carga de dashboard por ahora
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final user = AuthService().currentUser ?? {};
+    final firstName = user['firstName'] ?? 'Fanático';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Bienvenido de nuevo, Fanático', style: theme.textTheme.headlineMedium),
+          Text('Bienvenido de nuevo, $firstName', style: theme.textTheme.headlineMedium),
           const SizedBox(height: 24),
           LayoutBuilder(
             builder: (context, constraints) {
@@ -20,9 +52,9 @@ class Inicio extends StatelessWidget {
                 spacing: 16,
                 runSpacing: 16,
                 children: [
-                  SizedBox(width: cardWidth, child: const DashboardCard(title: 'Próximos Partidos', icon: Icons.calendar_month)),
-                  SizedBox(width: cardWidth, child: const DashboardCard(title: 'Mi Álbum', icon: Icons.book)),
-                  SizedBox(width: cardWidth, child: const DashboardCard(title: 'Mis Pollas', icon: Icons.group)),
+                  SizedBox(width: cardWidth, child: DashboardCard(title: 'Próximos Partidos', subtitle: '$_upcomingMatchesCount programados', icon: Icons.calendar_month)),
+                  SizedBox(width: cardWidth, child: const DashboardCard(title: 'Mi Álbum', subtitle: 'Ver colección', icon: Icons.book)),
+                  SizedBox(width: cardWidth, child: const DashboardCard(title: 'Mis Comunidades', subtitle: 'Ver ranking', icon: Icons.group)),
                 ],
               );
             }
@@ -37,7 +69,7 @@ class Inicio extends StatelessWidget {
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Center(child: Text('Noticias destacadas')),
+            child: const Center(child: Text('Noticias y Alertas de FIFA')),
           ),
         ],
       ),
@@ -47,9 +79,10 @@ class Inicio extends StatelessWidget {
 
 class DashboardCard extends StatelessWidget {
   final String title;
+  final String subtitle;
   final IconData icon;
 
-  const DashboardCard({required this.title, required this.icon, super.key});
+  const DashboardCard({required this.title, required this.subtitle, required this.icon, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +93,7 @@ class DashboardCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -73,7 +106,7 @@ class DashboardCard extends StatelessWidget {
           const SizedBox(height: 16),
           Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 8),
-          const Text('Ver más detalles', style: TextStyle(color: Colors.grey)),
+          Text(subtitle, style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
@@ -85,6 +118,10 @@ class AppTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = AuthService().currentUser ?? {};
+    final fullName = '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'.trim();
+    final displayName = fullName.isEmpty ? 'Usuario' : fullName;
+
     return Container(
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -93,16 +130,16 @@ class AppTopBar extends StatelessWidget {
         border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          const Spacer(),
-          IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
+          Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(width: 16),
+          IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
+          const SizedBox(width: 12),
           const CircleAvatar(
             backgroundColor: Color(0xFF00341C),
             child: Icon(Icons.person, color: Colors.white),
           ),
-          const SizedBox(width: 12),
-          const Flexible(child: Text('Usuario Ejemplo', style: TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
         ],
       ),
     );

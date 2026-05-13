@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend_proyecto/utils/responsive.dart';
+import '../services/auth/auth.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -94,7 +95,28 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  void _handleLogin() async {
+    setState(() => _isLoading = true);
+    final result = await AuthService().login(_emailController.text, _passwordController.text);
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      if (context.mounted) {
+        context.go('/home');
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result['message'] ?? 'Error desconocido')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +141,7 @@ class _LoginFormState extends State<LoginForm> {
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: _emailController,
           decoration: InputDecoration(
             hintText: 'tu@correo.com',
             prefixIcon: const Icon(Icons.email_outlined),
@@ -134,6 +157,7 @@ class _LoginFormState extends State<LoginForm> {
         ),
         const SizedBox(height: 8),
         TextField(
+          controller: _passwordController,
           obscureText: _obscurePassword,
           decoration: InputDecoration(
             hintText: '******',
@@ -163,7 +187,7 @@ class _LoginFormState extends State<LoginForm> {
         ),
         const SizedBox(height: 24),
         ElevatedButton(
-          onPressed: () => context.go('/home'),
+          onPressed: _isLoading ? null : _handleLogin,
           style: ElevatedButton.styleFrom(
             backgroundColor: theme.colorScheme.secondary,
             foregroundColor: Colors.white,
@@ -172,12 +196,14 @@ class _LoginFormState extends State<LoginForm> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Iniciar Sesión'),
-              SizedBox(width: 8),
-              Icon(Icons.arrow_forward, size: 20),
+              _isLoading 
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Text('Iniciar Sesión'),
+              if (!_isLoading) const SizedBox(width: 8),
+              if (!_isLoading) const Icon(Icons.arrow_forward, size: 20),
             ],
           ),
         ),
