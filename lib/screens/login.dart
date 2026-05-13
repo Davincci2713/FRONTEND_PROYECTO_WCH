@@ -25,9 +25,7 @@ class _LoginWeb extends StatelessWidget {
       backgroundColor: AppTheme.surface,
       body: Row(
         children: [
-          // Panel izquierdo: Hero con fondo de estadio
           Expanded(child: const _HeroPanel()),
-          // Panel derecho: formulario
           Container(
             width: 480,
             color: AppTheme.surfaceCard,
@@ -52,17 +50,13 @@ class _LoginMobile extends StatelessWidget {
       backgroundColor: AppTheme.surface,
       body: Stack(
         children: [
-          // Fondo estadio (espacio para imagen)
-          Positioned.fill(child: const _StadiumBackground()),
-          // Formulario sobre overlay
+          const Positioned.fill(child: _StadiumBackground()),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
                   const SizedBox(height: 32),
-                  // Logo móvil
-                  // ESPACIO LOGO: reemplaza con Image.asset('assets/logo_wch.png', height: 72)
                   Container(
                     width: 72, height: 72,
                     decoration: BoxDecoration(
@@ -73,6 +67,11 @@ class _LoginMobile extends StatelessWidget {
                     child: const Icon(Icons.sports_soccer, color: AppTheme.accentRed, size: 40),
                   ),
                   const SizedBox(height: 40),
+                  const SizedBox(
+                    height: 200,
+                    child: _InfiniteCarousel(),
+                  ),
+                  const SizedBox(height: 32),
                   Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
@@ -92,11 +91,204 @@ class _LoginMobile extends StatelessWidget {
   }
 }
 
+// ── CARRUSEL INFINITO QUE SE MUEVE CONSTANTEMENTE A LA DERECHA ────────────────
+class _InfiniteCarousel extends StatefulWidget {
+  const _InfiniteCarousel();
+
+  @override
+  State<_InfiniteCarousel> createState() => _InfiniteCarouselState();
+}
+
+class _InfiniteCarouselState extends State<_InfiniteCarousel> {
+  late final PageController _pageController;
+  int _currentPage = 0;
+  
+  // Duplicamos los items para crear el efecto infinito
+  late final List<FeatureItem> _infiniteFeatures;
+  
+  final List<FeatureItem> _originalFeatures = const [
+    FeatureItem(
+      icon: Icons.confirmation_number,
+      title: 'COMPRAR BOLETAS',
+      description: 'Adquiere tus entradas para los partidos del Mundial 2026',
+      color: AppTheme.accentRed,
+    ),
+    FeatureItem(
+      icon: Icons.calendar_today,
+      title: 'AGENDA',
+      description: 'Organiza tu calendario de partidos y eventos',
+      color: AppTheme.accentBlue,
+    ),
+    FeatureItem(
+      icon: Icons.workspace_premium,
+      title: 'POLLAS',
+      description: 'Crea y participa en quinielas con amigos',
+      color: AppTheme.accentGreen,
+    ),
+    FeatureItem(
+      icon: Icons.photo_album,
+      title: 'ÁLBUM',
+      description: 'Colecciona figuritas digitales del mundial',
+      color: AppTheme.accentYellow,
+    ),
+    FeatureItem(
+      icon: Icons.account_balance_wallet,
+      title: 'BILLETERA',
+      description: 'Gestiona tus pagos y recompensas',
+      color: AppTheme.primary,
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Duplicamos los items 3 veces para que el bucle sea infinito
+    _infiniteFeatures = [..._originalFeatures, ..._originalFeatures, ..._originalFeatures];
+    _pageController = PageController(
+      viewportFraction: 0.85,
+      initialPage: _originalFeatures.length, // Comenzamos en la copia del medio
+    );
+    _startInfiniteScroll();
+  }
+
+  void _startInfiniteScroll() {
+    // Mover constantemente a la derecha cada 2.5 segundos
+    Future.delayed(const Duration(milliseconds: 2500), _moveToNext);
+  }
+
+  void _moveToNext() {
+    if (!mounted) return;
+    
+    final nextPage = _currentPage + 1;
+    
+    _pageController.animateToPage(
+      nextPage,
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.linear, // Movimiento lineal y constante
+    );
+    
+    _startInfiniteScroll();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PageView.builder(
+      controller: _pageController,
+      onPageChanged: (index) {
+        setState(() {
+          _currentPage = index;
+        });
+        
+        // Efecto infinito: cuando llegamos al final, volvemos al inicio sin que se note
+        if (index == _infiniteFeatures.length - 1) {
+          Future.delayed(const Duration(milliseconds: 100), () {
+            _pageController.jumpToPage(_originalFeatures.length);
+            setState(() {
+              _currentPage = _originalFeatures.length;
+            });
+          });
+        }
+        // Cuando llegamos muy al principio (por si alguien scrollea hacia atrás)
+        else if (index == 0) {
+          Future.delayed(const Duration(milliseconds: 100), () {
+            _pageController.jumpToPage(_infiniteFeatures.length - _originalFeatures.length - 1);
+            setState(() {
+              _currentPage = _infiniteFeatures.length - _originalFeatures.length - 1;
+            });
+          });
+        }
+      },
+      itemCount: _infiniteFeatures.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: _FeatureCard(feature: _infiniteFeatures[index % _originalFeatures.length]),
+        );
+      },
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
+  final FeatureItem feature;
+  const _FeatureCard({required this.feature});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            feature.color.withOpacity(0.2),
+            feature.color.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: feature.color.withOpacity(0.3), width: 1),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: feature.color.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(feature.icon, size: 48, color: feature.color),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            feature.title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              feature.description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppTheme.onSurfaceMuted,
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class FeatureItem {
+  final IconData icon;
+  final String title;
+  final String description;
+  final Color color;
+  
+  const FeatureItem({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.color,
+  });
+}
+
 // ── COMPONENTES ──────────────────────────────────────────────────────────────
 
-/// Fondo de estadio con gradiente oscuro encima
-/// NOTA: Reemplaza el DecoratedBox con DecorationImage para imagen real:
-/// decoration: BoxDecoration(image: DecorationImage(image: AssetImage('assets/estadio.jpg'), fit: BoxFit.cover))
 class _StadiumBackground extends StatelessWidget {
   const _StadiumBackground();
 
@@ -105,9 +297,6 @@ class _StadiumBackground extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // ── ESPACIO PARA IMAGEN FONDO ESTADIO ──────────────────────────
-        // Reemplaza este Container con:
-        // Image.asset('assets/estadio.jpg', fit: BoxFit.cover)
         Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -120,7 +309,6 @@ class _StadiumBackground extends StatelessWidget {
             child: Icon(Icons.stadium, size: 200, color: Color(0x15FFFFFF)),
           ),
         ),
-        // Gradiente oscurecedor
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -138,7 +326,7 @@ class _StadiumBackground extends StatelessWidget {
   }
 }
 
-/// Panel hero solo para web
+/// Panel hero para web con carrusel infinito
 class _HeroPanel extends StatelessWidget {
   const _HeroPanel();
 
@@ -148,16 +336,13 @@ class _HeroPanel extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         const _StadiumBackground(),
-        // Contenido sobre el hero
         Padding(
           padding: const EdgeInsets.all(56),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Navbar superior estilo imagen
               Row(
                 children: [
-                  // ESPACIO LOGO WCH: reemplaza con Image.asset('assets/logo_wch.png', height: 40)
                   Container(
                     height: 40,
                     width: 40,
@@ -170,38 +355,31 @@ class _HeroPanel extends StatelessWidget {
                   const SizedBox(width: 12),
                   const Text('WCH', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: 3)),
                   const Spacer(),
-                  // Botones nav estilo imagen (Pollas, Álbum, Perfil)
-                  _NavChip(label: 'Pollas', onTap: () {}),
-                  const SizedBox(width: 8),
-                  _NavChip(label: 'Álbum', onTap: () {}),
-                  const SizedBox(width: 8),
-                  _NavChip(label: 'Perfil', onTap: () {}),
                 ],
-              ),
-              const Spacer(),
-              // Texto hero
-              const Text(
-                '¿QUIERES IR A\nUN PARTIDO?',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 52,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -1,
-                  height: 1.05,
-                ),
               ),
               const SizedBox(height: 24),
-              // Botones de colores estilo imagen (Log in, Registrarse, Agenda, Billetera)
-              Wrap(
-                spacing: 0,
-                children: [
-                  _ColorTab(label: 'LOG IN', color: AppTheme.accentBlue),
-                  _ColorTab(label: 'REGISTRARSE', color: AppTheme.accentGreen),
-                  _ColorTab(label: 'AGENDA', color: AppTheme.accentRed),
-                  _ColorTab(label: 'BILLETERA', color: AppTheme.accentYellow, textColor: Colors.black),
-                ],
+              const Text(
+                'WORLD CUP HUB',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 36,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 3,
+                ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 8),
+              Text(
+                'Tu experiencia definitiva del Mundial 2026',
+                style: TextStyle(
+                  color: AppTheme.onSurfaceMuted,
+                  fontSize: 14,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 40),
+              Expanded(
+                child: _WebInfiniteCarousel(),
+              ),
             ],
           ),
         ),
@@ -210,41 +388,172 @@ class _HeroPanel extends StatelessWidget {
   }
 }
 
-class _NavChip extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _NavChip({required this.label, required this.onTap});
+// Carrusel infinito para web (scroll automático constante a la derecha)
+class _WebInfiniteCarousel extends StatefulWidget {
+  @override
+  State<_WebInfiniteCarousel> createState() => _WebInfiniteCarouselState();
+}
+
+class _WebInfiniteCarouselState extends State<_WebInfiniteCarousel> {
+  late final ScrollController _scrollController;
+  int _currentIndex = 0;
+  
+  late final List<FeatureItem> _infiniteFeatures;
+  
+  final List<FeatureItem> _originalFeatures = const [
+    FeatureItem(
+      icon: Icons.confirmation_number,
+      title: 'COMPRAR BOLETAS',
+      description: 'Adquiere tus entradas oficiales',
+      color: AppTheme.accentRed,
+    ),
+    FeatureItem(
+      icon: Icons.calendar_today,
+      title: 'AGENDA',
+      description: 'Organiza tu itinerario',
+      color: AppTheme.accentBlue,
+    ),
+    FeatureItem(
+      icon: Icons.workspace_premium,
+      title: 'POLLAS',
+      description: 'Crea quinielas',
+      color: AppTheme.accentGreen,
+    ),
+    FeatureItem(
+      icon: Icons.photo_album,
+      title: 'ÁLBUM',
+      description: 'Colecciona figuritas',
+      color: AppTheme.accentYellow,
+    ),
+    FeatureItem(
+      icon: Icons.account_balance_wallet,
+      title: 'BILLETERA',
+      description: 'Gestiona tus pagos',
+      color: AppTheme.primary,
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Duplicamos items para efecto infinito
+    _infiniteFeatures = [..._originalFeatures, ..._originalFeatures, ..._originalFeatures];
+    _scrollController = ScrollController(initialScrollOffset: 300);
+    _startInfiniteScroll();
+  }
+
+  void _startInfiniteScroll() {
+    Future.delayed(const Duration(milliseconds: 2500), _scrollToNext);
+  }
+
+  void _scrollToNext() {
+    if (!mounted) return;
+    
+    _currentIndex++;
+    final cardWidth = 280.0;
+    const spacing = 20.0;
+    final scrollPosition = _currentIndex * (cardWidth + spacing);
+    
+    _scrollController.animateTo(
+      scrollPosition,
+      duration: const Duration(milliseconds: 800),
+      curve: Curves.linear,
+    );
+    
+    // Efecto infinito
+    if (_currentIndex >= _infiniteFeatures.length - 3) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _scrollController.jumpTo(300);
+        _currentIndex = 0;
+      });
+    }
+    
+    _startInfiniteScroll();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        child: Text(label, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600, fontSize: 13, letterSpacing: 0.5)),
+    return ListView.builder(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      itemCount: _infiniteFeatures.length,
+      itemBuilder: (context, index) {
+        return Container(
+          width: 280,
+          margin: const EdgeInsets.only(right: 20),
+          child: _WebFeatureCard(feature: _infiniteFeatures[index % _originalFeatures.length]),
+        );
+      },
+    );
+  }
+}
+
+class _WebFeatureCard extends StatelessWidget {
+  final FeatureItem feature;
+  const _WebFeatureCard({required this.feature});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            feature.color.withOpacity(0.15),
+            feature.color.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: feature.color.withOpacity(0.3), width: 1),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: feature.color.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(feature.icon, size: 40, color: feature.color),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            feature.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Text(
+              feature.description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppTheme.onSurfaceMuted,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _ColorTab extends StatelessWidget {
-  final String label;
-  final Color color;
-  final Color textColor;
-  const _ColorTab({required this.label, required this.color, this.textColor = Colors.white});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      color: color,
-      child: Text(label, style: TextStyle(color: textColor, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5)),
-    );
-  }
-}
-
-// ── FORMULARIO ──────────────────────────────────────────────────────────────
+// ── FORMULARIO ────────────────────────────────────────────────────────────────
 class _LoginForm extends StatefulWidget {
   const _LoginForm();
 
@@ -261,7 +570,6 @@ class _LoginFormState extends State<_LoginForm> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Header del form
         Row(
           children: [
             Container(width: 4, height: 32, color: AppTheme.accentRed),
@@ -337,7 +645,6 @@ class _LoginFormState extends State<_LoginForm> {
         ),
         const SizedBox(height: 20),
 
-        // Divisor
         Row(
           children: [
             const Expanded(child: Divider(color: Color(0xFF333333))),
