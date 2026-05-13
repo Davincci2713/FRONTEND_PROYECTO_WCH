@@ -47,51 +47,80 @@ class Inicio extends StatelessWidget {
 
           // Hero banner - espacio para imagen/estadio
           // ESPACIO BANNER: reemplaza el Container con tu imagen o widget
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppTheme.divider),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF001a0e), Color(0xFF0a1020), Color(0xFF1a000a)],
-              ),
-            ),
-            child: Stack(
-              children: [
-                // NOTA: Reemplaza con Image.asset('assets/estadio.jpg', fit: BoxFit.cover)
-                const Center(child: Icon(Icons.stadium, size: 80, color: Color(0x20FFFFFF))),
-                // Overlay con contenido
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        color: AppTheme.accentRed,
-                        child: const Text('¿QUIERES IR A UN PARTIDO?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5)),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: () => context.go('/tickets'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.accentRed,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                        ),
-                        child: const Text('RESERVA YA', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2)),
-                      ),
-                    ],
-                  ),
-                ),
+Container(
+  height: 200,
+  width: double.infinity,
+  decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(8),
+    border: Border.all(color: AppTheme.divider),
+    color: const Color(0xFF0a1020), 
+  ),
+  child: ClipRRect( 
+    borderRadius: BorderRadius.circular(8),
+    child: Stack(
+      children: [
+        Image.asset(
+          'assets/img/estadio.webp',
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        ),
+
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.black.withValues(alpha: 0.3), 
+                Colors.black.withValues(alpha: 0.7), 
               ],
             ),
           ),
+        ),
+
+        Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                color: AppTheme.accentRed,
+                child: const Text(
+                  '¿QUIERES IR A UN PARTIDO?',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () => context.go('/tickets'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentRed,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                child: const Text(
+                  'RESERVA YA',
+                  style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  ),
+),
           const SizedBox(height: 32),
 
           // Accesos rápidos

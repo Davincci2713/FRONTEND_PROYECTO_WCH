@@ -14,6 +14,11 @@ import 'package:frontend_proyecto/screens/RecuperarContrasena.dart';
 import 'package:frontend_proyecto/screens/backoffice.dart';
 import 'package:frontend_proyecto/screens/intercambio.dart';
 
+import 'package:frontend_proyecto/screens/comprar_entradas.dart';
+import 'package:frontend_proyecto/screens/crear_polla.dart';
+import 'package:frontend_proyecto/screens/detalle_polla.dart';
+
+
 void main() {
   runApp(const MyApp());
 }
@@ -56,6 +61,30 @@ class MyApp extends StatelessWidget {
           builder: (context, state) => const AppScaffold(
             currentIndex: 1,
             child: Intercambio(),
+          ),
+        ),
+
+                 GoRoute(
+          path: '/comprar_entradas',
+          builder: (context, state) => const AppScaffold(
+            currentIndex: 3,
+            child: ComprarEntradasScreen(),
+          ),
+        ),
+
+                 GoRoute(
+          path: '/crear_polla',
+          builder: (context, state) => const AppScaffold(
+            currentIndex: 2,
+            child: CrearPollaScreen(),
+          ),
+        ),
+
+                 GoRoute(
+          path: '/detalle_polla',
+          builder: (context, state) => const AppScaffold(
+            currentIndex: 2,
+            child: DetallePollaScreen(),
           ),
         ),
 

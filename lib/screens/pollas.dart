@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_proyecto/utils/theme.dart';
+import 'package:go_router/go_router.dart';
 
 class PollasScreen extends StatelessWidget {
   const PollasScreen({super.key});
@@ -27,7 +28,7 @@ class PollasScreen extends StatelessWidget {
                 ],
               ),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () { context.push('/crear_polla'); },
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('CREAR POLLA', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 12)),
                 style: ElevatedButton.styleFrom(
@@ -41,7 +42,7 @@ class PollasScreen extends StatelessWidget {
           ),
           const SizedBox(height: 28),
 
-          // Pollas activas (scroll horizontal)
+          // Pollas activas (ESTA ES LA PARTE CLICKEABLE AHORA)
           const Text('POLLAS ACTIVAS', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2)),
           const SizedBox(height: 16),
           SizedBox(
@@ -55,14 +56,14 @@ class PollasScreen extends StatelessWidget {
           ),
           const SizedBox(height: 32),
 
-          // Próximos cierres de pronóstico
+          // Próximos cierres
           const Text('PRÓXIMOS CIERRES', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2)),
           const SizedBox(height: 16),
           ...List.generate(2, (i) => _MatchPredictionCard(index: i)),
           const SizedBox(height: 32),
 
-          // Ranking global
-          const Text('RANKING GLOBAL', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2)),
+          // Ranking global (Ahora es informativo)
+          const Text('LÍDERES GLOBALES', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 2)),
           const SizedBox(height: 16),
           _RankingTable(),
         ],
@@ -77,37 +78,49 @@ class _PollCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final names = ['Polla Oficina', 'Amigos FC', 'Familia'];
     final colors = [AppTheme.accentBlue, AppTheme.accentGreen, AppTheme.accentRed];
     final color = colors[index % colors.length];
-    return Container(
-      width: 220,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceCard,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(width: 4, height: 16, color: color),
-              const SizedBox(width: 8),
-              Text('Grupo ${index + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
-            ],
-          ),
-          const Spacer(),
-          Text('12 Participantes', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 12)),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(Icons.emoji_events, color: color, size: 14),
-              const SizedBox(width: 4),
-              Text('Posición: 4°', style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 13)),
-            ],
-          ),
-        ],
+
+    return InkWell(
+      onTap: () => context.push('/detalle_polla'), 
+      borderRadius: BorderRadius.circular(8),
+      child: Ink(
+        width: 220,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceCard,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(width: 4, height: 16, color: color),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(names[index % names.length], 
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                    overflow: TextOverflow.ellipsis
+                  ),
+                ),
+                const Icon(Icons.chevron_right, size: 16, color: AppTheme.onSurfaceMuted),
+              ],
+            ),
+            const Spacer(),
+            Text('12 Participantes', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 12)),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.emoji_events, color: color, size: 14),
+                const SizedBox(width: 4),
+                Text('Posición: 4°', style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 13)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -135,7 +148,6 @@ class _MatchPredictionCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Match info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,17 +158,17 @@ class _MatchPredictionCard extends StatelessWidget {
               ],
             ),
           ),
-          // Botón predicción
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              // Aquí podrías abrir un modal para poner el marcador
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.accentBlue,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-              textStyle: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, fontSize: 11),
             ),
-            child: const Text('PREDECIR'),
+            child: const Text('PREDECIR', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
           ),
         ],
       ),
@@ -172,7 +184,6 @@ class _RankingTable extends StatelessWidget {
       {'pos': 2, 'user': 'mariafan26', 'pts': 90, 'medal': '🥈'},
       {'pos': 3, 'user': 'mundialero', 'pts': 80, 'medal': '🥉'},
       {'pos': 4, 'user': 'futbolero7', 'pts': 70, 'medal': ''},
-      {'pos': 5, 'user': 'copa2026', 'pts': 60, 'medal': ''},
     ];
 
     return Container(
@@ -183,26 +194,22 @@ class _RankingTable extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header tabla
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                SizedBox(width: 36, child: Text('POS', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5))),
-                const Expanded(child: Text('USUARIO', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5))),
-                Text('PUNTOS', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+                SizedBox(width: 36, child: Text('POS', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w800))),
+                const Expanded(child: Text('USUARIO', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w800))),
+                Text('PUNTOS', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w800)),
               ],
             ),
           ),
           const Divider(height: 1, color: AppTheme.divider),
           ...data.map((row) {
             final isTop3 = (row['pos'] as int) <= 3;
-            final colors = [AppTheme.accentYellow, Color(0xFFAAAAAA), Color(0xFFCD7F32)];
-            final rankColor = isTop3 ? colors[(row['pos'] as int) - 1] : AppTheme.onSurfaceMuted;
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: isTop3 ? rankColor.withOpacity(0.05) : Colors.transparent,
                 border: Border(bottom: BorderSide(color: AppTheme.divider, width: 0.5)),
               ),
               child: Row(
@@ -210,14 +217,14 @@ class _RankingTable extends StatelessWidget {
                   SizedBox(
                     width: 36,
                     child: Text(
-                      row['medal'] as String != '' ? row['medal'] as String : '#${row['pos']}',
-                      style: TextStyle(color: rankColor, fontWeight: FontWeight.w900, fontSize: 14),
+                      row['medal'] != '' ? row['medal'] as String : '#${row['pos']}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ),
                   Expanded(
-                    child: Text(row['user'] as String, style: TextStyle(color: isTop3 ? Colors.white : AppTheme.onSurface, fontWeight: isTop3 ? FontWeight.w700 : FontWeight.w400)),
+                    child: Text(row['user'] as String, style: const TextStyle(color: Colors.white)),
                   ),
-                  Text('${row['pts']} pts', style: TextStyle(color: rankColor, fontWeight: FontWeight.w900, fontSize: 15)),
+                  Text('${row['pts']} pts', style: const TextStyle(color: AppTheme.accentGreen, fontWeight: FontWeight.w900)),
                 ],
               ),
             );

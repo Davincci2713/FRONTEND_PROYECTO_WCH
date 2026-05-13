@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend_proyecto/utils/theme.dart';
+import 'package:go_router/go_router.dart';
 
 class TicketsScreen extends StatelessWidget {
   const TicketsScreen({super.key});
@@ -27,7 +28,7 @@ class TicketsScreen extends StatelessWidget {
                 ],
               ),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {context.push('/comprar_entradas');},
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('COMPRAR ENTRADAS', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 12)),
                 style: ElevatedButton.styleFrom(
