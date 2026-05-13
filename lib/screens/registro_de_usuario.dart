@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend_proyecto/utils/responsive.dart';
+import 'package:frontend_proyecto/utils/theme.dart';
 
 class RegistroDeUsuario extends StatelessWidget {
   const RegistroDeUsuario({super.key});
@@ -8,49 +9,78 @@ class RegistroDeUsuario extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const ResponsiveLayout(
-      mobile: RegistroMobile(),
-      web: RegistroWeb(),
+      mobile: _RegistroMobile(),
+      web: _RegistroWeb(),
     );
   }
 }
 
-class RegistroWeb extends StatelessWidget {
-  const RegistroWeb({super.key});
+class _RegistroWeb extends StatelessWidget {
+  const _RegistroWeb();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: AppTheme.surface,
       body: Row(
         children: [
+          // Panel izquierdo
           Expanded(
-            child: Container(
-              color: theme.colorScheme.primary,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.sports_soccer, size: 100, color: Colors.white),
-                    const SizedBox(height: 24),
-                    Text(
-                      'Únete a la Pasión',
-                      style: theme.textTheme.displaySmall?.copyWith(color: Colors.white),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // ESPACIO FONDO ESTADIO:
+                // Reemplaza con Image.asset('assets/estadio.jpg', fit: BoxFit.cover)
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Color(0xFF001a0e), Color(0xFF0a0a1a)],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Crea tu cuenta y vive el Mundial 2026',
-                      style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white70),
-                    ),
-                  ],
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.stadium, size: 180, color: Color(0x12FFFFFF)),
+                  ),
                 ),
-              ),
+                Container(color: Colors.black.withOpacity(0.5)),
+                Padding(
+                  padding: const EdgeInsets.all(56),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        color: AppTheme.accentGreen,
+                        child: const Text('ÚNETE AL MUNDIAL', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 2)),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'CREA TU\nCUENTA\nY VIVE 2026',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 48,
+                          fontWeight: FontWeight.w900,
+                          height: 1.05,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
+          // Panel derecho: formulario
           Container(
-            width: 500,
-            padding: const EdgeInsets.all(48.0),
-            child: const SingleChildScrollView(child: RegistroForm()),
+            width: 520,
+            color: AppTheme.surfaceCard,
+            child: const SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 56, vertical: 64),
+              child: _RegistroForm(),
+            ),
           ),
         ],
       ),
@@ -58,24 +88,39 @@ class RegistroWeb extends StatelessWidget {
   }
 }
 
-class RegistroMobile extends StatelessWidget {
-  const RegistroMobile({super.key});
+class _RegistroMobile extends StatelessWidget {
+  const _RegistroMobile();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
-              const Center(
-                child: Icon(Icons.sports_soccer, size: 48, color: Color(0xFF00341C)),
+              // ESPACIO LOGO MÓVIL
+              Container(
+                width: 60, height: 60,
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.divider),
+                ),
+                child: const Icon(Icons.sports_soccer, color: AppTheme.accentGreen, size: 32),
               ),
-              const SizedBox(height: 24),
-              const RegistroForm(),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.divider),
+                ),
+                child: const _RegistroForm(),
+              ),
             ],
           ),
         ),
@@ -84,90 +129,108 @@ class RegistroMobile extends StatelessWidget {
   }
 }
 
-class RegistroForm extends StatefulWidget {
-  const RegistroForm({super.key});
+class _RegistroForm extends StatefulWidget {
+  const _RegistroForm();
 
   @override
-  State<RegistroForm> createState() => _RegistroFormState();
+  State<_RegistroForm> createState() => _RegistroFormState();
 }
 
-class _RegistroFormState extends State<RegistroForm> {
+class _RegistroFormState extends State<_RegistroForm> {
   bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Crear Cuenta',
-          style: theme.textTheme.headlineLarge,
+        Row(
+          children: [
+            Container(width: 4, height: 32, color: AppTheme.accentGreen),
+            const SizedBox(width: 12),
+            const Text('CREAR CUENTA', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 2)),
+          ],
         ),
         const SizedBox(height: 8),
-        Text(
-          'Completa tus datos para registrarte',
-          style: theme.textTheme.bodyMedium,
-        ),
+        Text('Completa tus datos para registrarte', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 13)),
         const SizedBox(height: 32),
-        const Text('Nombre Completo', style: TextStyle(fontWeight: FontWeight.bold)),
+
+        _label('NOMBRE COMPLETO'),
         const SizedBox(height: 8),
         TextField(
-          decoration: InputDecoration(
-            hintText: 'Tu nombre',
-            prefixIcon: const Icon(Icons.person_outline),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          ),
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(hintText: 'Tu nombre completo', prefixIcon: Icon(Icons.person_outline)),
         ),
-        const SizedBox(height: 16),
-        const Text('Correo Electrónico', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+
+        _label('CORREO ELECTRÓNICO'),
         const SizedBox(height: 8),
         TextField(
-          decoration: InputDecoration(
-            hintText: 'tu@correo.com',
-            prefixIcon: const Icon(Icons.email_outlined),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          ),
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(hintText: 'tu@correo.com', prefixIcon: Icon(Icons.email_outlined)),
         ),
-        const SizedBox(height: 16),
-        const Text('Contraseña', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 20),
+
+        _label('CONTRASEÑA'),
         const SizedBox(height: 8),
         TextField(
           obscureText: _obscurePassword,
+          style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
-            hintText: '******',
+            hintText: '••••••••',
             prefixIcon: const Icon(Icons.lock_outline),
             suffixIcon: IconButton(
               icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
               onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
             ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
+
+        _label('CONFIRMAR CONTRASEÑA'),
+        const SizedBox(height: 8),
+        TextField(
+          obscureText: _obscureConfirm,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: '••••••••',
+            prefixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: IconButton(
+              icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
+              onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+
         ElevatedButton(
           onPressed: () => context.go('/home'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: theme.colorScheme.primary,
+            backgroundColor: AppTheme.accentGreen,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           ),
-          child: const Text('Registrarse'),
+          child: const Text('REGISTRARSE', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 13)),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
+
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('¿Ya tienes cuenta?'),
+            Text('¿Ya tienes cuenta?', style: TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 13)),
             TextButton(
               onPressed: () => context.go('/login'),
-              child: const Text('Inicia sesión aquí'),
+              child: const Text('Inicia sesión', style: TextStyle(color: AppTheme.accentRed, fontWeight: FontWeight.w700)),
             ),
           ],
         ),
       ],
     );
   }
+
+  Widget _label(String text) =>
+      Text(text, style: const TextStyle(color: AppTheme.onSurfaceMuted, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1.5));
 }
