@@ -105,17 +105,25 @@ class _LoginFormState extends State<LoginForm> {
     final result = await AuthService().login(_emailController.text, _passwordController.text);
     setState(() => _isLoading = false);
 
-    if (result['success']) {
-      if (context.mounted) {
-        context.go('/home');
-      }
+    if (!context.mounted) return;
+
+    if (result['success'] == true) {
+      context.go('/home');
+    } else if (result['errorCode'] == 'ERR_UNVERIFIED') {
+      _showVerificationDialog(result['email'] as String);
     } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result['message'] ?? 'Error desconocido')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'] ?? 'Error desconocido')),
+      );
     }
+  }
+
+  void _showVerificationDialog(String email) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _VerificationDialog(email: email),
+    );
   }
 
   @override
@@ -217,6 +225,112 @@ class _LoginFormState extends State<LoginForm> {
               child: const Text('Regístrate aquí'),
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Diálogo de verificación de email (usado tanto desde registro como desde login)
+// ---------------------------------------------------------------------------
+class _VerificationDialog extends StatefulWidget {
+  final String email;
+  const _VerificationDialog({required this.email});
+
+  @override
+  State<_VerificationDialog> createState() => _VerificationDialogState();
+}
+
+class _VerificationDialogState extends State<_VerificationDialog> {
+  final TextEditingController _codeController = TextEditingController();
+  bool _isVerifying = false;
+  bool _isResending = false;
+  String? _feedbackMessage;
+
+  Future<void> _verify() async {
+    if (_codeController.text.trim().length != 6) {
+      setState(() => _feedbackMessage = 'El código debe tener 6 dígitos.');
+      return;
+    }
+    setState(() { _isVerifying = true; _feedbackMessage = null; });
+    final result = await AuthService().verifyEmail(widget.email, _codeController.text.trim());
+    if (!mounted) return;
+    setState(() => _isVerifying = false);
+
+    if (result['success'] == true) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Cuenta verificada! Ahora puedes iniciar sesión.')),
+      );
+      context.go('/login');
+    } else {
+      setState(() => _feedbackMessage = result['message'] ?? 'Código incorrecto.');
+    }
+  }
+
+  Future<void> _resend() async {
+    setState(() { _isResending = true; _feedbackMessage = null; });
+    final result = await AuthService().resendVerificationCode(widget.email);
+    if (!mounted) return;
+    setState(() {
+      _isResending = false;
+      _feedbackMessage = result['message'] ?? (result['success'] == true
+          ? 'Código reenviado.'
+          : 'No se pudo reenviar.');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Verificar correo'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Ingresa el código de 6 dígitos enviado a ${widget.email}.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _codeController,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            decoration: const InputDecoration(
+              labelText: 'Código de verificación',
+              counterText: '',
+            ),
+          ),
+          if (_feedbackMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(_feedbackMessage!, style: TextStyle(
+              color: _feedbackMessage!.contains('reenviado') || _feedbackMessage!.contains('verificad')
+                  ? Colors.green
+                  : Colors.red,
+              fontSize: 13,
+            )),
+          ],
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: _isResending ? null : _resend,
+            child: _isResending
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('¿No recibiste el código? Reenviar'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isVerifying ? null : () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: _isVerifying ? null : _verify,
+          child: _isVerifying
+              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+              : const Text('Verificar'),
         ),
       ],
     );

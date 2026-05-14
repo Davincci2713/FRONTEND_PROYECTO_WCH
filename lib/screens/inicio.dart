@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth/auth.dart';
+import '../services/album_service.dart';
 import '../services/match_service.dart';
 
 class Inicio extends StatefulWidget {
@@ -113,6 +114,61 @@ class DashboardCard extends StatelessWidget {
   }
 }
 
+// ── Indicador de monedas reutilizable ────────────────────────────────────────
+class CoinsIndicator extends StatefulWidget {
+  final Color textColor;
+  const CoinsIndicator({super.key, this.textColor = Colors.black87});
+  @override
+  State<CoinsIndicator> createState() => _CoinsIndicatorState();
+}
+
+class _CoinsIndicatorState extends State<CoinsIndicator> {
+  int? _coins;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    final uid = AuthService().currentUserId;
+    if (uid == null) return;
+    try {
+      final data = await AlbumService().getUserAlbum(uid);
+      if (mounted) setState(() => _coins = (data['coins'] as num?)?.toInt());
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.amber.shade300),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🪙', style: TextStyle(fontSize: 14)),
+          const SizedBox(width: 4),
+          Text(
+            _coins == null ? '—' : '$_coins',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: Colors.amber.shade800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Top bar (web) ─────────────────────────────────────────────────────────────
 class AppTopBar extends StatelessWidget {
   const AppTopBar({super.key});
 
@@ -133,9 +189,11 @@ class AppTopBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(width: 16),
-          IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
           const SizedBox(width: 12),
+          const CoinsIndicator(),
+          const SizedBox(width: 12),
+          IconButton(icon: const Icon(Icons.notifications_outlined), onPressed: () {}),
+          const SizedBox(width: 8),
           const CircleAvatar(
             backgroundColor: Color(0xFF00341C),
             child: Icon(Icons.person, color: Colors.white),
