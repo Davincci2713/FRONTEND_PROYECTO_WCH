@@ -23,14 +23,15 @@ class AuthService {
         final data = jsonDecode(response.body);
         _accessToken = data['token'];
         _currentUser = data['user'];
-        return {
-          'success': true,
-          'token': _accessToken,
-          'user': _currentUser,
-        };
+        return {'success': true, 'token': _accessToken, 'user': _currentUser};
       } else {
         final error = jsonDecode(response.body);
-        return {'success': false, 'message': error['message'] ?? 'Credenciales inválidas'};
+        return {
+          'success': false,
+          'errorCode': error['error'],
+          'message': error['message'] ?? 'Credenciales inválidas',
+          'email': error['email'],
+        };
       }
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión'};
@@ -66,17 +67,31 @@ class AuthService {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/verify'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': email,
-          'code': code
-        }),
+        body: jsonEncode({'email': email, 'code': code}),
       );
-
       final data = jsonDecode(response.body);
       if (response.statusCode == 200) {
         return {'success': true, 'message': data['message']};
       } else {
         return {'success': false, 'message': data['message'] ?? 'Error al verificar'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión'};
+    }
+  }
+
+  Future<Map<String, dynamic>> resendVerificationCode(String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/resend'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': data['message']};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Error al reenviar'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión'};

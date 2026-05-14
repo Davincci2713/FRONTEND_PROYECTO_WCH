@@ -11,6 +11,8 @@ import 'package:frontend_proyecto/screens/pollas.dart';
 import 'package:frontend_proyecto/screens/tickets.dart';
 
 import 'package:frontend_proyecto/screens/open_pack.dart';
+import 'package:frontend_proyecto/screens/album_progress.dart';
+import 'package:frontend_proyecto/screens/comunidades.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,16 +42,20 @@ class MyApp extends StatelessWidget {
           path: '/open-pack',
           builder: (context, state) => const OpenPackScreen(),
         ),
+        GoRoute(
+          path: '/album-progress',
+          builder: (context, state) => const AlbumProgressScreen(),
+        ),
         ShellRoute(
           navigatorKey: _shellNavigatorKey,
           builder: (context, state, child) {
             int index = 0;
-            if (state.fullPath == '/home') {
-              index = 0;
-            } else if (state.fullPath == '/album') index = 1;
-            else if (state.fullPath == '/pollas') index = 2;
-            else if (state.fullPath == '/tickets') index = 3;
-            else if (state.fullPath == '/profile') index = 4;
+            if (state.fullPath == '/home')        index = 0;
+            else if (state.fullPath == '/album')       index = 1;
+            else if (state.fullPath == '/pollas')      index = 2;
+            else if (state.fullPath == '/comunidades') index = 3;
+            else if (state.fullPath == '/tickets')     index = 4;
+            else if (state.fullPath == '/profile')     index = 5;
             
             return AppScaffold(
               currentIndex: index,
@@ -68,6 +74,10 @@ class MyApp extends StatelessWidget {
             GoRoute(
               path: '/pollas',
               pageBuilder: (context, state) => const NoTransitionPage(child: PollasScreen()),
+            ),
+            GoRoute(
+              path: '/comunidades',
+              pageBuilder: (context, state) => const NoTransitionPage(child: ComunidadesScreen()),
             ),
             GoRoute(
               path: '/tickets',

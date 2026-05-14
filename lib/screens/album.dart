@@ -64,14 +64,29 @@ class _AlbumScreenState extends State<AlbumScreen> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text('Álbum Digital', style: theme.textTheme.headlineMedium),
-              ElevatedButton.icon(
-                onPressed: () => context.go('/open-pack'),
-                icon: const Icon(Icons.style),
-                label: const Text('ABRIR SOBRE'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: theme.colorScheme.secondary,
-                  foregroundColor: Colors.white,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => context.push('/album-progress'),
+                    icon: const Icon(Icons.grid_view_rounded),
+                    label: const Text('Ver Progreso'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: theme.colorScheme.primary,
+                      side: BorderSide(color: theme.colorScheme.primary),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    onPressed: () => context.go('/open-pack'),
+                    icon: const Icon(Icons.style),
+                    label: const Text('ABRIR SOBRE'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.secondary,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
