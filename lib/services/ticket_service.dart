@@ -39,11 +39,11 @@ class TicketService {
     throw Exception(d['message'] ?? 'Error al pagar');
   }
 
-  Future<Map<String, dynamic>> transferTicket(
-      int ticketId, int fromUserId, int toUserId) async {
-    final r = await http.post(Uri.parse('$baseUrl/tickets/$ticketId/transfer'),
+  Future<Map<String, dynamic>> transferTicketByEmail(
+      int ticketId, int fromUserId, String toEmail) async {
+    final r = await http.post(Uri.parse('$baseUrl/tickets/$ticketId/transfer-by-email'),
         headers: _h,
-        body: jsonEncode({'fromUserId': fromUserId, 'toUserId': toUserId}));
+        body: jsonEncode({'fromUserId': fromUserId, 'toEmail': toEmail}));
     final d = jsonDecode(r.body);
     if (r.statusCode == 200) return d;
     throw Exception(d['message'] ?? 'Error al transferir');

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../services/album_service.dart';
 import '../services/auth/auth.dart';
 
 class AlbumProgressScreen extends StatefulWidget {
-  const AlbumProgressScreen({super.key});
+  final String? initialTeam;
+  const AlbumProgressScreen({super.key, this.initialTeam});
   @override
   State<AlbumProgressScreen> createState() => _AlbumProgressScreenState();
 }
@@ -12,21 +14,27 @@ class _AlbumProgressScreenState extends State<AlbumProgressScreen> {
   final _service = AlbumService();
   Map<String, dynamic>? _data;
   bool _loading = true;
-  String _filter = 'all'; // 'all' | 'team' | 'special'
-  String _query = '';
+  String _filter = 'all';
+  late String _query;
 
   int get _userId => AuthService().currentUserId ?? 1;
 
   @override
   void initState() {
     super.initState();
+    _query = widget.initialTeam ?? '';
+    if (widget.initialTeam != null) _filter = 'team';
     _load();
   }
 
   Future<void> _load() async {
     try {
       final d = await _service.getAlbumProgress(_userId);
-      if (mounted) setState(() { _data = d; _loading = false; });
+      if (mounted)
+        setState(() {
+          _data = d;
+          _loading = false;
+        });
     } catch (e) {
       if (mounted) setState(() => _loading = false);
     }
@@ -40,9 +48,13 @@ class _AlbumProgressScreenState extends State<AlbumProgressScreen> {
       if (_filter == 'special' && s['type'] != 'special') return false;
       if (_query.isNotEmpty) {
         final label = (s['label'] as String).toLowerCase();
-        final hasMatch = label.contains(_query.toLowerCase()) ||
-            (s['stickers'] as List).any((st) =>
-                (st['name'] as String).toLowerCase().contains(_query.toLowerCase()));
+        final hasMatch =
+            label.contains(_query.toLowerCase()) ||
+            (s['stickers'] as List).any(
+              (st) => (st['name'] as String).toLowerCase().contains(
+                _query.toLowerCase(),
+              ),
+            );
         if (!hasMatch) return false;
       }
       return true;
@@ -51,37 +63,40 @@ class _AlbumProgressScreenState extends State<AlbumProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Progreso del Álbum'),
-        backgroundColor: theme.colorScheme.primary,
+        title: const Text(
+          'Progreso del álbum',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: const Color(0xFF00341C),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _data == null
-              ? const Center(child: Text('Error cargando el álbum'))
-              : Column(
-                  children: [
-                    _ProgressHeader(data: _data!),
-                    _FilterBar(
-                      filter: _filter,
-                      query: _query,
-                      onFilterChanged: (v) => setState(() => _filter = v),
-                      onQueryChanged: (v) => setState(() => _query = v),
-                    ),
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        itemCount: _filteredSections.length,
-                        itemBuilder: (ctx, i) =>
-                            _SectionTile(section: _filteredSections[i]),
-                      ),
-                    ),
-                  ],
+          ? const Center(child: Text('Error cargando el álbum'))
+          : Column(
+              children: [
+                _ProgressHeader(data: _data!),
+                _FilterBar(
+                  filter: _filter,
+                  query: _query,
+                  onFilterChanged: (v) => setState(() => _filter = v),
+                  onQueryChanged: (v) => setState(() => _query = v),
                 ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(24),
+                    itemCount: _filteredSections.length,
+                    itemBuilder: (ctx, i) =>
+                        _SectionTile(section: _filteredSections[i]),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -100,26 +115,39 @@ class _ProgressHeader extends StatelessWidget {
     final total = data['total_unique'] as int;
 
     return Container(
-      color: Theme.of(context).colorScheme.primary,
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _Stat(label: 'Obtenidas', value: '$owned', color: Colors.greenAccent),
-              _Stat(label: 'Total', value: '$total', color: Colors.white70),
-              _Stat(label: 'Completado', value: '${pct.toStringAsFixed(1)}%', color: Colors.amber),
+              _Stat(
+                label: 'Obtenidas',
+                value: '$owned',
+                color: Colors.green.shade700,
+              ),
+              _Stat(label: 'Total', value: '$total', color: Colors.black87),
+              _Stat(
+                label: 'Completado',
+                value: '${pct.toStringAsFixed(1)}%',
+                color: const Color(0xFF00341C),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 24),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: pct / 100,
-              minHeight: 8,
-              backgroundColor: Colors.white24,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
+              value: total > 0 ? owned / total : 0,
+              minHeight: 6,
+              backgroundColor: Colors.grey.shade200,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF00341C),
+              ),
             ),
           ),
         ],
@@ -135,8 +163,23 @@ class _Stat extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
-      Text(label, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+      Text(
+        value,
+        style: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          color: Colors.grey.shade600,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
     ],
   );
 }
@@ -148,45 +191,84 @@ class _FilterBar extends StatelessWidget {
   final String filter, query;
   final ValueChanged<String> onFilterChanged, onQueryChanged;
   const _FilterBar({
-    required this.filter, required this.query,
-    required this.onFilterChanged, required this.onQueryChanged,
+    required this.filter,
+    required this.query,
+    required this.onFilterChanged,
+    required this.onQueryChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               for (final f in [
                 ('all', 'Todos'),
                 ('special', 'Especiales'),
                 ('team', 'Equipos'),
               ])
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(f.$2),
-                    selected: filter == f.$1,
-                    onSelected: (_) => onFilterChanged(f.$1),
-                    selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.15),
-                    checkmarkColor: Theme.of(context).colorScheme.primary,
+                FilterChip(
+                  label: Text(
+                    f.$2,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: filter == f.$1 ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  selected: filter == f.$1,
+                  onSelected: (_) => onFilterChanged(f.$1),
+                  backgroundColor: Colors.white,
+                  selectedColor: const Color(0xFF00341C),
+                  checkmarkColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                    side: BorderSide(
+                      color: filter == f.$1
+                          ? const Color(0xFF00341C)
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 16),
           TextField(
             onChanged: onQueryChanged,
             decoration: InputDecoration(
-              hintText: 'Buscar jugador o equipo…',
-              prefixIcon: const Icon(Icons.search, size: 20),
+              hintText: 'Buscar jugador o equipo...',
+              prefixIcon: Icon(
+                Icons.search,
+                size: 20,
+                color: Colors.grey.shade500,
+              ),
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 12,
+                horizontal: 16,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
             ),
           ),
         ],
@@ -202,75 +284,34 @@ class _SectionTile extends StatelessWidget {
   final Map<String, dynamic> section;
   const _SectionTile({required this.section});
 
-  static const _specialEmoji = {
-    'Golden Baller':    '⭐',
-    'Top Keeper':       '🧤',
-    'Defensive Rock':   '🛡️',
-    'Midfield Maestro': '🎯',
-    'Goal Machine':     '⚽',
-    'Master Rookie':    '🌟',
-    'Official':         '🏆',
-    'Eternal':          '♾️',
-  };
-
-  static const _teamFlag = {
-    'Alemania':               '🇩🇪',
-    'Arabia Saudita':         '🇸🇦',
-    'Argelia':                '🇩🇿',
-    'Argentina':              '🇦🇷',
-    'Australia':              '🇦🇺',
-    'Austria':                '🇦🇹',
-    'Bélgica':                '🇧🇪',
-    'Bosnia Y Herzegovina':   '🇧🇦',
-    'Bosnia y Herzegovina':   '🇧🇦',
-    'Brasil':                 '🇧🇷',
-    'Cabo Verde':             '🇨🇻',
-    'Canadá':                 '🇨🇦',
-    'Catar':                  '🇶🇦',
-    'Colombia':               '🇨🇴',
-    'Congo Rd':               '🇨🇩',
-    'Congo RD':               '🇨🇩',
-    'Corea Del Sur':          '🇰🇷',
-    'Corea del Sur':          '🇰🇷',
-    'Costa De Marfil':        '🇨🇮',
-    'Costa de Marfil':        '🇨🇮',
-    'Croacia':                '🇭🇷',
-    'Curazao':                '🇨🇼',
-    'Ecuador':                '🇪🇨',
-    'Egipto':                 '🇪🇬',
-    'Escocia':                '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
-    'España':                 '🇪🇸',
-    'Estados Unidos':         '🇺🇸',
-    'Francia':                '🇫🇷',
-    'Ghana':                  '🇬🇭',
-    'Haití':                  '🇭🇹',
-    'Inglaterra':             '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-    'Irak':                   '🇮🇶',
-    'Irán':                   '🇮🇷',
-    'Japón':                  '🇯🇵',
-    'Jordania':               '🇯🇴',
-    'Marruecos':              '🇲🇦',
-    'México':                 '🇲🇽',
-    'Noruega':                '🇳🇴',
-    'Nueva Zelanda':          '🇳🇿',
-    'Países Bajos':           '🇳🇱',
-    'Panamá':                 '🇵🇦',
-    'Paraguay':               '🇵🇾',
-    'Portugal':               '🇵🇹',
-    'República Checa':        '🇨🇿',
-    'Senegal':                '🇸🇳',
-    'Sudáfrica':              '🇿🇦',
-    'Suecia':                 '🇸🇪',
-    'Suiza':                  '🇨🇭',
-    'Túnez':                  '🇹🇳',
-    'Turquía':                '🇹🇷',
-    'Uruguay':                '🇺🇾',
-    'Uzbekistán':             '🇺🇿',
-  };
-
-  String _sectionEmoji(String type, String key) {
-    if (type == 'special') return _specialEmoji[key] ?? '🃏';
-    return _teamFlag[key] ?? _teamFlag[key.split(' ').map((w) => w.isEmpty ? w : w[0].toUpperCase() + w.substring(1).toLowerCase()).join(' ')] ?? '🏳️';
+  Widget _buildSectionIcon(String type, String? originalFlagUrl, bool complete) {
+    if (type == 'special') {
+      return Icon(Icons.star, color: complete ? const Color(0xFF00341C) : Colors.grey.shade600, size: 20);
+    }
+    
+    if (originalFlagUrl != null && originalFlagUrl.isNotEmpty) {
+      final flagUrl = 'http://localhost:5001/api/v1/proxy/image?url=${Uri.encodeComponent(originalFlagUrl)}';
+      
+      if (originalFlagUrl.endsWith('.svg')) {
+        return SvgPicture.network(
+          flagUrl,
+          width: 20,
+          height: 20,
+          fit: BoxFit.contain,
+          placeholderBuilder: (context) => Icon(Icons.flag, color: complete ? const Color(0xFF00341C) : Colors.grey.shade600, size: 20),
+        );
+      } else {
+        return Image.network(
+          flagUrl,
+          width: 20,
+          height: 20,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => Icon(Icons.flag, color: complete ? const Color(0xFF00341C) : Colors.grey.shade600, size: 20),
+        );
+      }
+    }
+    
+    return Icon(Icons.flag, color: complete ? const Color(0xFF00341C) : Colors.grey.shade600, size: 20);
   }
 
   @override
@@ -280,70 +321,116 @@ class _SectionTile extends StatelessWidget {
     final pct = section['completion_pct'] as double;
     final complete = owned == total && total > 0;
     final stickers = List<Map<String, dynamic>>.from(section['stickers']);
-    final emoji = _sectionEmoji(section['type'], section['key']);
+    final flagUrl = section['flagUrl'] as String?;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      elevation: complete ? 3 : 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: complete
-            ? const BorderSide(color: Colors.amber, width: 1.5)
-            : BorderSide.none,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: complete ? const Color(0xFF00341C) : Colors.grey.shade300,
+          width: complete ? 2 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: ExpansionTile(
-        leading: CircleAvatar(
-          backgroundColor: complete ? Colors.amber.shade100 : Colors.grey.shade200,
-          child: Text(emoji, style: const TextStyle(fontSize: 18)),
-        ),
-        title: Text(
-          section['label'] as String,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$owned / $total  ($pct%)',
-              style: TextStyle(
-                fontSize: 12,
-                color: complete ? Colors.amber.shade800 : Colors.grey.shade600,
-              ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          iconColor: Colors.black87,
+          collapsedIconColor: Colors.grey.shade600,
+          leading: Container(
+            width: 40,
+            height: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: complete
+                  ? const Color(0xFF00341C).withOpacity(0.1)
+                  : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(6),
             ),
-            const SizedBox(height: 3),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: total > 0 ? owned / total : 0,
-                minHeight: 4,
-                backgroundColor: Colors.grey.shade200,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  complete ? Colors.amber : Theme.of(context).colorScheme.primary,
+            child: _buildSectionIcon(section['type'], flagUrl, complete),
+          ),
+          title: Text(
+            section['label'] as String,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+              color: Colors.black87,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$owned / $total',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: complete
+                            ? const Color(0xFF00341C)
+                            : Colors.grey.shade600,
+                      ),
+                    ),
+                    Text(
+                      '${pct.toStringAsFixed(0)}%',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: complete
+                            ? const Color(0xFF00341C)
+                            : Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: total > 0 ? owned / total : 0,
+                    minHeight: 4,
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      complete ? const Color(0xFF00341C) : Colors.blue.shade600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.grey.shade200)),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 140,
+                  childAspectRatio: 0.7,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: stickers.length,
+                itemBuilder: (ctx, i) => _StickerCard(sticker: stickers[i]),
               ),
             ),
           ],
         ),
-        trailing: complete
-            ? const Icon(Icons.check_circle, color: Colors.amber)
-            : null,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 120,
-                childAspectRatio: 0.68,
-                crossAxisSpacing: 6,
-                mainAxisSpacing: 6,
-              ),
-              itemCount: stickers.length,
-              itemBuilder: (ctx, i) => _StickerCard(sticker: stickers[i]),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -358,23 +445,9 @@ class _StickerCard extends StatelessWidget {
 
   static Color _rarityColor(String r) => switch (r) {
     'Legendary' => const Color(0xFFFFD700),
-    'Epic'      => const Color(0xFF9C27B0),
-    'Rare'      => const Color(0xFF1976D2),
-    _           => const Color(0xFF9E9E9E),
-  };
-
-  static IconData _categoryIcon(String cat) => switch (cat) {
-    'Golden Baller'    => Icons.star,
-    'Top Keeper'       => Icons.sports_handball,
-    'Defensive Rock'   => Icons.shield,
-    'Midfield Maestro' => Icons.cached,
-    'Goal Machine'     => Icons.sports_soccer,
-    'Master Rookie'    => Icons.rocket_launch,
-    'Fan Favourite'    => Icons.favorite,
-    'Icon Card'        => Icons.diamond,
-    'Team Crest'       => Icons.flag,
-    'Official'         => Icons.emoji_events,
-    _                  => Icons.person,
+    'Epic' => const Color(0xFF9C27B0),
+    'Rare' => const Color(0xFF1976D2),
+    _ => Colors.grey.shade400,
   };
 
   @override
@@ -388,51 +461,55 @@ class _StickerCard extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: owned ? Colors.white : const Color(0xFF2A2A2A),
-            borderRadius: BorderRadius.circular(8),
+            color: owned ? Colors.white : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: owned ? color : Colors.grey.shade700,
+              color: owned ? color : Colors.grey.shade300,
               width: owned ? 2 : 1,
             ),
-            boxShadow: owned
-                ? [BoxShadow(color: color.withOpacity(0.15), blurRadius: 6)]
-                : null,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Rarity strip
               Container(
-                height: 5,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: owned ? color : Colors.grey.shade700,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                  color: owned ? color : Colors.grey.shade300,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(4),
+                  ),
                 ),
               ),
               // Card body
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  child: owned ? _OwnedContent(sticker: sticker, color: color) : _UnownedContent(sticker: sticker),
+                  padding: const EdgeInsets.all(8),
+                  child: owned
+                      ? _OwnedContent(sticker: sticker, color: color)
+                      : _UnownedContent(sticker: sticker),
                 ),
               ),
             ],
           ),
         ),
-        // Badge de copias repetidas
         if (copies > 1)
           Positioned(
-            top: 4,
-            right: 4,
+            top: 8,
+            right: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.orange.shade700,
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.black87,
+                borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
                 'x$copies',
-                style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
@@ -454,40 +531,48 @@ class _OwnedContent extends StatelessWidget {
     final panini = sticker['panini_code'] as String?;
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Avatar placeholder con icono de categoría
         CircleAvatar(
-          radius: 22,
-          backgroundColor: color.withOpacity(0.15),
-          child: Icon(_StickerCard._categoryIcon(category), color: color, size: 20),
+          radius: 20,
+          backgroundColor: color.withOpacity(0.1),
+          child: Icon(Icons.person, color: color, size: 20),
         ),
-        Column(
-          children: [
-            Text(
-              name,
-              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black87),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (position != null) ...[
-              const SizedBox(height: 2),
-              Text(position, style: const TextStyle(fontSize: 8, color: Colors.grey), textAlign: TextAlign.center),
-            ],
-          ],
+        const SizedBox(height: 12),
+        Text(
+          name,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
         ),
-        // Panini code chip
+        if (position != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            position,
+            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+            textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(height: 8),
         if (panini != null)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               '#$panini',
-              style: TextStyle(fontSize: 8, color: color, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 10,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
       ],
@@ -503,27 +588,36 @@ class _UnownedContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final category = sticker['category'] as String;
     return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         CircleAvatar(
-          radius: 22,
-          backgroundColor: Colors.grey.shade800,
+          radius: 20,
+          backgroundColor: Colors.grey.shade200,
           child: Icon(
-            _StickerCard._categoryIcon(category),
-            color: Colors.grey.shade600,
+            Icons.lock_outline,
+            color: Colors.grey.shade400,
             size: 20,
           ),
         ),
-        const Text('No encontrado', style: TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        const Text(
+          'Faltante',
+          style: TextStyle(
+            fontSize: 11,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.grey.shade800,
+            color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
             category,
-            style: const TextStyle(fontSize: 7, color: Colors.grey),
+            style: TextStyle(fontSize: 9, color: Colors.grey.shade600),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

@@ -30,9 +30,12 @@ class _MatchesScreenState extends State<MatchesScreen> {
       final data = await _matchService.getAllMatches();
       setState(() => _matches = data);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -43,21 +46,53 @@ class _MatchesScreenState extends State<MatchesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Pronóstico: ${match['homeTeamName'] ?? 'Equipo A'} vs ${match['awayTeamName'] ?? 'Equipo B'}'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        title: Text(
+          'Pronóstico: ${match['homeTeamName'] ?? 'Local'} vs ${match['awayTeamName'] ?? 'Visitante'}',
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
-                Expanded(child: TextField(controller: homeController, decoration: const InputDecoration(labelText: 'Goles Local'), keyboardType: TextInputType.number)),
+                Expanded(
+                  child: TextField(
+                    controller: homeController,
+                    decoration: InputDecoration(
+                      labelText: 'Goles local',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      isDense: true,
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
                 const SizedBox(width: 16),
-                Expanded(child: TextField(controller: awayController, decoration: const InputDecoration(labelText: 'Goles Visitante'), keyboardType: TextInputType.number)),
+                Expanded(
+                  child: TextField(
+                    controller: awayController,
+                    decoration: InputDecoration(
+                      labelText: 'Goles visitante',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      isDense: true,
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
               ],
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+            child: const Text('Cancelar'),
+          ),
           ElevatedButton(
             onPressed: () async {
               try {
@@ -67,13 +102,34 @@ class _MatchesScreenState extends State<MatchesScreen> {
                   int.parse(homeController.text),
                   int.parse(awayController.text),
                 );
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pronóstico enviado con éxito')));
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Pronóstico enviado con éxito'),
+                    ),
+                  );
+                }
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(e.toString())));
+                }
               }
             },
-            child: const Text('Enviar'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00341C),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            child: const Text(
+              'Enviar',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),
@@ -83,24 +139,72 @@ class _MatchesScreenState extends State<MatchesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Calendario de Partidos')),
-      body: _isLoading 
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        title: const Text(
+          'Calendario de partidos',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: const Color(0xFF00341C),
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _fetchMatches,
               child: ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(24),
                 itemCount: _matches.length,
                 itemBuilder: (context, index) {
                   final m = _matches[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.grey.shade300),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.02),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
                     child: ListTile(
-                      title: Text('${m['homeTeamName'] ?? 'Local'} vs ${m['awayTeamName'] ?? 'Visitante'}'),
-                      subtitle: Text('Fecha: ${m['scheduledAt']} - Fase: ${m['phase']}'),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      title: Text(
+                        '${m['homeTeamName'] ?? 'Local'} vs ${m['awayTeamName'] ?? 'Visitante'}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Fecha: ${m['scheduledAt']} - Fase: ${m['phase']}',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 13,
+                        ),
+                      ),
                       trailing: ElevatedButton(
                         onPressed: () => _showPredictionDialog(m),
-                        child: const Text('APOSTAR'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00341C),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        child: const Text(
+                          'Apostar',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
                       ),
                     ),
                   );
