@@ -9,93 +9,108 @@ import 'package:frontend_proyecto/screens/profile.dart';
 import 'package:frontend_proyecto/screens/album.dart';
 import 'package:frontend_proyecto/screens/pollas.dart';
 import 'package:frontend_proyecto/screens/tickets.dart';
-
 import 'package:frontend_proyecto/screens/open_pack.dart';
 import 'package:frontend_proyecto/screens/album_progress.dart';
 import 'package:frontend_proyecto/screens/comunidades.dart';
+import 'package:frontend_proyecto/services/auth/auth.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AuthService().initialize();
   runApp(const MyApp());
 }
 
-final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> _rootNavigatorKey  = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
+
+final _auth = AuthService();
+
+final GoRouter _router = GoRouter(
+  navigatorKey: _rootNavigatorKey,
+  initialLocation: '/home',
+  refreshListenable: _auth,
+  redirect: (context, state) {
+    final loggedIn = _auth.isAuthenticated;
+    final isPublic = state.matchedLocation == '/login' ||
+                     state.matchedLocation == '/register';
+    if (!loggedIn && !isPublic) return '/login';
+    if (loggedIn  &&  isPublic) return '/home';
+    return null;
+  },
+  routes: [
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/register',
+      builder: (context, state) => const RegistroDeUsuario(),
+    ),
+    GoRoute(
+      path: '/open-pack',
+      builder: (context, state) => const OpenPackScreen(),
+    ),
+    GoRoute(
+      path: '/album-progress',
+      builder: (context, state) => AlbumProgressScreen(
+        initialTeam: state.extra as String?,
+      ),
+    ),
+    ShellRoute(
+      navigatorKey: _shellNavigatorKey,
+      builder: (context, state, child) {
+        int index = 0;
+        if (state.fullPath == '/home')        index = 0;
+        else if (state.fullPath == '/album')       index = 1;
+        else if (state.fullPath == '/pollas')      index = 2;
+        else if (state.fullPath == '/comunidades') index = 3;
+        else if (state.fullPath == '/tickets')     index = 4;
+        else if (state.fullPath == '/profile')     index = 5;
+
+        return AppScaffold(
+          currentIndex: index,
+          child: child,
+        );
+      },
+      routes: [
+        GoRoute(
+          path: '/home',
+          pageBuilder: (context, state) => const NoTransitionPage(child: Inicio()),
+        ),
+        GoRoute(
+          path: '/album',
+          pageBuilder: (context, state) => const NoTransitionPage(child: AlbumScreen()),
+        ),
+        GoRoute(
+          path: '/pollas',
+          pageBuilder: (context, state) => const NoTransitionPage(child: PollasScreen()),
+        ),
+        GoRoute(
+          path: '/comunidades',
+          pageBuilder: (context, state) => const NoTransitionPage(child: ComunidadesScreen()),
+        ),
+        GoRoute(
+          path: '/tickets',
+          pageBuilder: (context, state) => const NoTransitionPage(child: TicketsScreen()),
+        ),
+        GoRoute(
+          path: '/profile',
+          pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
+        ),
+      ],
+    ),
+  ],
+);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final GoRouter router = GoRouter(
-      navigatorKey: _rootNavigatorKey,
-      initialLocation: '/login',
-      routes: [
-        GoRoute(
-          path: '/login',
-          builder: (context, state) => const LoginScreen(),
-        ),
-        GoRoute(
-          path: '/register',
-          builder: (context, state) => const RegistroDeUsuario(),
-        ),
-        GoRoute(
-          path: '/open-pack',
-          builder: (context, state) => const OpenPackScreen(),
-        ),
-        GoRoute(
-          path: '/album-progress',
-          builder: (context, state) => const AlbumProgressScreen(),
-        ),
-        ShellRoute(
-          navigatorKey: _shellNavigatorKey,
-          builder: (context, state, child) {
-            int index = 0;
-            if (state.fullPath == '/home')        index = 0;
-            else if (state.fullPath == '/album')       index = 1;
-            else if (state.fullPath == '/pollas')      index = 2;
-            else if (state.fullPath == '/comunidades') index = 3;
-            else if (state.fullPath == '/tickets')     index = 4;
-            else if (state.fullPath == '/profile')     index = 5;
-            
-            return AppScaffold(
-              currentIndex: index,
-              child: child,
-            );
-          },
-          routes: [
-            GoRoute(
-              path: '/home',
-              pageBuilder: (context, state) => const NoTransitionPage(child: Inicio()),
-            ),
-            GoRoute(
-              path: '/album',
-              pageBuilder: (context, state) => const NoTransitionPage(child: AlbumScreen()),
-            ),
-            GoRoute(
-              path: '/pollas',
-              pageBuilder: (context, state) => const NoTransitionPage(child: PollasScreen()),
-            ),
-            GoRoute(
-              path: '/comunidades',
-              pageBuilder: (context, state) => const NoTransitionPage(child: ComunidadesScreen()),
-            ),
-            GoRoute(
-              path: '/tickets',
-              pageBuilder: (context, state) => const NoTransitionPage(child: TicketsScreen()),
-            ),
-            GoRoute(
-              path: '/profile',
-              pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
-            ),
-          ],
-        ),
-      ],
-    );
-
     return MaterialApp.router(
       title: 'World Cup Hub',
       theme: AppTheme.lightTheme,
-      routerConfig: router,
+      routerConfig: _router,
       debugShowCheckedModeBanner: false,
     );
   }
