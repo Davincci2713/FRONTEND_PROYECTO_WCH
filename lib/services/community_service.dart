@@ -4,11 +4,17 @@ import 'package:http/http.dart' as http;
 class CommunityService {
   final String baseUrl = "http://localhost:5001/api/v1";
 
-  Future<Map<String, dynamic>> createCommunity(String name, int userId) async {
+  Future<Map<String, dynamic>> createCommunity(String name, int userId, {int? maxMembers, String? favoriteTeam, String? favoritePlayers}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/communities'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name, 'userId': userId}),
+      body: jsonEncode({
+        'name': name,
+        'userId': userId,
+        if (maxMembers != null) 'maxMembers': maxMembers,
+        if (favoriteTeam != null) 'favoriteTeam': favoriteTeam,
+        if (favoritePlayers != null) 'favoritePlayers': favoritePlayers,
+      }),
     );
 
     if (response.statusCode == 201) {

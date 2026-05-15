@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend_proyecto/utils/responsive.dart';
@@ -18,6 +19,7 @@ class AppScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return ResponsiveLayout(
       mobile: Scaffold(
+        endDrawer: const _NotificationsDrawer(),
         body: SafeArea(
           child: Column(
             children: [
@@ -43,6 +45,7 @@ class AppScaffold extends StatelessWidget {
         ),
       ),
       web: Scaffold(
+        endDrawer: const _NotificationsDrawer(),
         body: Row(
           children: [
             Container(
@@ -118,35 +121,144 @@ class _SidebarItem extends StatelessWidget {
   }
 }
 
-// ── Header mobile: nombre + monedas ──────────────────────────────────────────
+// ── Header mobile: nombre + campana ──────────────────────────────────────────
 class _MobileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final user = AuthService().currentUser ?? {};
-    final firstName = user['firstName'] as String? ?? '';
-    if (firstName.isEmpty) return const SizedBox.shrink();
+    return ListenableBuilder(
+      listenable: AuthService(),
+      builder: (context, child) {
+        final user = AuthService().currentUser ?? {};
+        final firstName = user['firstName'] as String? ?? '';
+        if (firstName.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-      ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 16,
-            backgroundColor: Color(0xFF00341C),
-            child: Icon(Icons.person, color: Colors.white, size: 16),
+        final profilePicture = user['profilePicture'] as String?;
+        ImageProvider? imageProvider;
+        if (profilePicture != null && profilePicture.isNotEmpty) {
+          if (profilePicture.startsWith('data:image')) {
+            final base64Str = profilePicture.split(',').last;
+            imageProvider = MemoryImage(base64Decode(base64Str));
+          } else if (profilePicture.startsWith('http')) {
+            imageProvider = NetworkImage(profilePicture);
+          }
+        }
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
           ),
-          const SizedBox(width: 8),
-          Text(
-            firstName,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 15,
+                backgroundColor: const Color(0xFF00341C),
+                backgroundImage: imageProvider,
+                child: imageProvider == null
+                    ? const Icon(Icons.person, color: Colors.white, size: 15)
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(firstName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const Spacer(),
+              Builder(
+                builder: (ctx) => IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+                ),
+              ),
+            ],
           ),
-          const Spacer(),
-          const CoinsIndicator(),
-        ],
+        );
+      },
+    );
+  }
+}
+
+// ── Drawer de notificaciones ──────────────────────────────────────────────────
+class _NotificationsDrawer extends StatefulWidget {
+  const _NotificationsDrawer();
+  @override
+  State<_NotificationsDrawer> createState() => _NotificationsDrawerState();
+}
+
+class _NotificationsDrawerState extends State<_NotificationsDrawer> {
+  List<Map<String, dynamic>> _items = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+    // Notificaciones del sistema (estáticas por ahora, extendible con API)
+    setState(() {
+      _items = [
+        {'icon': Icons.sports_soccer, 'color': 0xFF00341C,
+         'title': 'Copa Mundial 2026', 'body': 'Los partidos de la fase de grupos están disponibles para apostar.', 'time': 'Hace 2 h'},
+        {'icon': Icons.style, 'color': 0xFFF57C00,
+         'title': 'Álbum Digital', 'body': 'Tienes sobres disponibles. ¡Ábrelos para completar tu colección!', 'time': 'Hoy'},
+        {'icon': Icons.confirmation_number, 'color': 0xFF1565C0,
+         'title': 'Entradas disponibles', 'body': 'Hay entradas disponibles para los próximos partidos.', 'time': 'Hoy'},
+      ];
+      _loading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Drawer(
+      width: 320,
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+              child: Row(children: [
+                Text('Notificaciones', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                const Spacer(),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              ]),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _items.isEmpty
+                      ? const Center(child: Text('Sin notificaciones', style: TextStyle(color: Colors.grey)))
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: _items.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1, indent: 56),
+                          itemBuilder: (_, i) {
+                            final n = _items[i];
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: Color(n['color'] as int).withOpacity(0.1),
+                                child: Icon(n['icon'] as IconData, color: Color(n['color'] as int), size: 20),
+                              ),
+                              title: Text(n['title'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                              subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text(n['body'], style: const TextStyle(fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                const SizedBox(height: 2),
+                                Text(n['time'], style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                              ]),
+                              isThreeLine: true,
+                            );
+                          },
+                        ),
+            ),
+          ],
+        ),
       ),
     );
   }
