@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:frontend_proyecto/config.dart';
 import 'package:http/http.dart' as http;
 
 class BetService {
-  final String baseUrl = "http://localhost:5001/api/v1";
+  final String baseUrl = kBaseUrl;
 
   Future<Map<String, dynamic>> submitBet(int matchId, int userId, int homeGoals, int awayGoals) async {
     final response = await http.post(

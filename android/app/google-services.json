@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "810022980430",
+    "project_id": "world-cup-hub-b92b8",
+    "storage_bucket": "world-cup-hub-b92b8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:810022980430:android:9c1570d5e1def9d3dbac1f",
+        "android_client_info": {
+          "package_name": "com.example.frontend_proyecto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-u66hbMopveZu7Jy3IS8Q33gTepzbf5U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:frontend_proyecto/config.dart';
 import 'package:http/http.dart' as http;
 
 class AlbumService {
-  final String baseUrl = "http://localhost:5001/api/v1";
+  final String baseUrl = kBaseUrl;
 
   Future<Map<String, dynamic>> getUserAlbum(int userId) async {
     final response = await http.get(Uri.parse('$baseUrl/users/$userId/album'));
@@ -29,13 +30,32 @@ class AlbumService {
   }
 
   Future<Map<String, dynamic>> getAlbumProgress(int userId) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/users/$userId/album/progress'),
-    );
+    final response = await http.get(Uri.parse('$baseUrl/users/$userId/album/progress'));
+
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Error al cargar el progreso del álbum');
+      throw Exception('Error al obtener el progreso del álbum: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> proposeTrade(int proposerId, String receiverEmail, int offeredStickerId, int requestedStickerId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/album/exchange/propose'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'proposer_id': proposerId,
+        'receiver_email': receiverEmail,
+        'offered_sticker_id': offeredStickerId,
+        'requested_sticker_id': requestedStickerId,
+      }),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 201) {
+      return {'success': true, 'data': data};
+    } else {
+      return {'success': false, 'message': data['message'] ?? 'Error al proponer intercambio'};
     }
   }
 }

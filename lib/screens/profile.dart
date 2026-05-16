@@ -101,6 +101,13 @@ class _ProfileFormState extends State<ProfileForm> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AuthService(),
+      builder: (context, child) => _buildContent(context),
+    );
+  }
+
+  Widget _buildContent(BuildContext context) {
     final user = AuthService().currentUser ?? {};
     final fullName =
         '${user['firstName'] ?? 'Usuario'} ${user['lastName'] ?? ''}'.trim();

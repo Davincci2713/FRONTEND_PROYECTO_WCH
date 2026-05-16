@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend_proyecto/utils/theme.dart';
@@ -12,12 +13,22 @@ import 'package:frontend_proyecto/screens/tickets.dart';
 import 'package:frontend_proyecto/screens/open_pack.dart';
 import 'package:frontend_proyecto/screens/album_progress.dart';
 import 'package:frontend_proyecto/screens/comunidades.dart';
+import 'package:frontend_proyecto/screens/group_detail.dart';
+import 'package:frontend_proyecto/screens/trades.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
+import 'package:frontend_proyecto/services/fcm_service.dart';
+import 'package:frontend_proyecto/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,);
   await AuthService().initialize();
+  FCMService().setRouter(_router, _rootNavigatorKey);
   runApp(const MyApp());
+  // FCM init after runApp — requestPermission() needs the Flutter UI to be active
+  // so the iOS permission dialog can appear on top of the rendered app.
+  FCMService().initialize();
 }
 
 final GlobalKey<NavigatorState> _rootNavigatorKey  = GlobalKey<NavigatorState>();
@@ -45,6 +56,19 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegistroDeUsuario(),
+    ),
+    GoRoute(
+      path: '/group-detail',
+      builder: (context, state) {
+        final group = state.extra as Map<String, dynamic>?;
+        if (group == null) {
+          WidgetsBinding.instance.addPostFrameCallback(
+              (_) => context.go('/comunidades'));
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
+        return GroupDetailScreen(group: group);
+      },
     ),
     GoRoute(
       path: '/open-pack',
@@ -96,6 +120,10 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/profile',
           pageBuilder: (context, state) => const NoTransitionPage(child: ProfileScreen()),
+        ),
+        GoRoute(
+          path: '/trades',
+          pageBuilder: (context, state) => const MaterialPage(child: TradesScreen()),
         ),
       ],
     ),
