@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../services/auth/auth.dart';
 import '../services/album_service.dart';
 import '../services/match_service.dart';
-import '../services/news_service.dart';
+import '../services/news_service.dart' show NewsArticle, NewsService, proxiedImageUrl;
+import 'news_detail.dart';
 
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
@@ -179,7 +180,9 @@ class _NewsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasImage = article.imageUrl.isNotEmpty;
 
-    return Container(
+    return GestureDetector(
+      onTap: () => showNewsDetail(context, article),
+      child: Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -202,7 +205,7 @@ class _NewsCard extends StatelessWidget {
               width: 100,
               height: 100,
               child: Image.network(
-                article.imageUrl,
+                proxiedImageUrl(article.imageUrl),
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => _ImagePlaceholder(),
               ),
@@ -274,7 +277,7 @@ class _NewsCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

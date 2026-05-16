@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../services/ticket_service.dart';
 import '../services/auth/auth.dart';
 
@@ -435,6 +436,7 @@ class _TicketCard extends StatefulWidget {
 
 class _TicketCardState extends State<_TicketCard> {
   bool _acting = false;
+  bool _showQR = false;
 
   Map<String, dynamic> get t => widget.ticket;
   String get status => (t['status'] as String? ?? '').toLowerCase();
@@ -561,108 +563,163 @@ class _TicketCardState extends State<_TicketCard> {
           ),
         ],
       ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            // Barra de estado lateral
-            Container(
-              width: 4,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(6),
+      child: Column(
+        children: [
+          // ── Información principal ──────────────────────────────────────────
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                // Barra de estado lateral
+                Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: const BorderRadius.horizontal(
+                      left: Radius.circular(6),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Estado + badge
-                    Row(
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: color.withOpacity(0.2)),
-                          ),
-                          child: Text(
-                            _statusLabel(status),
-                            style: TextStyle(
-                              color: color,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
+                        // Estado + badge
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: color.withOpacity(0.2),
+                                ),
+                              ),
+                              child: Text(
+                                _statusLabel(status),
+                                style: TextStyle(
+                                  color: color,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
+                            const Spacer(),
+                            Text(
+                              '\$${t['price'] ?? '—'}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          matchDetail,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: Colors.black87,
                           ),
                         ),
-                        const Spacer(),
+                        if (t['stadium'] != null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                size: 14,
+                                color: Colors.grey.shade500,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                t['stadium'],
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (ttl != null) ...[
+                          const SizedBox(height: 12),
+                          _TTLWidget(ttl: ttl),
+                        ],
+                        const SizedBox(height: 16),
+                        _ActionsRow(
+                          status: status,
+                          acting: _acting,
+                          onPay: status == 'reservada' ? _pay : null,
+                          onTransfer: status == 'pagada' ? _transfer : null,
+                          onRefund: status == 'pagada' ? _refund : null,
+                          onHistory: _history,
+                          onQr: status == 'pagada'
+                              ? () => setState(() => _showQR = !_showQR)
+                              : null,
+                          qrActive: _showQR,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // ── QR de acceso (fuera de IntrinsicHeight) ────────────────────────
+          if (status == 'pagada' && _showQR) ...[
+            Row(
+              children: [
+                Container(width: 4, color: color),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Divider(height: 1, color: Colors.grey.shade200),
+                        const SizedBox(height: 14),
                         Text(
-                          '\$${t['price'] ?? '—'}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                            fontSize: 16,
+                          'Código QR de acceso',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: QrImageView(
+                              data:
+                                  'ticket_id:${t['ticketId'] ?? 0},match:${t['matchId'] ?? 0}',
+                              version: QrVersions.auto,
+                              size: 180,
+                              backgroundColor: Colors.white,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      matchDetail,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    if (t['stadium'] != null) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 14,
-                            color: Colors.grey.shade500,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            t['stadium'],
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    // Countdown para reservadas
-                    if (ttl != null) ...[
-                      const SizedBox(height: 12),
-                      _TTLWidget(ttl: ttl),
-                    ],
-                    // Botones de acción
-                    const SizedBox(height: 16),
-                    _ActionsRow(
-                      status: status,
-                      acting: _acting,
-                      onPay: status == 'reservada' ? _pay : null,
-                      onTransfer: status == 'pagada' ? _transfer : null,
-                      onRefund: status == 'pagada' ? _refund : null,
-                      onHistory: _history,
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -736,14 +793,17 @@ class _TTLWidgetState extends State<_TTLWidget> {
 class _ActionsRow extends StatelessWidget {
   final String status;
   final bool acting;
-  final VoidCallback? onPay, onTransfer, onRefund, onHistory;
+  final bool qrActive;
+  final VoidCallback? onPay, onTransfer, onRefund, onHistory, onQr;
   const _ActionsRow({
     required this.status,
     required this.acting,
+    this.qrActive = false,
     this.onPay,
     this.onTransfer,
     this.onRefund,
     this.onHistory,
+    this.onQr,
   });
 
   @override
@@ -781,6 +841,13 @@ class _ActionsRow extends StatelessWidget {
             icon: Icons.refresh,
             color: const Color(0xFFBB0014),
             onTap: onRefund!,
+          ),
+        if (onQr != null)
+          _Btn(
+            label: qrActive ? 'Ocultar QR' : 'Ver QR',
+            icon: qrActive ? Icons.qr_code_2 : Icons.qr_code,
+            color: const Color(0xFF00341C),
+            onTap: onQr!,
           ),
         _Btn(
           label: 'Historial',

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:frontend_proyecto/config.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,7 +12,7 @@ class AuthService extends ChangeNotifier {
   factory AuthService() => _instance;
   AuthService._internal();
 
-  final String baseUrl = "http://localhost:5001/api/v1";
+  final String baseUrl = kBaseUrl;
 
   String? _accessToken;
   Map<String, dynamic>? _currentUser;
@@ -29,9 +30,36 @@ class AuthService extends ChangeNotifier {
     final token = prefs.getString(_kToken);
     final userJson = prefs.getString(_kUser);
     if (token != null && userJson != null) {
-      _accessToken  = token;
-      _currentUser  = jsonDecode(userJson) as Map<String, dynamic>;
+      _accessToken = token;
+      _currentUser = jsonDecode(userJson) as Map<String, dynamic>;
       notifyListeners();
+      // Refresca datos del servidor para sincronizar foto y otros cambios
+      _refreshUserFromServer();
+    }
+  }
+
+  Future<void> _refreshUserFromServer() async {
+    final uid = currentUserId;
+    if (uid == null) return;
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$uid'),
+        headers: getAuthHeaders(),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        // Mapea los campos del backend al formato del cliente
+        final refreshed = {
+          ..._currentUser!,
+          'firstName':      data['firstName']     ?? _currentUser!['firstName'],
+          'lastName':       data['lastName']      ?? _currentUser!['lastName'],
+          'email':          data['email']         ?? _currentUser!['email'],
+          'profilePicture': data['profilePicture'] ?? _currentUser!['profilePicture'],
+        };
+        await _saveSession(_accessToken!, refreshed);
+      }
+    } catch (_) {
+      // Falla silenciosa — sigue con datos locales
     }
   }
 
@@ -197,6 +225,25 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión'};
     }
+  }
+
+  // ------------------------------------------------------------------
+  // Notifications
+  // ------------------------------------------------------------------
+
+  Future<List<dynamic>> getNotifications() async {
+    final uid = currentUserId;
+    if (uid == null) return [];
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$uid/notifications'),
+        headers: getAuthHeaders(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as List<dynamic>;
+      }
+    } catch (_) {}
+    return [];
   }
 
   // ------------------------------------------------------------------

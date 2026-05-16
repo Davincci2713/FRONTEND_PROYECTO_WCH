@@ -17,12 +17,101 @@ class _BetSelection {
   });
 }
 
-// ── Pantalla de apuestas ──────────────────────────────────────────────────────
+// ── Pantalla de apuestas con Tabs ──────────────────────────────────────────
 class PollasScreen extends StatelessWidget {
   const PollasScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const _BettingTab();
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: Colors.grey.shade50,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            color: Colors.white,
+            child: const TabBar(
+              labelColor: Color(0xFF00341C),
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: Color(0xFF00341C),
+              indicatorSize: TabBarIndicatorSize.tab,
+              tabs: [
+                Tab(text: 'Apuestas'),
+                Tab(text: 'Historial'),
+              ],
+            ),
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            _BettingTab(),
+            _HistoryTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Tab de Historial ─────────────────────────────────────────────────────────
+class _HistoryTab extends StatefulWidget {
+  const _HistoryTab();
+  @override
+  State<_HistoryTab> createState() => _HistoryTabState();
+}
+
+class _HistoryTabState extends State<_HistoryTab> {
+  final _svc = BettingService();
+  List<dynamic> _bets = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    try {
+      final uid = AuthService().currentUserId ?? 1;
+      final data = await _svc.getUserBets(uid);
+      if (mounted) setState(() => _bets = data);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+
+    if (_bets.isEmpty) {
+      return const _EmptyState(
+        icon: Icons.history,
+        text: 'Aún no has realizado ninguna apuesta.\n¡Empieza hoy mismo!',
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(24),
+        itemCount: _bets.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (_, i) => Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: _BetHistoryRow(bet: _bets[i]),
+        ),
+      ),
+    );
+  }
 }
 
 // ── Tab de apuestas ───────────────────────────────────────────────────────────

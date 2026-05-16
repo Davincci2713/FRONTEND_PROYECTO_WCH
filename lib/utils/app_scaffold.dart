@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend_proyecto/utils/responsive.dart';
 import 'package:frontend_proyecto/screens/inicio.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
+
+// Contador global de notificaciones no leídas; se resetea al abrir el drawer.
+final _notifCount = ValueNotifier<int>(0);
 
 class AppScaffold extends StatelessWidget {
   final Widget child;
@@ -122,7 +126,35 @@ class _SidebarItem extends StatelessWidget {
 }
 
 // ── Header mobile: nombre + campana ──────────────────────────────────────────
-class _MobileHeader extends StatelessWidget {
+class _MobileHeader extends StatefulWidget {
+  @override
+  State<_MobileHeader> createState() => _MobileHeaderState();
+}
+
+class _MobileHeaderState extends State<_MobileHeader> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _poll();
+    _timer = Timer.periodic(const Duration(seconds: 60), (_) => _poll());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _poll() async {
+    if (!AuthService().isAuthenticated) return;
+    try {
+      final items = await AuthService().getNotifications();
+      _notifCount.value = items.length;
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -163,11 +195,40 @@ class _MobileHeader extends StatelessWidget {
               Text(firstName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               const Spacer(),
               Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.notifications_outlined),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+                builder: (ctx) => ValueListenableBuilder<int>(
+                  valueListenable: _notifCount,
+                  builder: (_, count, __) => Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          _notifCount.value = 0;
+                          Scaffold.of(ctx).openEndDrawer();
+                        },
+                      ),
+                      if (count > 0)
+                        Positioned(
+                          top: -2,
+                          right: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                            child: Text(
+                              count > 99 ? '99+' : '$count',
+                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -186,7 +247,7 @@ class _NotificationsDrawer extends StatefulWidget {
 }
 
 class _NotificationsDrawerState extends State<_NotificationsDrawer> {
-  List<Map<String, dynamic>> _items = [];
+  List<dynamic> _items = [];
   bool _loading = true;
 
   @override
@@ -196,20 +257,36 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
   }
 
   Future<void> _load() async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    final data = await AuthService().getNotifications();
     if (!mounted) return;
-    // Notificaciones del sistema (estáticas por ahora, extendible con API)
     setState(() {
-      _items = [
-        {'icon': Icons.sports_soccer, 'color': 0xFF00341C,
-         'title': 'Copa Mundial 2026', 'body': 'Los partidos de la fase de grupos están disponibles para apostar.', 'time': 'Hace 2 h'},
-        {'icon': Icons.style, 'color': 0xFFF57C00,
-         'title': 'Álbum Digital', 'body': 'Tienes sobres disponibles. ¡Ábrelos para completar tu colección!', 'time': 'Hoy'},
-        {'icon': Icons.confirmation_number, 'color': 0xFF1565C0,
-         'title': 'Entradas disponibles', 'body': 'Hay entradas disponibles para los próximos partidos.', 'time': 'Hoy'},
-      ];
+      _items = data;
       _loading = false;
     });
+  }
+
+  void _showNotificationDetail(dynamic n) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        title: Text(
+          n['title'] ?? 'Notificación',
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18, color: Colors.black87),
+        ),
+        content: Text(
+          n['message'] ?? '',
+          style: const TextStyle(fontSize: 14, color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFF00341C)),
+            child: const Text('Cerrar', style: TextStyle(fontWeight: FontWeight.w500)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -241,16 +318,25 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
                           separatorBuilder: (_, __) => const Divider(height: 1, indent: 56),
                           itemBuilder: (_, i) {
                             final n = _items[i];
+                            // Using standard colors and icons for dynamic notifications
+                            final color = n['notifType'] == 'trade' ? 0xFF00341C : 0xFF1565C0;
+                            final icon = n['notifType'] == 'trade' ? Icons.swap_horiz : Icons.notifications;
                             return ListTile(
+                              onTap: () {
+                                if (n['notifType'] == 'trade') {
+                                  Navigator.pop(context);
+                                  context.push('/trades');
+                                } else {
+                                  _showNotificationDetail(n);
+                                }
+                              },
                               leading: CircleAvatar(
-                                backgroundColor: Color(n['color'] as int).withOpacity(0.1),
-                                child: Icon(n['icon'] as IconData, color: Color(n['color'] as int), size: 20),
+                                backgroundColor: Color(color).withOpacity(0.1),
+                                child: Icon(icon, color: Color(color), size: 20),
                               ),
-                              title: Text(n['title'], style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                              title: Text(n['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87)),
                               subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text(n['body'], style: const TextStyle(fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
-                                const SizedBox(height: 2),
-                                Text(n['time'], style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                                Text(n['message'] ?? '', style: TextStyle(fontSize: 12, color: Colors.grey.shade700), maxLines: 2, overflow: TextOverflow.ellipsis),
                               ]),
                               isThreeLine: true,
                             );

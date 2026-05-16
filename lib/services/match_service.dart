@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:frontend_proyecto/config.dart';
 import 'package:http/http.dart' as http;
 
 class MatchService {
-  final String baseUrl = "http://localhost:5001/api/v1";
+  final String baseUrl = kBaseUrl;
 
   Future<List<dynamic>> getAllMatches() async {
     final response = await http.get(Uri.parse('$baseUrl/matches'));
