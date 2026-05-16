@@ -38,6 +38,13 @@ class NewsArticle {
   }
 }
 
+/// Devuelve la URL de imagen pasada por el proxy del backend para evitar CORS.
+String proxiedImageUrl(String imageUrl) {
+  if (imageUrl.isEmpty) return '';
+  final base = AuthService().baseUrl;
+  return '$base/proxy/image?url=${Uri.encodeComponent(imageUrl)}';
+}
+
 class NewsService {
   final String _base = AuthService().baseUrl;
 

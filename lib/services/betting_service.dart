@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'package:frontend_proyecto/config.dart';
 import 'package:http/http.dart' as http;
 import 'auth/auth.dart';
 
 class BettingService {
-  final String baseUrl = "http://localhost:5001/api/v1";
+  final String baseUrl = kBaseUrl;
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',

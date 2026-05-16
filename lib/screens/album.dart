@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../services/album_service.dart';
 import '../services/auth/auth.dart';
@@ -16,6 +17,27 @@ class _AlbumScreenState extends State<AlbumScreen> {
   bool _isLoading = true;
 
   int get _currentUserId => AuthService().currentUserId ?? 1;
+
+  static const String _proxyBase = 'http://localhost:5001/api/v1/proxy/image?url=';
+
+  static Widget _buildFlag(String? rawUrl, {double size = 40}) {
+    if (rawUrl == null || rawUrl.isEmpty) {
+      return Icon(Icons.flag, size: size, color: Colors.grey.shade400);
+    }
+    final url = '$_proxyBase${Uri.encodeComponent(rawUrl)}';
+    if (rawUrl.endsWith('.svg')) {
+      return SvgPicture.network(
+        url, width: size, height: size, fit: BoxFit.contain,
+        placeholderBuilder: (_) =>
+            Icon(Icons.flag, size: size, color: Colors.grey.shade400),
+      );
+    }
+    return Image.network(
+      url, width: size, height: size, fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) =>
+          Icon(Icons.flag, size: size, color: Colors.grey.shade400),
+    );
+  }
 
   @override
   void initState() {
@@ -241,6 +263,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 final col = collections[i];
                 final teamName = col['name'] as String? ?? '';
                 final count = col['count'] as int? ?? 0;
+                final flagUrl = col['flagUrl'] as String?;
                 return InkWell(
                   onTap: () => context.push('/album-progress', extra: teamName),
                   borderRadius: BorderRadius.circular(6),
@@ -267,11 +290,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.flag,
-                                  size: 36,
-                                  color: Colors.grey.shade400,
-                                ),
+                                _buildFlag(flagUrl, size: 44),
                                 const SizedBox(height: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
