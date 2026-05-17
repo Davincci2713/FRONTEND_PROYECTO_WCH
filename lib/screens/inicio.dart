@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth/auth.dart';
 import '../services/album_service.dart';
 import '../services/match_service.dart';
@@ -111,22 +112,25 @@ class _InicioState extends State<Inicio> {
                       title: 'Próximos partidos',
                       subtitle: '$_upcomingMatchesCount programados',
                       icon: Icons.calendar_month,
+                      onTap: () => context.go('/tickets'),
                     ),
                   ),
                   SizedBox(
                     width: cardWidth,
-                    child: const DashboardCard(
+                    child: DashboardCard(
                       title: 'Mi álbum',
                       subtitle: 'Ver colección',
                       icon: Icons.book,
+                      onTap: () => context.go('/album'),
                     ),
                   ),
                   SizedBox(
                     width: cardWidth,
-                    child: const DashboardCard(
+                    child: DashboardCard(
                       title: 'Mis comunidades',
                       subtitle: 'Ver ranking',
                       icon: Icons.group,
+                      onTap: () => context.go('/comunidades'),
                     ),
                   ),
                 ],
@@ -368,18 +372,19 @@ class DashboardCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
+  final VoidCallback? onTap;
 
   const DashboardCard({
     required this.title,
     required this.subtitle,
     required this.icon,
+    this.onTap,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(6),
@@ -392,25 +397,35 @@ class DashboardCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 28, color: const Color(0xFF00341C)),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: Colors.black87,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(icon, size: 28, color: const Color(0xFF00341C)),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-          ),
-        ],
+        ),
       ),
     );
   }

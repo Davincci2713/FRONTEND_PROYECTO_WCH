@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/feed_service.dart';
 import '../services/auth/auth.dart';
@@ -98,6 +99,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     final maxMembers  = widget.group['maxMembers']   as int?;
     final bannerB64   = widget.group['banner']       as String?;
     final iconB64     = widget.group['icon']         as String?;
+    final invitationCode = widget.group['invitationCode']?.toString() ?? widget.group['invitation_code']?.toString();
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -118,6 +120,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         _GroupHeader(
           name: name, description: description, team: team,
           members: members, maxMembers: maxMembers, iconB64: iconB64,
+          invitationCode: invitationCode,
         ),
         Expanded(child: _loading
             ? const Center(child: CircularProgressIndicator(
@@ -200,13 +203,13 @@ class _BannerImage extends StatelessWidget {
 
 class _GroupHeader extends StatelessWidget {
   final String name;
-  final String? description, team, iconB64;
+  final String? description, team, iconB64, invitationCode;
   final int members;
   final int? maxMembers;
 
   const _GroupHeader({
     required this.name, required this.members,
-    this.description, this.team, this.iconB64, this.maxMembers,
+    this.description, this.team, this.iconB64, this.maxMembers, this.invitationCode,
   });
 
   @override
@@ -246,6 +249,10 @@ class _GroupHeader extends StatelessWidget {
                 '$members${maxMembers != null ? '/$maxMembers' : ''} miembros'),
             if (team != null) _stat(Icons.sports_soccer, team!),
           ]),
+          if (invitationCode != null) ...[
+            const SizedBox(height: 12),
+            _CopyCodeButton(code: invitationCode!),
+          ],
         ])),
       ]),
     );
@@ -266,6 +273,52 @@ class _GroupHeader extends StatelessWidget {
     } catch (_) {
       return Container(color: Colors.grey.shade100);
     }
+  }
+}
+
+class _CopyCodeButton extends StatelessWidget {
+  final String code;
+  const _CopyCodeButton({required this.code});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () async {
+        await Clipboard.setData(ClipboardData(text: code));
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Código copiado al portapapeles'),
+            backgroundColor: Color(0xFF00341C),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFF00341C).withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: const Color(0xFF00341C).withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.copy, size: 12, color: Color(0xFF00341C)),
+            const SizedBox(width: 4),
+            Text(
+              'Código: $code',
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF00341C),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

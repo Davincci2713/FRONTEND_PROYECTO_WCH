@@ -131,6 +131,9 @@ class _AlbumScreenState extends State<AlbumScreen> {
           // Statistics
           LayoutBuilder(
             builder: (context, constraints) {
+              final pct = (_albumData['completion_percentage'] as num?)?.toDouble() ?? 0.0;
+              final formattedPct = '${pct.toStringAsFixed(1)}%';
+              
               if (constraints.maxWidth > 600) {
                 return Row(
                   children: [
@@ -138,7 +141,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                       child: _buildStatCard(
                         context,
                         'Completado',
-                        '${_albumData!['completion_percentage']}%',
+                        formattedPct,
                         Colors.green.shade700,
                       ),
                     ),
@@ -147,7 +150,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                       child: _buildStatCard(
                         context,
                         'Láminas',
-                        '${_albumData!['total_stickers']}/${_albumData!['max_stickers']}',
+                        '${_albumData['total_stickers']}/${_albumData['max_stickers']}',
                         Colors.blue.shade700,
                       ),
                     ),
@@ -156,7 +159,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                       child: _buildStatCard(
                         context,
                         'Repetidas',
-                        '${_albumData!['repeated_stickers']}',
+                        '${_albumData['repeated_stickers']}',
                         Colors.orange.shade800,
                       ),
                     ),
@@ -169,14 +172,14 @@ class _AlbumScreenState extends State<AlbumScreen> {
                     _buildStatCard(
                       context,
                       'Completado',
-                      '${_albumData!['completion_percentage']}%',
+                      formattedPct,
                       Colors.green.shade700,
                     ),
                     const SizedBox(height: 12),
                     _buildStatCard(
                       context,
                       'Láminas',
-                      '${_albumData!['total_stickers']}/${_albumData!['max_stickers']}',
+                      '${_albumData['total_stickers']}/${_albumData['max_stickers']}',
                       Colors.blue.shade700,
                     ),
                     const SizedBox(height: 12),
