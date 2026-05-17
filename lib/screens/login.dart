@@ -139,6 +139,8 @@ class _LoginFormState extends State<LoginForm> {
 
     if (result['success'] == true) {
       context.go('/home');
+    } else if (result['requiresMfa'] == true) {
+      _showMfaDialog(result['email'] as String);
     } else if (result['errorCode'] == 'ERR_UNVERIFIED') {
       _showVerificationDialog(result['email'] as String);
     } else {
@@ -153,6 +155,14 @@ class _LoginFormState extends State<LoginForm> {
       context: context,
       barrierDismissible: false,
       builder: (context) => _VerificationDialog(email: email),
+    );
+  }
+
+  void _showMfaDialog(String email) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _MfaDialog(email: email),
     );
   }
 
@@ -468,3 +478,123 @@ class _VerificationDialogState extends State<_VerificationDialog> {
     );
   }
 }
+
+// ---------------------------------------------------------------------------
+// Diálogo de verificación de MFA (Multi-Factor Authentication) en Login
+// ---------------------------------------------------------------------------
+class _MfaDialog extends StatefulWidget {
+  final String email;
+  const _MfaDialog({required this.email});
+
+  @override
+  State<_MfaDialog> createState() => _MfaDialogState();
+}
+
+class _MfaDialogState extends State<_MfaDialog> {
+  final TextEditingController _codeController = TextEditingController();
+  bool _isVerifying = false;
+  String? _feedbackMessage;
+
+  Future<void> _verifyMfa() async {
+    if (_codeController.text.trim().length != 6) {
+      setState(() => _feedbackMessage = 'El código debe tener 6 dígitos.');
+      return;
+    }
+    setState(() {
+      _isVerifying = true;
+      _feedbackMessage = null;
+    });
+    
+    final result = await AuthService().verifyMfa(
+      widget.email,
+      _codeController.text.trim(),
+    );
+    
+    if (!mounted) return;
+    setState(() => _isVerifying = false);
+
+    if (result['success'] == true) {
+      Navigator.pop(context); // Close dialog
+      context.go('/home'); // Go to home on success
+    } else {
+      setState(() => _feedbackMessage = result['message'] ?? 'Código incorrecto o expirado.');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      title: const Text(
+        'Autenticación en dos pasos',
+        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hemos enviado un código de seguridad a ${widget.email}.',
+            style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _codeController,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            decoration: InputDecoration(
+              labelText: 'Código MFA',
+              counterText: '',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+              isDense: true,
+            ),
+          ),
+          if (_feedbackMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _feedbackMessage!,
+              style: const TextStyle(
+                color: Color(0xFFBB0014),
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isVerifying ? null : () => Navigator.pop(context),
+          style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: _isVerifying ? null : _verifyMfa,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF00341C),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          child: _isVerifying
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text(
+                  'Verificar',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
