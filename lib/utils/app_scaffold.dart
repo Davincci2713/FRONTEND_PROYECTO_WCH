@@ -239,6 +239,38 @@ class _MobileHeaderState extends State<_MobileHeader> {
   }
 }
 
+// ── Utilidades de notificaciones ──────────────────────────────────────────────
+({IconData icon, Color color, String? route}) _notifMeta(String? type) {
+  return switch (type) {
+    'trade' || 'trade_accepted' || 'trade_rejected' =>
+      (icon: Icons.swap_horiz, color: const Color(0xFF00341C), route: '/trades'),
+    'ticket' =>
+      (icon: Icons.confirmation_number_outlined, color: const Color(0xFF1565C0), route: '/tickets'),
+    'packs' || 'album_milestone' =>
+      (icon: Icons.style_outlined, color: const Color(0xFFE65100), route: '/album'),
+    'community_like' || 'community_comment' || 'community_reply' =>
+      (icon: Icons.groups_outlined, color: const Color(0xFF6A1B9A), route: '/comunidades'),
+    'bet' || 'bet_result' =>
+      (icon: Icons.sports_soccer_outlined, color: const Color(0xFF00796B), route: '/pollas'),
+    _ => (icon: Icons.notifications_outlined, color: Colors.grey.shade600, route: null),
+  };
+}
+
+String _timeAgo(String? iso) {
+  if (iso == null) return '';
+  try {
+    final dt = DateTime.parse(iso).toLocal();
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 60) return 'ahora';
+    if (diff.inMinutes < 60) return 'hace ${diff.inMinutes} min';
+    if (diff.inHours < 24) return 'hace ${diff.inHours} h';
+    if (diff.inDays < 7) return 'hace ${diff.inDays} d';
+    return '${dt.day}/${dt.month}/${dt.year}';
+  } catch (_) {
+    return '';
+  }
+}
+
 // ── Drawer de notificaciones ──────────────────────────────────────────────────
 class _NotificationsDrawer extends StatefulWidget {
   const _NotificationsDrawer();
@@ -265,35 +297,17 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
     });
   }
 
-  void _showNotificationDetail(dynamic n) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        title: Text(
-          n['title'] ?? 'Notificación',
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18, color: Colors.black87),
-        ),
-        content: Text(
-          n['message'] ?? '',
-          style: const TextStyle(fontSize: 14, color: Colors.black87),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF00341C)),
-            child: const Text('Cerrar', style: TextStyle(fontWeight: FontWeight.w500)),
-          ),
-        ],
-      ),
-    );
+  void _onTap(dynamic n) {
+    final meta = _notifMeta(n['notifType'] as String?);
+    Navigator.pop(context);
+    if (meta.route != null) context.push(meta.route!);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Drawer(
-      width: 320,
+      width: 340,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -301,9 +315,12 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
               child: Row(children: [
-                Text('Notificaciones', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Notificaciones',
+                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                 const Spacer(),
-                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+                IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context)),
               ]),
             ),
             const Divider(height: 1),
@@ -311,36 +328,62 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _items.isEmpty
-                      ? const Center(child: Text('Sin notificaciones', style: TextStyle(color: Colors.grey)))
-                      : ListView.separated(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemCount: _items.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1, indent: 56),
-                          itemBuilder: (_, i) {
-                            final n = _items[i];
-                            // Using standard colors and icons for dynamic notifications
-                            final color = n['notifType'] == 'trade' ? 0xFF00341C : 0xFF1565C0;
-                            final icon = n['notifType'] == 'trade' ? Icons.swap_horiz : Icons.notifications;
-                            return ListTile(
-                              onTap: () {
-                                if (n['notifType'] == 'trade') {
-                                  Navigator.pop(context);
-                                  context.push('/trades');
-                                } else {
-                                  _showNotificationDetail(n);
-                                }
-                              },
-                              leading: CircleAvatar(
-                                backgroundColor: Color(color).withOpacity(0.1),
-                                child: Icon(icon, color: Color(color), size: 20),
-                              ),
-                              title: Text(n['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87)),
-                              subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text(n['message'] ?? '', style: TextStyle(fontSize: 12, color: Colors.grey.shade700), maxLines: 2, overflow: TextOverflow.ellipsis),
-                              ]),
-                              isThreeLine: true,
-                            );
-                          },
+                      ? Center(
+                          child: Column(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(Icons.notifications_off_outlined,
+                                size: 48, color: Colors.grey.shade300),
+                            const SizedBox(height: 12),
+                            Text('Sin notificaciones',
+                                style: TextStyle(color: Colors.grey.shade500)),
+                          ]),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _load,
+                          child: ListView.separated(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: _items.length,
+                            separatorBuilder: (_, __) =>
+                                Divider(height: 1, indent: 56, color: Colors.grey.shade200),
+                            itemBuilder: (_, i) {
+                              final n = _items[i];
+                              final meta = _notifMeta(n['notifType'] as String?);
+                              final timeStr = _timeAgo(n['createdAt'] as String?);
+                              return ListTile(
+                                onTap: () => _onTap(n),
+                                leading: CircleAvatar(
+                                  backgroundColor: meta.color.withOpacity(0.1),
+                                  child: Icon(meta.icon, color: meta.color, size: 20),
+                                ),
+                                title: Text(
+                                  n['title'] ?? '',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: Colors.black87),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      n['message'] ?? '',
+                                      style: TextStyle(
+                                          fontSize: 12, color: Colors.grey.shade700),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (timeStr.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(timeStr,
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              color: Colors.grey.shade400)),
+                                    ],
+                                  ],
+                                ),
+                                isThreeLine: true,
+                              );
+                            },
+                          ),
                         ),
             ),
           ],

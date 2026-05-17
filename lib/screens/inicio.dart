@@ -21,6 +21,7 @@ class _InicioState extends State<Inicio> {
   List<NewsArticle> _articles = [];
   bool _newsLoading = true;
   String? _newsError;
+  bool _newsStale = false;
 
   @override
   void initState() {
@@ -37,18 +38,14 @@ class _InicioState extends State<Inicio> {
   }
 
   Future<void> _fetchNews() async {
-    try {
-      final articles = await _newsService.getWC2026News();
-      if (mounted) setState(() {
-        _articles = articles;
-        _newsLoading = false;
-      });
-    } catch (e) {
-      if (mounted) setState(() {
-        _newsError = 'No se pudieron cargar las noticias';
-        _newsLoading = false;
-      });
-    }
+    final result = await _newsService.getWC2026News();
+    if (!mounted) return;
+    setState(() {
+      _articles   = result.articles;
+      _newsStale  = result.isStale;
+      _newsLoading = false;
+      _newsError  = result.articles.isEmpty ? 'No se pudieron cargar las noticias' : null;
+    });
   }
 
   @override
@@ -76,6 +73,28 @@ class _InicioState extends State<Inicio> {
               ),
             ),
             const SizedBox(height: 24),
+
+            // ── Banner datos provisionales ───────────────────────────────
+            if (_newsStale)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  border: Border.all(color: Colors.amber.shade300),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(children: [
+                  Icon(Icons.wifi_off_rounded, size: 16, color: Colors.amber.shade800),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Mostrando última información disponible — actualización pendiente.',
+                      style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                    ),
+                  ),
+                ]),
+              ),
 
             // ── Dashboard cards ─────────────────────────────────────────
             LayoutBuilder(builder: (context, constraints) {

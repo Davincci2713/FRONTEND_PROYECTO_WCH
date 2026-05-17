@@ -5,6 +5,7 @@ import 'package:frontend_proyecto/utils/theme.dart';
 import 'package:frontend_proyecto/utils/app_scaffold.dart';
 import 'package:frontend_proyecto/screens/login.dart';
 import 'package:frontend_proyecto/screens/registro_de_usuario.dart';
+import 'package:frontend_proyecto/screens/onboarding.dart';
 import 'package:frontend_proyecto/screens/inicio.dart';
 import 'package:frontend_proyecto/screens/profile.dart';
 import 'package:frontend_proyecto/screens/album.dart';
@@ -19,13 +20,23 @@ import 'package:frontend_proyecto/services/auth/auth.dart';
 import 'package:frontend_proyecto/services/fcm_service.dart';
 import 'package:frontend_proyecto/firebase_options.dart';
 
+import 'package:provider/provider.dart';
+import 'package:frontend_proyecto/providers/album_provider.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
   options: DefaultFirebaseOptions.currentPlatform,);
   await AuthService().initialize();
   FCMService().setRouter(_router, _rootNavigatorKey);
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AlbumProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
   // FCM init after runApp — requestPermission() needs the Flutter UI to be active
   // so the iOS permission dialog can appear on top of the rendered app.
   FCMService().initialize();
@@ -42,10 +53,19 @@ final GoRouter _router = GoRouter(
   refreshListenable: _auth,
   redirect: (context, state) {
     final loggedIn = _auth.isAuthenticated;
+    final hasSeenOnboarding = _auth.hasSeenOnboarding;
     final isPublic = state.matchedLocation == '/login' ||
                      state.matchedLocation == '/register';
+
     if (!loggedIn && !isPublic) return '/login';
-    if (loggedIn  &&  isPublic) return '/home';
+
+    if (loggedIn) {
+      if (!hasSeenOnboarding && state.matchedLocation != '/onboarding') {
+        return '/onboarding';
+      } else if (hasSeenOnboarding && (isPublic || state.matchedLocation == '/onboarding')) {
+        return '/home';
+      }
+    }
     return null;
   },
   routes: [
@@ -56,6 +76,10 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegistroDeUsuario(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingScreen(),
     ),
     GoRoute(
       path: '/group-detail',

@@ -1,9 +1,15 @@
 import 'dart:convert';
 import 'package:frontend_proyecto/config.dart';
 import 'package:http/http.dart' as http;
+import 'auth/auth.dart';
 
 class CommunityService {
   final String baseUrl = kBaseUrl;
+
+  Map<String, String> get _h => {
+        'Content-Type': 'application/json',
+        ...AuthService().getAuthHeaders(),
+      };
 
   Future<Map<String, dynamic>> createCommunity(
     String name,
@@ -17,7 +23,7 @@ class CommunityService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/communities'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _h,
       body: jsonEncode({
         'name': name,
         'userId': userId,
@@ -40,7 +46,7 @@ class CommunityService {
   Future<Map<String, dynamic>> joinCommunity(int invitationCode, int userId) async {
     final response = await http.post(
       Uri.parse('$baseUrl/communities/join'),
-      headers: {'Content-Type': 'application/json'},
+      headers: _h,
       body: jsonEncode({'invitationCode': invitationCode, 'userId': userId}),
     );
 
@@ -52,13 +58,13 @@ class CommunityService {
   }
 
   Future<List<dynamic>> getRanking(int communityId) async {
-    final response = await http.get(Uri.parse('$baseUrl/communities/$communityId/ranking'));
+    final response = await http.get(Uri.parse('$baseUrl/communities/$communityId/ranking'), headers: _h);
     if (response.statusCode == 200) return jsonDecode(response.body);
     throw Exception('Error al obtener el ranking');
   }
 
   Future<List<Map<String, dynamic>>> getMyCommunities(int userId) async {
-    final r = await http.get(Uri.parse('$baseUrl/communities/mine?userId=$userId'));
+    final r = await http.get(Uri.parse('$baseUrl/communities/mine?userId=$userId'), headers: _h);
     if (r.statusCode == 200) {
       return List<Map<String, dynamic>>.from(jsonDecode(r.body));
     }
@@ -66,7 +72,7 @@ class CommunityService {
   }
 
   Future<List<Map<String, dynamic>>> getSuggestedCommunities(int userId) async {
-    final r = await http.get(Uri.parse('$baseUrl/communities/suggested?userId=$userId'));
+    final r = await http.get(Uri.parse('$baseUrl/communities/suggested?userId=$userId'), headers: _h);
     if (r.statusCode == 200) {
       return List<Map<String, dynamic>>.from(jsonDecode(r.body));
     }

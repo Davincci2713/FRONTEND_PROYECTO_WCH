@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import '../services/album_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/album_provider.dart';
 import '../services/auth/auth.dart';
 
 class AlbumScreen extends StatefulWidget {
@@ -12,12 +13,6 @@ class AlbumScreen extends StatefulWidget {
 }
 
 class _AlbumScreenState extends State<AlbumScreen> {
-  final AlbumService _albumService = AlbumService();
-  Map<String, dynamic>? _albumData;
-  bool _isLoading = true;
-
-  int get _currentUserId => AuthService().currentUserId ?? 1;
-
   static const String _proxyBase = 'http://localhost:5001/api/v1/proxy/image?url=';
 
   static Widget _buildFlag(String? rawUrl, {double size = 40}) {
@@ -42,39 +37,30 @@ class _AlbumScreenState extends State<AlbumScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchAlbum();
-  }
-
-  Future<void> _fetchAlbum() async {
-    try {
-      final data = await _albumService.getUserAlbum(_currentUserId);
-      setState(() {
-        _albumData = data;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
-      }
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AlbumProvider>().fetchAlbum();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final albumProvider = context.watch<AlbumProvider>();
 
-    if (_isLoading) {
+    if (albumProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_albumData == null) {
-      return const Center(child: Text("Error cargando el álbum"));
+    if (albumProvider.errorMessage != null) {
+      return Center(child: Text("Error: ${albumProvider.errorMessage}"));
     }
 
-    final collections = _albumData!['collections'] as List<dynamic>? ?? [];
+    final _albumData = albumProvider.albumData;
+    if (_albumData == null) {
+      return const Center(child: Text("Cargando el álbum..."));
+    }
+
+    final collections = _albumData['collections'] as List<dynamic>? ?? [];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 24),

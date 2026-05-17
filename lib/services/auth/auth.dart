@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const _kToken    = 'auth_token';
 const _kUser     = 'auth_user';
+const _kOnboarding = 'auth_onboarding';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
@@ -16,10 +17,12 @@ class AuthService extends ChangeNotifier {
 
   String? _accessToken;
   Map<String, dynamic>? _currentUser;
+  bool _hasSeenOnboarding = false;
 
   bool get isAuthenticated => _accessToken != null;
   int?  get currentUserId  => _currentUser?['userId'];
   Map<String, dynamic>? get currentUser => _currentUser;
+  bool get hasSeenOnboarding => _hasSeenOnboarding;
 
   // ------------------------------------------------------------------
   // Persistence
@@ -29,6 +32,8 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString(_kToken);
     final userJson = prefs.getString(_kUser);
+    _hasSeenOnboarding = prefs.getBool(_kOnboarding) ?? false;
+    
     if (token != null && userJson != null) {
       _accessToken = token;
       _currentUser = jsonDecode(userJson) as Map<String, dynamic>;
@@ -36,6 +41,13 @@ class AuthService extends ChangeNotifier {
       // Refresca datos del servidor para sincronizar foto y otros cambios
       _refreshUserFromServer();
     }
+  }
+
+  Future<void> completeOnboarding() async {
+    _hasSeenOnboarding = true;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kOnboarding, true);
+    notifyListeners();
   }
 
   Future<void> _refreshUserFromServer() async {
@@ -95,6 +107,11 @@ class AuthService extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        
+        if (data['requires_mfa'] == true) {
+          return {'success': false, 'requiresMfa': true, 'email': data['email']};
+        }
+
         await _saveSession(data['token'] as String, data['user'] as Map<String, dynamic>);
         return {'success': true, 'token': _accessToken, 'user': _currentUser};
       } else {
@@ -105,6 +122,25 @@ class AuthService extends ChangeNotifier {
           'message': error['message'] ?? 'Credenciales inválidas',
           'email': error['email'],
         };
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Error de conexión'};
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyMfa(String email, String code) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/login/mfa'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'code': code}),
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        await _saveSession(data['token'] as String, data['user'] as Map<String, dynamic>);
+        return {'success': true, 'token': _accessToken, 'user': _currentUser};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Error al verificar código MFA'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión'};

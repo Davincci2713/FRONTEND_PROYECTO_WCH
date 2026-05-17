@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth/auth.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -67,6 +68,44 @@ class ProfileForm extends StatefulWidget {
 class _ProfileFormState extends State<ProfileForm> {
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
+
+  // Notification Preferences
+  bool _prefPush = true;
+  bool _prefEmail = false;
+  bool _prefTrades = true;
+  bool _prefMatches = true;
+  bool _prefBets = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _prefPush = prefs.getBool('pref_push') ?? true;
+      _prefEmail = prefs.getBool('pref_email') ?? false;
+      _prefTrades = prefs.getBool('pref_trades') ?? true;
+      _prefMatches = prefs.getBool('pref_matches') ?? true;
+      _prefBets = prefs.getBool('pref_bets') ?? true;
+    });
+  }
+
+  Future<void> _savePreference(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Preferencia actualizada'),
+          duration: Duration(seconds: 1),
+          backgroundColor: Color(0xFF00341C),
+        ),
+      );
+    }
+  }
 
   Future<void> _changeProfilePicture() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 50);
@@ -207,7 +246,7 @@ class _ProfileFormState extends State<ProfileForm> {
         ),
         const SizedBox(height: 48),
         Text(
-          'Preferencias',
+          'Notificaciones Generales',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
             color: Colors.black87,
@@ -223,27 +262,89 @@ class _ProfileFormState extends State<ProfileForm> {
           child: Column(
             children: [
               SwitchListTile(
-                title: const Text(
-                  'Notificaciones push',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-                value: true,
-                onChanged: (val) {},
+                title: const Text('Notificaciones push', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                value: _prefPush,
+                onChanged: (val) {
+                  setState(() => _prefPush = val);
+                  _savePreference('pref_push', val);
+                },
                 activeColor: const Color(0xFF00341C),
               ),
               Divider(height: 1, color: Colors.grey.shade200),
               SwitchListTile(
-                title: const Text(
-                  'Notificaciones por correo',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-                value: false,
-                onChanged: (val) {},
+                title: const Text('Notificaciones por correo', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                value: _prefEmail,
+                onChanged: (val) {
+                  setState(() => _prefEmail = val);
+                  _savePreference('pref_email', val);
+                },
                 activeColor: const Color(0xFF00341C),
               ),
             ],
           ),
         ),
+        const SizedBox(height: 24),
+        AnimatedOpacity(
+          opacity: _prefPush ? 1.0 : 0.5,
+          duration: const Duration(milliseconds: 200),
+          child: IgnorePointer(
+            ignoring: !_prefPush,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Eventos a notificar',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        title: const Text('Solicitudes de intercambio (Álbum)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                        value: _prefTrades,
+                        onChanged: (val) {
+                          setState(() => _prefTrades = val);
+                          _savePreference('pref_trades', val);
+                        },
+                        activeColor: const Color(0xFF00341C),
+                      ),
+                      Divider(height: 1, color: Colors.grey.shade200),
+                      SwitchListTile(
+                        title: const Text('Recordatorios de Partidos', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                        value: _prefMatches,
+                        onChanged: (val) {
+                          setState(() => _prefMatches = val);
+                          _savePreference('pref_matches', val);
+                        },
+                        activeColor: const Color(0xFF00341C),
+                      ),
+                      Divider(height: 1, color: Colors.grey.shade200),
+                      SwitchListTile(
+                        title: const Text('Resultados de Pollas / Apuestas', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                        value: _prefBets,
+                        onChanged: (val) {
+                          setState(() => _prefBets = val);
+                          _savePreference('pref_bets', val);
+                        },
+                        activeColor: const Color(0xFF00341C),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 48),
       ],
     );
   }
