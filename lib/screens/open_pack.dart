@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../providers/album_provider.dart';
 import '../services/album_service.dart';
 import '../services/auth/auth.dart';
 
@@ -58,7 +60,7 @@ class _OpenPackScreenState extends State<OpenPackScreen> {
       _error = null;
     });
     try {
-      final data = await _albumService.openPack(uid);
+      final data = await context.read<AlbumProvider>().openPack();
       if (mounted)
         setState(() {
           _stickers = data['stickers'] ?? [];
