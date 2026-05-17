@@ -424,7 +424,7 @@ class _SectionTile extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 140,
-                  childAspectRatio: 0.7,
+                  childAspectRatio: 0.55,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                 ),
