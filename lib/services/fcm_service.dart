@@ -100,7 +100,7 @@ class FCMService {
           children: [
             Text(
               notification.title ?? '',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             if (notification.body != null)
               Text(notification.body!, maxLines: 2, overflow: TextOverflow.ellipsis),

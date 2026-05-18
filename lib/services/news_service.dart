@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'auth/auth.dart';
+import 'package:frontend_proyecto/services/auth/auth.dart';
 
 class NewsArticle {
   final String title;

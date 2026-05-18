@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 const _kToken    = 'auth_token';
 const _kUser     = 'auth_user';
 const _kOnboarding = 'auth_onboarding';
+const _kPendingOnboarding = 'pending_onboarding_email';
 
 class AuthService extends ChangeNotifier {
   static final AuthService _instance = AuthService._internal();
@@ -87,15 +88,15 @@ class AuthService extends ChangeNotifier {
     _accessToken = token;
     _currentUser = user;
     final uid = user['userId'];
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kToken, token);
     await prefs.setString(_kUser, jsonEncode(user));
-    
+
     if (uid != null) {
       _hasSeenOnboarding = prefs.getBool('${_kOnboarding}_$uid') ?? false;
     }
-    
+
     notifyListeners();
   }
 
@@ -124,6 +125,23 @@ class AuthService extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         await _saveSession(data['token'] as String, data['user'] as Map<String, dynamic>);
+
+        // If the user didn't just register, mark onboarding as done so it never shows again
+        if (!_hasSeenOnboarding) {
+          final prefs = await SharedPreferences.getInstance();
+          final pendingEmail = prefs.getString(_kPendingOnboarding);
+          if (pendingEmail != null && pendingEmail == email.toLowerCase()) {
+            // New registration — consume the flag and show onboarding
+            await prefs.remove(_kPendingOnboarding);
+          } else {
+            // Existing user — skip onboarding
+            _hasSeenOnboarding = true;
+            final uid = currentUserId;
+            if (uid != null) await prefs.setBool('${_kOnboarding}_$uid', true);
+            notifyListeners();
+          }
+        }
+
         return {'success': true, 'token': _accessToken, 'user': _currentUser};
       } else {
         final error = jsonDecode(response.body);
@@ -154,6 +172,8 @@ class AuthService extends ChangeNotifier {
       );
       final data = jsonDecode(response.body);
       if (response.statusCode == 201) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_kPendingOnboarding, email.toLowerCase());
         return {'success': true, 'message': data['message']};
       } else {
         return {'success': false, 'message': data['message'] ?? 'Error al registrar'};
@@ -253,6 +273,37 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       return {'success': false, 'message': 'Error de conexión'};
     }
+  }
+
+  // ------------------------------------------------------------------
+  // User Preferences
+  // ------------------------------------------------------------------
+
+  Future<Map<String, dynamic>> getUserPreferences() async {
+    final uid = currentUserId;
+    if (uid == null) return {};
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$uid/preferences'),
+        headers: getAuthHeaders(),
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+    } catch (_) {}
+    return {};
+  }
+
+  Future<void> updateUserPreferences(Map<String, bool> preferences) async {
+    final uid = currentUserId;
+    if (uid == null) return;
+    try {
+      await http.put(
+        Uri.parse('$baseUrl/users/$uid/preferences'),
+        headers: getAuthHeaders(),
+        body: jsonEncode(preferences),
+      );
+    } catch (_) {}
   }
 
   // ------------------------------------------------------------------

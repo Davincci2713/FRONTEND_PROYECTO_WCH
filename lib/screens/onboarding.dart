@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend_proyecto/utils/theme.dart';
 import '../services/auth/auth.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -65,20 +67,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // Progress Indicator
+            // Progress Indicator (Brutalist style)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Row(
                 children: [
                   Expanded(
-                    child: LinearProgressIndicator(
-                      value: (_currentPage + 1) / 2,
-                      backgroundColor: Colors.grey.shade200,
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00341C)),
+                    child: Container(
+                      height: 8,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.border, width: 2),
+                      ),
+                      child: FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: (_currentPage + 1) / 2,
+                        child: Container(color: AppColors.primary),
+                      ),
                     ),
                   ),
                 ],
@@ -101,22 +109,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
 
             // Bottom Buttons
-            Padding(
+            Container(
               padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.border, width: 2)),
+              ),
               child: Row(
                 children: [
                   if (_currentPage > 0)
-                    TextButton(
+                    OutlinedButton(
                       onPressed: () {
                         _pageController.previousPage(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
                         );
                       },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.grey.shade600,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.text,
+                        side: BorderSide(color: AppColors.text, width: 2),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                       ),
-                      child: const Text('Atrás'),
+                      child: Text('ATRÁS', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.bold)),
                     )
                   else
                     const SizedBox.shrink(),
@@ -124,17 +138,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ElevatedButton(
                     onPressed: (_currentPage == 0 && _selectedTeam == null) ? null : _nextPage,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00341C),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.inverseSurface,
+                      disabledBackgroundColor: Colors.grey.shade800,
+                      disabledForegroundColor: Colors.grey.shade500,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                      side: BorderSide(color: (_currentPage == 0 && _selectedTeam == null) ? Colors.transparent : AppColors.primary, width: 2),
                       elevation: 0,
                     ),
                     child: Text(
-                      _currentPage == 1 ? 'Empezar' : 'Siguiente',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      _currentPage == 1 ? 'EMPEZAR' : 'SIGUIENTE',
+                      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, letterSpacing: 1),
                     ),
                   ),
                 ],
@@ -148,51 +163,60 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildTeamSelectionPage() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '¡Bienvenido a World Cup Hub!',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+          Text(
+            'BIENVENIDO AL\nHUB.',
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 48,
+              height: 0.9,
+              fontWeight: FontWeight.w900,
+              color: AppColors.text,
+              letterSpacing: -2,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 16),
           Text(
-            'Para personalizar tu experiencia, elige tu selección favorita. Recibirás noticias y alertas destacadas sobre ellos.',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
+            'PARA PERSONALIZAR TU EXPERIENCIA, ELIGE TU SELECCIÓN FAVORITA. RECIBIRÁS NOTICIAS Y ALERTAS DESTACADAS SOBRE ELLOS.',
+            style: GoogleFonts.dmSans(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+              color: AppColors.textMuted,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 48),
           Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: 16,
+            runSpacing: 16,
             children: _teams.map((team) {
               final isSelected = _selectedTeam == team;
-              return ChoiceChip(
-                label: Text(team),
-                selected: isSelected,
-                onSelected: (selected) {
+              return GestureDetector(
+                onTap: () {
                   setState(() {
-                    _selectedTeam = selected ? team : null;
+                    _selectedTeam = isSelected ? null : team;
                   });
                 },
-                selectedColor: const Color(0xFF00341C),
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : Colors.black87,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(
-                    color: isSelected ? const Color(0xFF00341C) : Colors.grey.shade300,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primary : Colors.transparent,
+                    border: Border.all(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                      width: 2,
+                    ),
+                  ),
+                  child: Text(
+                    team.toUpperCase(),
+                    style: GoogleFonts.spaceGrotesk(
+                      color: isSelected ? Colors.black : AppColors.text,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                    ),
                   ),
                 ),
               );
@@ -205,85 +229,99 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildNotificationPage() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Mantente al tanto',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+          Text(
+            'MANTENTE\nAL TANTO.',
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 48,
+              height: 0.9,
+              fontWeight: FontWeight.w900,
+              color: AppColors.text,
+              letterSpacing: -2,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 16),
           Text(
-            'Elige qué tipo de notificaciones deseas recibir. Podrás cambiar esto más tarde en tu perfil.',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
+            'ELIGE QUÉ TIPO DE NOTIFICACIONES DESEAS RECIBIR. PODRÁS CAMBIAR ESTO MÁS TARDE EN TU PERFIL.',
+            style: GoogleFonts.dmSans(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+              color: AppColors.textMuted,
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: 48),
           
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey.shade300),
+              color: Colors.transparent,
+              border: Border.all(color: AppColors.border, width: 2),
             ),
             child: Column(
               children: [
                 SwitchListTile(
-                  title: const Text('Activar notificaciones push', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Recomendado para no perderte nada'),
+                  title: Text('ACTIVAR NOTIFICACIONES PUSH', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, color: AppColors.text)),
+                  subtitle: Text('Recomendado para no perderte nada', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12)),
                   value: _prefPush,
                   onChanged: (val) => setState(() => _prefPush = val),
-                  activeColor: const Color(0xFF00341C),
+                  activeColor: AppColors.inverseSurface,
+                  activeTrackColor: AppColors.primary,
+                  inactiveTrackColor: AppColors.toggleInactiveTrack,
+                  inactiveThumbColor: AppColors.toggleInactiveThumb,
                 ),
               ],
             ),
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           
           AnimatedOpacity(
-            opacity: _prefPush ? 1.0 : 0.5,
+            opacity: _prefPush ? 1.0 : 0.3,
             duration: const Duration(milliseconds: 200),
             child: IgnorePointer(
               ignoring: !_prefPush,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
+                  color: Colors.transparent,
+                  border: Border.all(color: AppColors.border, width: 2),
                 ),
                 child: Column(
                   children: [
                     SwitchListTile(
-                      title: const Text('Solicitudes de intercambio'),
-                      subtitle: const Text('Cuando alguien quiera cambiar una lámina'),
+                      title: Text('SOLICITUDES DE INTERCAMBIO', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w800, color: AppColors.text, fontSize: 14)),
+                      subtitle: Text('Cuando alguien quiera cambiar una lámina', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12)),
                       value: _prefTrades,
                       onChanged: (val) => setState(() => _prefTrades = val),
-                      activeColor: const Color(0xFF00341C),
+                      activeColor: AppColors.inverseSurface,
+                      activeTrackColor: AppColors.primary,
+                      inactiveTrackColor: AppColors.borderLight,
+                      inactiveThumbColor: AppColors.textMuted,
                     ),
-                    const Divider(height: 1),
+                    Divider(height: 2),
                     SwitchListTile(
-                      title: const Text('Recordatorios de partidos'),
-                      subtitle: const Text('Inicio y final de partidos de tu selección'),
+                      title: Text('RECORDATORIOS DE PARTIDOS', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w800, color: AppColors.text, fontSize: 14)),
+                      subtitle: Text('Inicio y final de partidos de tu selección', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12)),
                       value: _prefMatches,
                       onChanged: (val) => setState(() => _prefMatches = val),
-                      activeColor: const Color(0xFF00341C),
+                      activeColor: AppColors.inverseSurface,
+                      activeTrackColor: AppColors.primary,
+                      inactiveTrackColor: AppColors.borderLight,
+                      inactiveThumbColor: AppColors.textMuted,
                     ),
-                    const Divider(height: 1),
+                    Divider(height: 2),
                     SwitchListTile(
-                      title: const Text('Resultados de Pollas'),
-                      subtitle: const Text('Aciertos y subidas en el ranking'),
+                      title: Text('RESULTADOS DE POLLAS', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w800, color: AppColors.text, fontSize: 14)),
+                      subtitle: Text('Aciertos y subidas en el ranking', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12)),
                       value: _prefBets,
                       onChanged: (val) => setState(() => _prefBets = val),
-                      activeColor: const Color(0xFF00341C),
+                      activeColor: AppColors.inverseSurface,
+                      activeTrackColor: AppColors.primary,
+                      inactiveTrackColor: AppColors.borderLight,
+                      inactiveThumbColor: AppColors.textMuted,
                     ),
                   ],
                 ),

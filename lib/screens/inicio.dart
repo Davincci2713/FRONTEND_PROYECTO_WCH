@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../services/auth/auth.dart';
-import '../services/album_service.dart';
-import '../services/match_service.dart';
-import '../services/news_service.dart' show NewsArticle, NewsService, proxiedImageUrl;
-import 'news_detail.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend_proyecto/providers/theme_provider.dart';
+import 'package:frontend_proyecto/utils/theme.dart';
+import 'package:frontend_proyecto/services/auth/auth.dart';
+import 'package:frontend_proyecto/services/album_service.dart';
+import 'package:frontend_proyecto/services/match_service.dart';
+import 'package:frontend_proyecto/services/news_service.dart' show NewsArticle, NewsService, proxiedImageUrl;
+import 'package:frontend_proyecto/screens/news_detail.dart';
 
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
@@ -51,11 +55,13 @@ class _InicioState extends State<Inicio> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    context.watch<ThemeProvider>();
     final user = AuthService().currentUser ?? {};
-    final firstName = user['firstName'] ?? 'Fanático';
+    final firstName = user['firstName'] ?? 'FANÁTICO';
 
     return RefreshIndicator(
+      color: AppColors.onPrimary,
+      backgroundColor: AppColors.primary,
       onRefresh: () async {
         setState(() { _newsLoading = true; _newsError = null; });
         await _fetchNews();
@@ -67,31 +73,33 @@ class _InicioState extends State<Inicio> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Bienvenido de nuevo, $firstName',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+              'BIENVENIDO,\n${firstName.toUpperCase()}.',
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 48,
+                fontWeight: FontWeight.w900,
+                color: AppColors.text,
+                letterSpacing: -2,
+                height: 0.9,
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 32),
 
             // ── Banner datos provisionales ───────────────────────────────
             if (_newsStale)
               Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade50,
-                  border: Border.all(color: Colors.amber.shade300),
-                  borderRadius: BorderRadius.circular(6),
+                  color: AppColors.error,
+                  border: Border.all(color: AppColors.onPrimary, width: 2),
                 ),
                 child: Row(children: [
-                  Icon(Icons.wifi_off_rounded, size: 16, color: Colors.amber.shade800),
-                  const SizedBox(width: 8),
+                  Icon(Icons.wifi_off_rounded, size: 20, color: AppColors.onPrimary),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Mostrando última información disponible — actualización pendiente.',
-                      style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+                      'INFORMACIÓN SIN CONEXIÓN — ACTUALIZACIÓN PENDIENTE.',
+                      style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.onPrimary, fontWeight: FontWeight.bold, letterSpacing: 1),
                     ),
                   ),
                 ]),
@@ -101,16 +109,16 @@ class _InicioState extends State<Inicio> {
             LayoutBuilder(builder: (context, constraints) {
               final cardWidth = constraints.maxWidth < 300
                   ? constraints.maxWidth
-                  : (constraints.maxWidth - 32) / 2;
+                  : (constraints.maxWidth - 24) / 2;
               return Wrap(
-                spacing: 16,
-                runSpacing: 16,
+                spacing: 24,
+                runSpacing: 24,
                 children: [
                   SizedBox(
                     width: cardWidth,
                     child: DashboardCard(
-                      title: 'Próximos partidos',
-                      subtitle: '$_upcomingMatchesCount programados',
+                      title: 'PARTIDOS',
+                      subtitle: '$_upcomingMatchesCount PROGRAMADOS',
                       icon: Icons.calendar_month,
                       onTap: () => context.go('/tickets'),
                     ),
@@ -118,8 +126,8 @@ class _InicioState extends State<Inicio> {
                   SizedBox(
                     width: cardWidth,
                     child: DashboardCard(
-                      title: 'Mi álbum',
-                      subtitle: 'Ver colección',
+                      title: 'MI ÁLBUM',
+                      subtitle: 'VER COLECCIÓN',
                       icon: Icons.book,
                       onTap: () => context.go('/album'),
                     ),
@@ -127,8 +135,8 @@ class _InicioState extends State<Inicio> {
                   SizedBox(
                     width: cardWidth,
                     child: DashboardCard(
-                      title: 'Mis comunidades',
-                      subtitle: 'Ver ranking',
+                      title: 'COMUNIDADES',
+                      subtitle: 'VER RANKING',
                       icon: Icons.group,
                       onTap: () => context.go('/comunidades'),
                     ),
@@ -137,17 +145,19 @@ class _InicioState extends State<Inicio> {
               );
             }),
 
-            const SizedBox(height: 32),
+            SizedBox(height: 48),
 
             // ── Noticias ────────────────────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Noticias del Mundial 2026',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                  'NOTICIAS DEL MUNDIAL',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.text,
+                    letterSpacing: -1,
                   ),
                 ),
                 if (!_newsLoading)
@@ -156,16 +166,16 @@ class _InicioState extends State<Inicio> {
                       setState(() { _newsLoading = true; _newsError = null; });
                       _fetchNews();
                     },
-                    icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Actualizar', style: TextStyle(fontSize: 13)),
+                    icon: Icon(Icons.refresh, size: 16),
+                    label: Text('ACTUALIZAR', style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
                     style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF00341C),
+                      foregroundColor: AppColors.primary,
                       padding: EdgeInsets.zero,
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 24),
 
             if (_newsLoading)
               const _NewsShimmer()
@@ -181,11 +191,11 @@ class _InicioState extends State<Inicio> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _articles.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, __) => SizedBox(height: 24),
                 itemBuilder: (_, i) => _NewsCard(article: _articles[i]),
               ),
 
-            const SizedBox(height: 16),
+            SizedBox(height: 24),
           ],
         ),
       ),
@@ -206,110 +216,106 @@ class _NewsCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => showNewsDetail(context, article),
       child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.hardEdge,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Imagen
-          if (hasImage)
-            SizedBox(
-              width: 100,
-              height: 100,
-              child: Image.network(
-                proxiedImageUrl(article.imageUrl),
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _ImagePlaceholder(),
+        height: 140,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          border: Border.all(color: AppColors.border, width: 2),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Imagen
+            Container(
+              width: 120,
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                border: Border(right: BorderSide(color: AppColors.border, width: 2)),
               ),
-            )
-          else
-            SizedBox(width: 100, height: 100, child: _ImagePlaceholder()),
+              child: hasImage
+                  ? Image.network(
+                      proxiedImageUrl(article.imageUrl),
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => _ImagePlaceholder(),
+                    )
+                  : _ImagePlaceholder(),
+            ),
 
-          // Contenido
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (article.source.isNotEmpty)
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF00341C).withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            article.source,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: Color(0xFF00341C),
-                              fontWeight: FontWeight.w600,
+            // Contenido
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (article.source.isNotEmpty)
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                            ),
+                            child: Text(
+                              article.source.toUpperCase(),
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 10,
+                                color: AppColors.onPrimary,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1,
+                              ),
                             ),
                           ),
-                        ),
-                        const Spacer(),
-                        if (article.formattedDate.isNotEmpty)
-                          Text(
-                            article.formattedDate,
-                            style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
-                          ),
-                      ],
-                    ),
-                  const SizedBox(height: 6),
-                  Text(
-                    article.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                      height: 1.3,
-                    ),
-                  ),
-                  if (article.description.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                          const Spacer(),
+                          if (article.formattedDate.isNotEmpty)
+                            Text(
+                              article.formattedDate.toUpperCase(),
+                              style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold),
+                            ),
+                        ],
+                      ),
+                    SizedBox(height: 12),
                     Text(
-                      article.description,
+                      article.title.toUpperCase(),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                        height: 1.4,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.text,
+                        height: 1.1,
                       ),
                     ),
+                    if (article.description.isNotEmpty) ...[
+                      SizedBox(height: 8),
+                      Text(
+                        article.description,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          color: AppColors.textMuted,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ));
+    );
   }
 }
 
 class _ImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-    color: const Color(0xFF00341C).withValues(alpha: 0.06),
-    child: const Center(
-      child: Icon(Icons.sports_soccer, color: Color(0xFF00341C), size: 28),
+    color: AppColors.primary,
+    child: Center(
+      child: Icon(Icons.sports_soccer, color: AppColors.onPrimary, size: 32),
     ),
   );
 }
@@ -319,12 +325,12 @@ class _NewsShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: List.generate(3, (_) => Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 24),
       child: Container(
-        height: 100,
+        height: 120,
         decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.transparent,
+          border: Border.all(color: AppColors.borderLight, width: 2),
         ),
       ),
     )),
@@ -336,30 +342,45 @@ class _NewsError extends StatelessWidget {
   final VoidCallback onRetry;
   const _NewsError({required this.message, required this.onRetry});
   @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      children: [
-        Icon(Icons.wifi_off, color: Colors.grey.shade400, size: 40),
-        const SizedBox(height: 12),
-        Text(message, style: TextStyle(color: Colors.grey.shade600)),
-        const SizedBox(height: 12),
-        TextButton(
-          onPressed: onRetry,
-          child: const Text('Reintentar', style: TextStyle(color: Color(0xFF00341C))),
-        ),
-      ],
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(32),
+    decoration: BoxDecoration(
+      border: Border.all(color: AppColors.error, width: 2),
+    ),
+    child: Center(
+      child: Column(
+        children: [
+          Icon(Icons.error_outline, color: AppColors.error, size: 40),
+          SizedBox(height: 16),
+          Text(message.toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.text, fontWeight: FontWeight.bold, letterSpacing: 1)),
+          SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: onRetry,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.error,
+              side: BorderSide(color: AppColors.error, width: 2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            child: Text('REINTENTAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     ),
   );
 }
 
 class _NewsEmpty extends StatelessWidget {
+  const _NewsEmpty({super.key});
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(48),
+    decoration: BoxDecoration(
+      border: Border.all(color: AppColors.border, width: 2),
+    ),
+    child: Center(
       child: Text(
-        'No hay noticias disponibles ahora mismo.',
-        style: TextStyle(color: Colors.grey.shade500),
+        'NO HAY NOTICIAS DISPONIBLES',
+        style: GoogleFonts.spaceGrotesk(color: AppColors.textMuted, fontWeight: FontWeight.w900, fontSize: 18),
         textAlign: TextAlign.center,
       ),
     ),
@@ -384,170 +405,48 @@ class DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(6),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, size: 28, color: const Color(0xFF00341C)),
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                ),
-              ],
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          border: Border.all(color: AppColors.border, width: 2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+              ),
+              child: Icon(icon, size: 24, color: AppColors.onPrimary),
             ),
-          ),
+            SizedBox(height: 24),
+            Text(
+              title,
+              style: GoogleFonts.spaceGrotesk(
+                fontWeight: FontWeight.w900,
+                fontSize: 20,
+                color: AppColors.text,
+                letterSpacing: -1,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: GoogleFonts.dmSans(
+                color: AppColors.accentText,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-// ── CoinsIndicator & AppTopBar (mantenidos para otros widgets que los importan) ─
-
-class CoinsIndicator extends StatefulWidget {
-  final Color textColor;
-  const CoinsIndicator({super.key, this.textColor = Colors.black87});
-  @override
-  State<CoinsIndicator> createState() => _CoinsIndicatorState();
-}
-
-class _CoinsIndicatorState extends State<CoinsIndicator> {
-  int? _coins;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetch();
-  }
-
-  Future<void> _fetch() async {
-    final uid = AuthService().currentUserId;
-    if (uid == null) return;
-    try {
-      final data = await AlbumService().getUserAlbum(uid);
-      if (mounted) setState(() => _coins = (data['coins'] as num?)?.toInt());
-    } catch (_) {}
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.monetization_on, size: 14, color: Colors.amber),
-          const SizedBox(width: 4),
-          Text(
-            _coins == null ? '—' : '$_coins',
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-              color: Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class AppTopBar extends StatelessWidget {
-  const AppTopBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: AuthService(),
-      builder: (context, child) {
-        final user = AuthService().currentUser ?? {};
-        final fullName =
-            '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'.trim();
-        final displayName = fullName.isEmpty ? 'Usuario' : fullName;
-
-        final profilePicture = user['profilePicture'] as String?;
-        ImageProvider? imageProvider;
-        if (profilePicture != null && profilePicture.isNotEmpty) {
-          if (profilePicture.startsWith('data:image')) {
-            final base64Str = profilePicture.split(',').last;
-            imageProvider = MemoryImage(base64Decode(base64Str));
-          } else if (profilePicture.startsWith('http')) {
-            imageProvider = NetworkImage(profilePicture);
-          }
-        }
-
-        return Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                displayName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Builder(
-                builder: (ctx) => IconButton(
-                  icon: const Icon(Icons.notifications_outlined, size: 22),
-                  color: Colors.grey.shade700,
-                  onPressed: () => Scaffold.of(ctx).openEndDrawer(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: const Color(0xFF00341C),
-                backgroundImage: imageProvider,
-                child: imageProvider == null
-                    ? const Icon(Icons.person, color: Colors.white, size: 18)
-                    : null,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
