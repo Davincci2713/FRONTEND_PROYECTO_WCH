@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend_proyecto/providers/theme_provider.dart';
 import '../services/betting_service.dart';
 import '../services/auth/auth.dart';
+import '../utils/theme.dart';
 
 // ── Modelo local ─────────────────────────────────────────────────────────────
 class _BetSelection {
@@ -17,28 +21,34 @@ class _BetSelection {
   });
 }
 
-// ── Pantalla de apuestas con Tabs ──────────────────────────────────────────
+// ── Pantalla de apuestas con Tabs ─────────────────────────────────────────────
 class PollasScreen extends StatelessWidget {
   const PollasScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade50,
+        backgroundColor: AppColors.background,
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
+          preferredSize: const Size.fromHeight(60),
           child: Container(
-            color: Colors.white,
-            child: const TabBar(
-              labelColor: Color(0xFF00341C),
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: Color(0xFF00341C),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
+            ),
+            child: TabBar(
+              labelColor: AppColors.accentText,
+              unselectedLabelColor: AppColors.textMuted,
+              indicatorColor: AppColors.accentText,
+              indicatorWeight: 4,
               indicatorSize: TabBarIndicatorSize.tab,
-              tabs: [
-                Tab(text: 'Apuestas'),
-                Tab(text: 'Historial'),
+              labelStyle: GoogleFonts.spaceGrotesk(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1),
+              tabs: const [
+                Tab(icon: Icon(Icons.sports_soccer_rounded, size: 20), text: 'APUESTAS'),
+                Tab(icon: Icon(Icons.receipt_long_rounded, size: 20), text: 'HISTORIAL'),
               ],
             ),
           ),
@@ -54,7 +64,7 @@ class PollasScreen extends StatelessWidget {
   }
 }
 
-// ── Tab de Historial ─────────────────────────────────────────────────────────
+// ── Tab de Historial ──────────────────────────────────────────────────────────
 class _HistoryTab extends StatefulWidget {
   const _HistoryTab();
   @override
@@ -86,29 +96,26 @@ class _HistoryTabState extends State<_HistoryTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_loading) {
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
+    }
 
     if (_bets.isEmpty) {
       return const _EmptyState(
-        icon: Icons.history,
-        text: 'Aún no has realizado ninguna apuesta.\n¡Empieza hoy mismo!',
+        icon: Icons.receipt_long_rounded,
+        text: 'AÚN NO HAS REALIZADO NINGUNA APUESTA.',
       );
     }
 
     return RefreshIndicator(
+      color: AppColors.onPrimary,
+      backgroundColor: AppColors.primary,
       onRefresh: _load,
       child: ListView.separated(
         padding: const EdgeInsets.all(24),
         itemCount: _bets.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, i) => Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: _BetHistoryRow(bet: _bets[i]),
-        ),
+        separatorBuilder: (_, __) => SizedBox(height: 16),
+        itemBuilder: (_, i) => _BetHistoryRow(bet: _bets[i]),
       ),
     );
   }
@@ -142,11 +149,12 @@ class _BettingTabState extends State<_BettingTab> {
         _svc.getBettingMatches(),
         _svc.getUserBets(_userId),
       ]);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _matches = results[0];
           _myBets = results[1];
         });
+      }
     } catch (_) {
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -175,10 +183,7 @@ class _BettingTabState extends State<_BettingTab> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (_) => _BetSlip(
         selections: List.from(_slip),
         userId: _userId,
@@ -199,9 +204,9 @@ class _BettingTabState extends State<_BettingTab> {
           if (mounted) {
             setState(() => _slip.clear());
             Navigator.pop(context);
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Apuesta registrada')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('APUESTA REGISTRADA EXITOSAMENTE', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold))),
+            );
             _load();
           }
         },
@@ -211,21 +216,19 @@ class _BettingTabState extends State<_BettingTab> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Stack(
       children: [
         _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(child: CircularProgressIndicator(color: AppColors.primary))
             : RefreshIndicator(
+                color: AppColors.onPrimary,
+                backgroundColor: AppColors.primary,
                 onRefresh: _load,
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 100),
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 100),
                   children: [
-                    _SectionHeader(
-                      label: 'Próximos partidos',
-                      icon: Icons.schedule,
-                    ),
-                    const SizedBox(height: 16),
+                    const _SectionHeader(label: 'PRÓXIMOS PARTIDOS', icon: Icons.schedule_rounded),
+                    SizedBox(height: 24),
                     ..._matches.map(
                       (m) => _MatchOddsCard(
                         match: m,
@@ -235,31 +238,24 @@ class _BettingTabState extends State<_BettingTab> {
                     ),
                     if (_matches.isEmpty)
                       const _EmptyState(
-                        icon: Icons.sports_soccer,
-                        text:
-                            'No hay partidos disponibles ahora.\nTira hacia abajo para actualizar.',
+                        icon: Icons.sports_soccer_rounded,
+                        text: 'NO HAY PARTIDOS DISPONIBLES AHORA.',
                       ),
                     if (_myBets.isNotEmpty) ...[
-                      const SizedBox(height: 48),
-                      _SectionHeader(
-                        label: 'Mis apuestas',
-                        icon: Icons.receipt_long,
-                      ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: 48),
+                      const _SectionHeader(label: 'APUESTAS RECIENTES', icon: Icons.receipt_long_rounded),
+                      SizedBox(height: 24),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.grey.shade300),
+                          color: Colors.transparent,
+                          border: Border.all(color: AppColors.border, width: 2),
                         ),
                         child: ListView.separated(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _myBets.length > 10 ? 10 : _myBets.length,
-                          separatorBuilder: (_, __) =>
-                              Divider(height: 1, color: Colors.grey.shade200),
-                          itemBuilder: (_, i) =>
-                              _BetHistoryRow(bet: _myBets[i]),
+                          separatorBuilder: (_, __) => Divider(),
+                          itemBuilder: (_, i) => _BetHistoryRow(bet: _myBets[i], compact: true),
                         ),
                       ),
                     ],
@@ -272,43 +268,83 @@ class _BettingTabState extends State<_BettingTab> {
             bottom: 24,
             left: 24,
             right: 24,
-            child: ElevatedButton.icon(
-              onPressed: _openSlip,
-              icon: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.white24,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  '${_slip.length}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              label: const Text(
-                'Ver boleto',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00341C),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
-            ),
+            child: _SlipFab(count: _slip.length, onTap: _openSlip),
           ),
       ],
     );
   }
 }
 
+// ── Floating slip button ──────────────────────────────────────────────────────
+class _SlipFab extends StatefulWidget {
+  final int count;
+  final VoidCallback onTap;
+  const _SlipFab({required this.count, required this.onTap});
+  @override
+  State<_SlipFab> createState() => _SlipFabState();
+}
+
+class _SlipFabState extends State<_SlipFab> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 100));
+    _scale = Tween<double>(begin: 1, end: 0.96).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _ctrl.forward(),
+      onTapUp: (_) { _ctrl.reverse(); widget.onTap(); },
+      onTapCancel: () => _ctrl.reverse(),
+      child: ScaleTransition(
+        scale: _scale,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            border: Border.all(color: AppColors.onPrimary, width: 2),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.onPrimary,
+                  border: Border.all(color: AppColors.onPrimary, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    '${widget.count}',
+                    style: GoogleFonts.spaceGrotesk(fontSize: 16, color: AppColors.primary, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  'VER BOLETO DE APUESTA',
+                  style: GoogleFonts.spaceGrotesk(color: AppColors.onPrimary, fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: -0.5),
+                ),
+              ),
+              Icon(Icons.arrow_forward_sharp, color: AppColors.onPrimary, size: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Match card ────────────────────────────────────────────────────────────────
 class _MatchOddsCard extends StatelessWidget {
   final Map<String, dynamic> match;
   final bool Function(dynamic matchId, String betType) isSelected;
@@ -334,171 +370,144 @@ class _MatchOddsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final odds = Map<String, dynamic>.from(match['odds'] ?? {});
     final mid = match['match_id'];
-    final home = match['home_name'] as String? ?? 'Local';
-    final away = match['away_name'] as String? ?? 'Visitante';
+    final home = match['home_name'] as String? ?? 'LOCAL';
+    final away = match['away_name'] as String? ?? 'VISITANTE';
     final status = match['status'] as String? ?? '';
     final live = status == 'IN_PLAY' || status == 'LIVE';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.border, width: 2),
       ),
       child: Column(
         children: [
-          // Header partido
+          // ── Card header ────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(6),
-              ),
+              color: live ? AppColors.primary.withValues(alpha: 0.1) : AppColors.inverseSurface,
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
             ),
             child: Row(
               children: [
                 if (live) ...[
-                  const Icon(Icons.circle, color: Color(0xFFBB0014), size: 10),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'EN VIVO',
-                    style: TextStyle(
-                      color: Color(0xFFBB0014),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      border: Border.all(color: AppColors.onPrimary, width: 1),
                     ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.circle, color: AppColors.onPrimary, size: 8),
+                      SizedBox(width: 6),
+                      Text('EN VIVO', style: GoogleFonts.spaceGrotesk(color: AppColors.onPrimary, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    ]),
                   ),
-                ] else
+                ] else ...[
+                  Icon(Icons.schedule_rounded, size: 16, color: AppColors.textMuted),
+                  SizedBox(width: 8),
                   Text(
                     _fmt(match['date']),
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
                   ),
+                ],
                 const Spacer(),
-                Icon(
-                  Icons.sports_soccer,
-                  color: Colors.grey.shade400,
-                  size: 16,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    border: Border.all(color: AppColors.border, width: 1),
+                  ),
+                  child: Text('FIFA WC 2026', style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.text, fontWeight: FontWeight.bold, letterSpacing: 1)),
                 ),
               ],
             ),
           ),
+
+          // ── Teams ──────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    home,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
+                  child: Text(home.toUpperCase(),
+                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1),
+                    textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'vs',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    border: Border.all(color: AppColors.onPrimary, width: 2),
                   ),
+                  child: Text('VS', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.onPrimary, letterSpacing: -1)),
                 ),
                 Expanded(
-                  child: Text(
-                    away,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
+                  child: Text(away.toUpperCase(),
+                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1),
+                    textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
           ),
+
+          // ── Odds buttons ───────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             child: Row(
               children: [
                 _OddsBtn(
-                  label: '1 Local',
-                  value: odds['home_win'],
+                  label: '1 LOCAL', value: odds['home_win'],
                   selected: isSelected(mid, 'home_win'),
-                  onTap: () => onSelect(
-                    _BetSelection(
-                      matchId: mid,
-                      homeName: home,
-                      awayName: away,
-                      betType: 'home_win',
-                      betLabel: '$home gana',
-                      odds: (odds['home_win'] as num).toDouble(),
-                    ),
-                  ),
+                  onTap: () => onSelect(_BetSelection(
+                    matchId: mid, homeName: home, awayName: away,
+                    betType: 'home_win', betLabel: '$home gana',
+                    odds: (odds['home_win'] as num).toDouble(),
+                  )),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 12),
                 _OddsBtn(
-                  label: 'X Empate',
-                  value: odds['draw'],
+                  label: 'X EMPATE', value: odds['draw'],
                   selected: isSelected(mid, 'draw'),
-                  onTap: () => onSelect(
-                    _BetSelection(
-                      matchId: mid,
-                      homeName: home,
-                      awayName: away,
-                      betType: 'draw',
-                      betLabel: 'Empate',
-                      odds: (odds['draw'] as num).toDouble(),
-                    ),
-                  ),
+                  onTap: () => onSelect(_BetSelection(
+                    matchId: mid, homeName: home, awayName: away,
+                    betType: 'draw', betLabel: 'Empate',
+                    odds: (odds['draw'] as num).toDouble(),
+                  )),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 12),
                 _OddsBtn(
-                  label: '2 Visita',
-                  value: odds['away_win'],
+                  label: '2 VISITA', value: odds['away_win'],
                   selected: isSelected(mid, 'away_win'),
-                  onTap: () => onSelect(
-                    _BetSelection(
-                      matchId: mid,
-                      homeName: home,
-                      awayName: away,
-                      betType: 'away_win',
-                      betLabel: '$away gana',
-                      odds: (odds['away_win'] as num).toDouble(),
-                    ),
-                  ),
+                  onTap: () => onSelect(_BetSelection(
+                    matchId: mid, homeName: home, awayName: away,
+                    betType: 'away_win', betLabel: '$away gana',
+                    odds: (odds['away_win'] as num).toDouble(),
+                  )),
                 ),
               ],
             ),
           ),
+
+          // ── Score odds ─────────────────────────────────────────────────
           if ((odds['top_scores'] as List?)?.isNotEmpty == true) ...[
-            Divider(height: 1, color: Colors.grey.shade200),
+            Divider(),
             _ScoreOddsRow(
-              matchId: mid,
-              homeName: home,
-              awayName: away,
+              matchId: mid, homeName: home, awayName: away,
               scores: List<Map<String, dynamic>>.from(odds['top_scores']),
-              isSelected: isSelected,
-              onSelect: onSelect,
+              isSelected: isSelected, onSelect: onSelect,
             ),
           ],
+
+          // ── Probability bar ────────────────────────────────────────────
+          Divider(),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
             child: _ProbBar(
               probHome: (odds['prob_home'] as num?)?.toDouble() ?? 33,
               probDraw: (odds['prob_draw'] as num?)?.toDouble() ?? 34,
@@ -511,49 +520,48 @@ class _MatchOddsCard extends StatelessWidget {
   }
 }
 
+// ── Odds button ───────────────────────────────────────────────────────────────
 class _OddsBtn extends StatelessWidget {
   final String label;
   final dynamic value;
   final bool selected;
   final VoidCallback onTap;
-  const _OddsBtn({
-    required this.label,
-    required this.value,
-    required this.selected,
-    required this.onTap,
-  });
+  const _OddsBtn({required this.label, required this.value, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: selected ? const Color(0xFF00341C) : Colors.white,
-            borderRadius: BorderRadius.circular(6),
+            color: selected ? AppColors.primary : Colors.transparent,
             border: Border.all(
-              color: selected ? const Color(0xFF00341C) : Colors.grey.shade300,
+              color: selected ? AppColors.primary : AppColors.border,
+              width: 2,
             ),
           ),
           child: Column(
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: selected ? Colors.white70 : Colors.grey.shade600,
+                style: GoogleFonts.dmSans(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: selected ? Colors.black54 : AppColors.textMuted,
+                  letterSpacing: 1,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 8),
               Text(
                 '${value ?? '-'}',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white : Colors.black87,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: selected ? Colors.black : AppColors.text,
+                  letterSpacing: -1,
                 ),
               ),
             ],
@@ -564,6 +572,7 @@ class _OddsBtn extends StatelessWidget {
   }
 }
 
+// ── Score odds row ────────────────────────────────────────────────────────────
 class _ScoreOddsRow extends StatelessWidget {
   final dynamic matchId;
   final String homeName, awayName;
@@ -571,80 +580,56 @@ class _ScoreOddsRow extends StatelessWidget {
   final bool Function(dynamic, String) isSelected;
   final void Function(_BetSelection) onSelect;
   const _ScoreOddsRow({
-    required this.matchId,
-    required this.homeName,
-    required this.awayName,
-    required this.scores,
-    required this.isSelected,
-    required this.onSelect,
+    required this.matchId, required this.homeName, required this.awayName,
+    required this.scores, required this.isSelected, required this.onSelect,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Marcador exacto',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 12),
+          Row(children: [
+            Icon(Icons.scoreboard_rounded, size: 16, color: AppColors.textMuted),
+            SizedBox(width: 8),
+            Text('MARCADOR EXACTO',
+              style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted, letterSpacing: 1)),
+          ]),
+          SizedBox(height: 16),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 12,
+            runSpacing: 12,
             children: scores.take(6).map((s) {
               final score = s['score'] as String;
               final odds = (s['odds'] as num).toDouble();
               final bType = 'score_$score';
               final sel = isSelected(matchId, bType);
               return GestureDetector(
-                onTap: () => onSelect(
-                  _BetSelection(
-                    matchId: matchId,
-                    homeName: homeName,
-                    awayName: awayName,
-                    betType: bType,
-                    betLabel: 'Marcador $score',
-                    odds: odds,
-                  ),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
+                onTap: () => onSelect(_BetSelection(
+                  matchId: matchId, homeName: homeName, awayName: awayName,
+                  betType: bType, betLabel: 'Marcador $score', odds: odds,
+                )),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: sel ? const Color(0xFF00341C) : Colors.white,
-                    borderRadius: BorderRadius.circular(6),
+                    color: sel ? AppColors.primary : Colors.transparent,
                     border: Border.all(
-                      color: sel
-                          ? const Color(0xFF00341C)
-                          : Colors.grey.shade300,
+                      color: sel ? AppColors.primary : AppColors.border,
+                      width: 2,
                     ),
                   ),
                   child: Column(
                     children: [
-                      Text(
-                        score,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: sel ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      Text(
-                        'x${odds.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: sel ? Colors.white70 : Colors.grey.shade600,
-                        ),
-                      ),
+                      Text(score,
+                        style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 16,
+                            color: sel ? Colors.black : AppColors.text)),
+                      SizedBox(height: 4),
+                      Text('x${odds.toStringAsFixed(2)}',
+                        style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold,
+                            color: sel ? Colors.black54 : AppColors.accentText)),
                     ],
                   ),
                 ),
@@ -657,13 +642,10 @@ class _ScoreOddsRow extends StatelessWidget {
   }
 }
 
+// ── Probability bar ───────────────────────────────────────────────────────────
 class _ProbBar extends StatelessWidget {
   final double probHome, probDraw, probAway;
-  const _ProbBar({
-    required this.probHome,
-    required this.probDraw,
-    required this.probAway,
-  });
+  const _ProbBar({required this.probHome, required this.probDraw, required this.probAway});
 
   @override
   Widget build(BuildContext context) {
@@ -673,86 +655,62 @@ class _ProbBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '${probHome.toStringAsFixed(0)}%',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: Colors.green.shade700,
-              ),
-            ),
-            Text(
-              '${probDraw.toStringAsFixed(0)}%',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            Text(
-              '${probAway.toStringAsFixed(0)}%',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: Colors.red.shade700,
-              ),
-            ),
+            _ProbLabel('${probHome.toStringAsFixed(0)}%', 'LOCAL', AppColors.primary),
+            _ProbLabel('${probDraw.toStringAsFixed(0)}%', 'EMPATE', AppColors.textMuted, center: true),
+            _ProbLabel('${probAway.toStringAsFixed(0)}%', 'VISITANTE', AppColors.primaryDark, right: true),
           ],
         ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+        SizedBox(height: 12),
+        Container(
+          height: 12,
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.border, width: 2),
+          ),
           child: Row(
             children: [
               Flexible(
                 flex: (probHome * 100 / total).round(),
-                child: Container(height: 6, color: Colors.green.shade500),
+                child: Container(color: AppColors.primary),
               ),
               Flexible(
                 flex: (probDraw * 100 / total).round(),
-                child: Container(height: 6, color: Colors.grey.shade300),
+                child: Container(color: AppColors.surfaceVariant),
               ),
               Flexible(
                 flex: (probAway * 100 / total).round(),
-                child: Container(height: 6, color: Colors.red.shade500),
+                child: Container(color: AppColors.primaryDark),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Local',
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-            ),
-            Text(
-              'Empate',
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-            ),
-            Text(
-              'Visitante',
-              style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-            ),
-          ],
         ),
       ],
     );
   }
 }
 
+class _ProbLabel extends StatelessWidget {
+  final String value, label;
+  final Color color;
+  final bool center, right;
+  const _ProbLabel(this.value, this.label, this.color, {this.center = false, this.right = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final align = right ? CrossAxisAlignment.end : (center ? CrossAxisAlignment.center : CrossAxisAlignment.start);
+    return Column(crossAxisAlignment: align, children: [
+      Text(value, style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w900, color: color)),
+      Text(label, style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+    ]);
+  }
+}
+
+// ── Bet slip ──────────────────────────────────────────────────────────────────
 class _BetSlip extends StatefulWidget {
   final List<_BetSelection> selections;
   final int userId;
   final BettingService service;
   final Future<void> Function(int stake) onConfirm;
-  const _BetSlip({
-    required this.selections,
-    required this.userId,
-    required this.service,
-    required this.onConfirm,
-  });
+  const _BetSlip({required this.selections, required this.userId, required this.service, required this.onConfirm});
   @override
   State<_BetSlip> createState() => _BetSlipState();
 }
@@ -761,258 +719,158 @@ class _BetSlipState extends State<_BetSlip> {
   int _stake = 10;
   bool _placing = false;
 
-  double get _totalOdds =>
-      widget.selections.fold(1.0, (acc, s) => acc * s.odds);
+  double get _totalOdds => widget.selections.fold(1.0, (acc, s) => acc * s.odds);
   int get _potentialWin => (_stake * _totalOdds).round();
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          border: Border(top: BorderSide(color: AppColors.primary, width: 4)),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+            // ── Title ──────────────────────────────────────────────────
+            Row(children: [
+              Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  border: Border.all(color: AppColors.onPrimary, width: 2),
                 ),
-                const Spacer(),
-                const Text(
-                  'Boleto de apuesta',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const Spacer(),
-                const SizedBox(width: 40),
-              ],
-            ),
-            const SizedBox(height: 24),
+                child: Icon(Icons.receipt_long_rounded, color: AppColors.onPrimary, size: 24),
+              ),
+              SizedBox(width: 16),
+              Text('BOLETO',
+                style: GoogleFonts.spaceGrotesk(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -2)),
+              const Spacer(),
+              Text('${widget.selections.length} SELECC.',
+                style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            ]),
+            SizedBox(height: 32),
+
+            // ── Selections ─────────────────────────────────────────────
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.border, width: 2),
               ),
               child: Column(
-                children: widget.selections
-                    .map(
-                      (s) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(color: Colors.grey.shade200),
-                          ),
-                        ),
-                        child: Row(
+                children: widget.selections.map((s) => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: AppColors.primary, width: 4),
+                      bottom: BorderSide(color: AppColors.borderLight, width: 2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${s.homeName} vs ${s.awayName}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    s.betLabel,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              'x${s.odds.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
+                            Text('${s.homeName} VS ${s.awayName}'.toUpperCase(),
+                              style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                            SizedBox(height: 4),
+                            Text(s.betLabel.toUpperCase(),
+                              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.text, letterSpacing: -0.5)),
                           ],
                         ),
                       ),
-                    )
-                    .toList(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          border: Border.all(color: AppColors.primary, width: 2),
+                        ),
+                        child: Text('x${s.odds.toStringAsFixed(2)}',
+                          style: GoogleFonts.spaceGrotesk(color: AppColors.primary, fontWeight: FontWeight.w900, fontSize: 16)),
+                      ),
+                    ],
+                  ),
+                )).toList(),
               ),
             ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                const Text(
-                  'Monto (USD)',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const Spacer(),
-                _StakeChip(
-                  value: 5,
-                  current: _stake,
-                  onTap: () => setState(() => _stake = 5),
-                ),
-                _StakeChip(
-                  value: 10,
-                  current: _stake,
-                  onTap: () => setState(() => _stake = 10),
-                ),
-                _StakeChip(
-                  value: 25,
-                  current: _stake,
-                  onTap: () => setState(() => _stake = 25),
-                ),
-                _StakeChip(
-                  value: 50,
-                  current: _stake,
-                  onTap: () => setState(() => _stake = 50),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+            SizedBox(height: 32),
+
+            // ── Stake ──────────────────────────────────────────────────
+            Row(children: [
+              Text('MONTO (USD)', style: GoogleFonts.dmSans(fontWeight: FontWeight.bold, color: AppColors.text, letterSpacing: 1, fontSize: 12)),
+              const Spacer(),
+              ...[5, 10, 25, 50].map((v) => _StakeChip(
+                value: v, current: _stake,
+                onTap: () => setState(() => _stake = v),
+              )),
+            ]),
+            SizedBox(height: 32),
+
+            // ── Summary ────────────────────────────────────────────────
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.grey.shade200),
+                color: Colors.transparent,
+                border: Border.all(color: AppColors.border, width: 2),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Cuota total',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'x${_totalOdds.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('CUOTA TOTAL', style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      SizedBox(height: 8),
+                      Text('x${_totalOdds.toStringAsFixed(2)}',
+                        style: GoogleFonts.spaceGrotesk(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -2)),
+                    ]),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Ganancia potencial',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '\$$_potentialWin',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green.shade700,
-                        ),
-                      ),
-                    ],
+                  Container(width: 2, height: 48, color: AppColors.border),
+                  SizedBox(width: 24),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('GANANCIA', style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      SizedBox(height: 8),
+                      Text('\$$_potentialWin',
+                        style: GoogleFonts.spaceGrotesk(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.primary, letterSpacing: -2)),
+                    ]),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.lock_outline, size: 14, color: Colors.grey.shade500),
-                const SizedBox(width: 6),
-                Text(
-                  'Pago seguro • Modo de prueba',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(Icons.lock_outline_rounded, size: 14, color: AppColors.textMuted),
+              SizedBox(width: 8),
+              Text('PAGO SEGURO • MODO DE PRUEBA',
+                style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            ]),
+            SizedBox(height: 32),
+
+            // ── Confirm button ─────────────────────────────────────────
             ElevatedButton(
-              onPressed: _placing
-                  ? null
-                  : () async {
-                      setState(() => _placing = true);
-                      final messenger = ScaffoldMessenger.of(context);
-                      try {
-                        await widget.onConfirm(_stake);
-                      } catch (e) {
-                        if (mounted)
-                          messenger.showSnackBar(
-                            SnackBar(content: Text(e.toString())),
-                          );
-                        if (mounted) setState(() => _placing = false);
-                      }
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00341C),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
-                ),
-              ),
+              onPressed: _placing ? null : () async {
+                setState(() => _placing = true);
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  await widget.onConfirm(_stake);
+                } catch (e) {
+                  if (mounted) messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+                  if (mounted) setState(() => _placing = false);
+                }
+              },
+              style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 24)),
               child: _placing
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.credit_card, size: 18),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Pagar \$$_stake',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
+                ? SizedBox(width: 24, height: 24,
+                    child: CircularProgressIndicator(color: AppColors.onPrimary, strokeWidth: 3))
+                : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Icon(Icons.credit_card_rounded, size: 20),
+                    SizedBox(width: 12),
+                    Text('CONFIRMAR • \$$_stake',
+                      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 1)),
+                  ]),
             ),
           ],
         ),
@@ -1021,35 +879,30 @@ class _BetSlipState extends State<_BetSlip> {
   }
 }
 
+// ── Stake chip ────────────────────────────────────────────────────────────────
 class _StakeChip extends StatelessWidget {
   final int value, current;
   final VoidCallback onTap;
-  const _StakeChip({
-    required this.value,
-    required this.current,
-    required this.onTap,
-  });
+  const _StakeChip({required this.value, required this.current, required this.onTap});
+
   @override
   Widget build(BuildContext context) {
     final sel = value == current;
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(left: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        margin: const EdgeInsets.only(left: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: sel ? const Color(0xFF00341C) : Colors.white,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: sel ? const Color(0xFF00341C) : Colors.grey.shade300,
-          ),
+          color: sel ? AppColors.primary : Colors.transparent,
+          border: Border.all(color: sel ? AppColors.primary : AppColors.border, width: 2),
         ),
         child: Text(
           '\$$value',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: sel ? Colors.white : Colors.grey.shade700,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 16, fontWeight: FontWeight.w900,
+            color: sel ? Colors.black : AppColors.textMuted,
           ),
         ),
       ),
@@ -1057,30 +910,33 @@ class _StakeChip extends StatelessWidget {
   }
 }
 
+// ── Bet history row ───────────────────────────────────────────────────────────
 class _BetHistoryRow extends StatelessWidget {
   final Map<String, dynamic> bet;
-  const _BetHistoryRow({required this.bet});
+  final bool compact;
+  const _BetHistoryRow({required this.bet, this.compact = false});
 
   Color _statusColor(String s) => switch (s) {
-    'won' => Colors.green.shade700,
-    'lost' => const Color(0xFFBB0014),
-    'cancelled' => Colors.grey.shade600,
-    _ => Colors.orange.shade700,
+    'won'       => AppColors.primary,
+    'lost'      => AppColors.error,
+    'cancelled' => AppColors.textMuted,
+    _           => const Color(0xFF00FFFF), // Cyan pending
   };
 
   String _statusLabel(String s) => switch (s) {
-    'won' => 'Ganada',
-    'lost' => 'Perdida',
-    'cancelled' => 'Cancelada',
-    _ => 'Pendiente',
+    'won'       => 'GANADA',
+    'lost'      => 'PERDIDA',
+    'cancelled' => 'CANCELADA',
+    _           => 'PENDIENTE',
   };
 
   @override
   Widget build(BuildContext context) {
     final status = bet['status'] as String? ?? 'pending';
     final color = _statusColor(status);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+
+    final row = Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: compact ? 16 : 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -1089,84 +945,101 @@ class _BetHistoryRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  bet['bet_label'] ?? '—',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
+                  (bet['bet_label'] ?? '—').toString().toUpperCase(),
+                  style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.text, letterSpacing: -0.5),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 6),
                 Text(
-                  '${bet['home_name']} vs ${bet['away_name']} • x${(bet['odds'] as num).toStringAsFixed(2)}',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  '${bet['home_name']} VS ${bet['away_name']} • X${(bet['odds'] as num).toStringAsFixed(2)}',
+                  style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1),
                 ),
               ],
             ),
           ),
+          SizedBox(width: 16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                _statusLabel(status),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: color,
-                  fontWeight: FontWeight.w600,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  border: Border.all(color: color, width: 2),
                 ),
+                child: Text(_statusLabel(status),
+                  style: GoogleFonts.spaceGrotesk(fontSize: 10, color: color, fontWeight: FontWeight.w900, letterSpacing: 1)),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 8),
               Text(
                 '${bet['stake']} → ${bet['potential_win']} USD',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+                style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.text, fontWeight: FontWeight.bold),
               ),
             ],
           ),
         ],
       ),
     );
+
+    if (compact) return row;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.border, width: 2),
+      ),
+      child: row,
+    );
   }
 }
 
+// ── Section header ────────────────────────────────────────────────────────────
 class _SectionHeader extends StatelessWidget {
   final String label;
   final IconData icon;
   const _SectionHeader({required this.label, required this.icon});
+
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Icon(icon, size: 20, color: Colors.black87),
-      const SizedBox(width: 8),
-      Text(
-        label,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
+      Container(
+        width: 32, height: 32,
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          border: Border.all(color: AppColors.onPrimary, width: 2),
         ),
+        child: Icon(icon, size: 16, color: AppColors.onPrimary),
       ),
+      SizedBox(width: 12),
+      Text(label, style: GoogleFonts.spaceGrotesk(fontSize: 18, color: AppColors.text, fontWeight: FontWeight.w900, letterSpacing: -1)),
     ],
   );
 }
 
+// ── Empty state ───────────────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
   final IconData icon;
   final String text;
   const _EmptyState({required this.icon, required this.text});
+
   @override
   Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: const EdgeInsets.all(48),
+      padding: const EdgeInsets.all(64),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 48, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+          Container(
+            width: 80, height: 80,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              border: Border.all(color: AppColors.border, width: 2),
+            ),
+            child: Icon(icon, size: 32, color: AppColors.textMuted),
           ),
+          SizedBox(height: 24),
+          Text(text,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, height: 1.6, letterSpacing: 1)),
         ],
       ),
     ),

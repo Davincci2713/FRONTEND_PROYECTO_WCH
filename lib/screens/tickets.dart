@@ -1,73 +1,68 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend_proyecto/providers/theme_provider.dart';
 import '../services/ticket_service.dart';
 import '../services/auth/auth.dart';
+import '../utils/theme.dart';
 
 // ── Colores de estado ─────────────────────────────────────────────────────────
 Color _statusColor(String s) => switch (s.toLowerCase()) {
-  'pagada' => Colors.green.shade700,
-  'reservada' => Colors.orange.shade700,
-  'transferida' => Colors.blue.shade700,
-  'reembolsada' => Colors.purple.shade700,
-  'expirada' => const Color(0xFFBB0014),
-  _ => Colors.grey.shade700,
+  'pagada'      => AppColors.primary,
+  'reservada'   => const Color(0xFF00FFFF), // Cyan
+  'transferida' => const Color(0xFFFF00FF), // Magenta
+  'reembolsada' => AppColors.error,
+  'expirada'    => AppColors.textMuted,
+  _             => AppColors.border,
 };
 
 String _statusLabel(String s) => switch (s.toLowerCase()) {
-  'disponible' => 'Disponible',
-  'reservada' => 'Reservada',
-  'pagada' => 'Pagada',
-  'transferida' => 'Transferida',
-  'reembolsada' => 'Reembolsada',
-  'expirada' => 'Expirada',
-  _ => s,
+  'disponible' => 'DISPONIBLE',
+  'reservada' => 'RESERVADA',
+  'pagada' => 'PAGADA',
+  'transferida' => 'TRANSFERIDA',
+  'reembolsada' => 'REEMBOLSADA',
+  'expirada' => 'EXPIRADA',
+  _ => s.toUpperCase(),
 };
 
 // ── Pantalla principal ────────────────────────────────────────────────────────
 class TicketsScreen extends StatelessWidget {
   const TicketsScreen({super.key});
   @override
-  Widget build(BuildContext context) => DefaultTabController(
+  Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
+    return DefaultTabController(
     length: 2,
     child: Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppColors.background,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(48),
-        child: Material(
-          color: Colors.white,
-          elevation: 0,
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: const TabBar(
-              labelColor: Color(0xFF00341C),
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: Color(0xFF00341C),
-              indicatorWeight: 3,
-              labelStyle: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              unselectedLabelStyle: TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 13,
-              ),
-              tabs: [
-                Tab(
-                  text: 'Comprar',
-                  icon: Icon(Icons.confirmation_number_outlined, size: 18),
-                ),
-                Tab(
-                  text: 'Mis entradas',
-                  icon: Icon(Icons.receipt_long_outlined, size: 18),
-                ),
-              ],
-            ),
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
+          ),
+          child: TabBar(
+            labelColor: AppColors.accentText,
+            unselectedLabelColor: AppColors.textMuted,
+            indicatorColor: AppColors.accentText,
+            indicatorWeight: 4,
+            indicatorSize: TabBarIndicatorSize.tab,
+            labelStyle: GoogleFonts.spaceGrotesk(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1),
+            tabs: const [
+              Tab(icon: Icon(Icons.confirmation_number_rounded, size: 20), text: 'COMPRAR'),
+              Tab(icon: Icon(Icons.receipt_long_rounded, size: 20), text: 'MIS ENTRADAS'),
+            ],
           ),
         ),
       ),
       body: const TabBarView(children: [_BuyTab(), _MyTicketsTab()]),
     ),
   );
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -107,19 +102,19 @@ class _BuyTabState extends State<_BuyTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_matches.isEmpty)
-      return const _Empty(
-        icon: Icons.event_busy,
-        text: 'No hay partidos disponibles.',
-      );
+    if (_loading) return Center(child: CircularProgressIndicator(color: AppColors.primary));
+    if (_matches.isEmpty) {
+      return const _Empty(icon: Icons.event_busy_rounded, text: 'NO HAY PARTIDOS DISPONIBLES.');
+    }
 
     return RefreshIndicator(
+      color: AppColors.onPrimary,
+      backgroundColor: AppColors.primary,
       onRefresh: _load,
       child: ListView.separated(
         padding: const EdgeInsets.all(24),
         itemCount: _matches.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        separatorBuilder: (_, __) => SizedBox(height: 24),
         itemBuilder: (ctx, i) => _MatchCard(
           match: _matches[i],
           onReserve: () => _reserve(_matches[i]),
@@ -133,13 +128,10 @@ class _BuyTabState extends State<_BuyTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => _ConfirmDialog(
-        title: 'Reservar entrada',
-        content:
-            'Reservar entrada para\n${match['home_name']} vs ${match['away_name']}\n\n'
-            'Precio: \$${match['price']}\n\n'
-            '⏱ Tienes 10 minutos para completar el pago.',
-        confirmLabel: 'Reservar',
-        confirmColor: const Color(0xFF00341C),
+        title: 'RESERVAR ENTRADA',
+        content: 'RESERVAR ENTRADA PARA\n${match['home_name']} VS ${match['away_name']}\n\nPRECIO: \$${match['price']}\n\n⏱ TIENES 10 MINUTOS PARA COMPLETAR EL PAGO.',
+        confirmLabel: 'RESERVAR',
+        confirmColor: AppColors.primary,
       ),
     );
     if (confirmed != true) return;
@@ -148,16 +140,21 @@ class _BuyTabState extends State<_BuyTab> {
       await _svc.reserveTicket(_uid, match['match_id']);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Entrada reservada. Ve a "Mis entradas" para pagar.'),
+        SnackBar(
+          content: Text('ENTRADA RESERVADA. VE A "MIS ENTRADAS" PARA PAGAR.', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.primary,
         ),
       );
       DefaultTabController.of(context).animateTo(1);
     } catch (e) {
-      if (mounted)
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 }
@@ -177,21 +174,7 @@ class _MatchCard extends StatelessWidget {
     }
   }
 
-  String _mes(int m) => [
-    '',
-    'Ene',
-    'Feb',
-    'Mar',
-    'Abr',
-    'May',
-    'Jun',
-    'Jul',
-    'Ago',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dic',
-  ][m];
+  String _mes(int m) => ['', 'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'][m];
 
   @override
   Widget build(BuildContext context) {
@@ -200,153 +183,87 @@ class _MatchCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.border, width: 2),
       ),
       child: Column(
         children: [
-          // Header
+          // ── Header ────────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: sold ? Colors.grey.shade100 : Colors.grey.shade50,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(6),
-              ),
+              color: sold ? Colors.black : AppColors.primary.withValues(alpha: 0.1),
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.sports_soccer,
-                  color: Colors.grey.shade500,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _fmt(match['date'] as String?),
-                  style: TextStyle(
-                    color: Colors.grey.shade700,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                Icon(Icons.schedule_rounded, size: 16, color: AppColors.textMuted),
+                SizedBox(width: 8),
+                Text(_fmt(match['date'] as String?),
+                  style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
                 const Spacer(),
-                if (avail > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.green.shade200),
-                    ),
-                    child: Text(
-                      '$avail disponibles',
-                      style: TextStyle(
-                        color: Colors.green.shade700,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  )
-                else
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Text(
-                      'Agotado',
-                      style: TextStyle(
-                        color: Colors.red.shade700,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: avail > 0 ? AppColors.primary : AppColors.error,
+                    border: Border.all(color: AppColors.onPrimary, width: 2),
                   ),
-              ],
-            ),
-          ),
-          // Equipos + precio
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            child: Row(
-              children: [
-                Expanded(
                   child: Text(
-                    match['home_name'] as String? ?? '—',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.black87,
+                    avail > 0 ? '$avail DISPONIBLES' : 'AGOTADO',
+                    style: GoogleFonts.spaceGrotesk(
+                      color: AppColors.onPrimary,
+                      fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1,
                     ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'vs',
-                    style: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    match['away_name'] as String? ?? '—',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.right,
                   ),
                 ),
               ],
             ),
           ),
+          // ── Teams ─────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '\$${match['price']}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
+                Expanded(
+                  child: Text((match['home_name'] as String? ?? '—').toUpperCase(),
+                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
                 ),
-                ElevatedButton(
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    border: Border.all(color: AppColors.onPrimary, width: 2),
+                  ),
+                  child: Text('VS', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.onPrimary, letterSpacing: -1)),
+                ),
+                Expanded(
+                  child: Text((match['away_name'] as String? ?? '—').toUpperCase(),
+                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1),
+                    textAlign: TextAlign.right),
+                ),
+              ],
+            ),
+          ),
+          // ── Price + action ────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Row(
+              children: [
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('PRECIO', style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  SizedBox(height: 4),
+                  Text('\$${match['price']}',
+                    style: GoogleFonts.spaceGrotesk(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -2)),
+                ]),
+                const Spacer(),
+                ElevatedButton.icon(
                   onPressed: sold ? null : onReserve,
+                  icon: Icon(sold ? Icons.block_rounded : Icons.confirmation_number_rounded, size: 20),
+                  label: Text(sold ? 'AGOTADO' : 'RESERVAR'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00341C),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   ),
-                  child: Text(sold ? 'Agotado' : 'Reservar'),
                 ),
               ],
             ),
@@ -394,19 +311,22 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_tickets.isEmpty)
+    if (_loading) return Center(child: CircularProgressIndicator(color: AppColors.primary));
+    if (_tickets.isEmpty) {
       return const _Empty(
-        icon: Icons.confirmation_number_outlined,
-        text: 'No tienes entradas aún.\nVe a "Comprar" para reservar la tuya.',
+        icon: Icons.confirmation_number_rounded,
+        text: 'NO TIENES ENTRADAS AÚN.\nVE A "COMPRAR" PARA RESERVAR LA TUYA.',
       );
+    }
 
     return RefreshIndicator(
+      color: AppColors.onPrimary,
+      backgroundColor: AppColors.primary,
       onRefresh: _load,
       child: ListView.separated(
         padding: const EdgeInsets.all(24),
         itemCount: _tickets.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        separatorBuilder: (_, __) => SizedBox(height: 24),
         itemBuilder: (_, i) => _TicketCard(
           ticket: _tickets[i],
           userId: _uid,
@@ -466,9 +386,9 @@ class _TicketCardState extends State<_TicketCard> {
     try {
       await widget.service.payTicket(t['ticketId'], widget.userId);
       widget.onRefresh();
-      messenger.showSnackBar(const SnackBar(content: Text('Pago confirmado')));
+      messenger.showSnackBar(SnackBar(content: Text('PAGO CONFIRMADO', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.primary));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+      messenger.showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
     } finally {
       if (mounted) setState(() => _acting = false);
     }
@@ -492,13 +412,12 @@ class _TicketCardState extends State<_TicketCard> {
       final toName = res['toName'] as String? ?? email;
       messenger.showSnackBar(
         SnackBar(
-          content: Text(
-            'Transferida a $toName (${res['correlationId']?.toString().substring(0, 8) ?? '—'})...',
-          ),
+          content: Text('TRANSFERIDA A ${toName.toUpperCase()}', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.primary,
         ),
       );
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+      messenger.showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
     } finally {
       if (mounted) setState(() => _acting = false);
     }
@@ -508,11 +427,10 @@ class _TicketCardState extends State<_TicketCard> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => _ConfirmDialog(
-        title: 'Solicitar reembolso',
-        content:
-            'Esta acción es irreversible.\n¿Confirmar reembolso de la entrada?',
-        confirmLabel: 'Reembolsar',
-        confirmColor: const Color(0xFFBB0014),
+        title: 'SOLICITAR REEMBOLSO',
+        content: 'ESTA ACCIÓN ES IRREVERSIBLE.\n¿CONFIRMAR REEMBOLSO DE LA ENTRADA?',
+        confirmLabel: 'REEMBOLSAR',
+        confirmColor: AppColors.error,
       ),
     );
     if (ok != true) return;
@@ -526,10 +444,10 @@ class _TicketCardState extends State<_TicketCard> {
       );
       widget.onRefresh();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Reembolso procesado')),
+        SnackBar(content: Text('REEMBOLSO PROCESADO', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.primary),
       );
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+      messenger.showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
     } finally {
       if (mounted) setState(() => _acting = false);
     }
@@ -547,113 +465,63 @@ class _TicketCardState extends State<_TicketCard> {
   @override
   Widget build(BuildContext context) {
     final ttl = _ttl();
-    final matchDetail =
-        t['match_details'] as String? ?? 'Partido #${t['matchId']}';
+    final matchDetail = t['match_details'] as String? ?? 'PARTIDO #${t['matchId']}';
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.border, width: 2),
       ),
       child: Column(
         children: [
-          // ── Información principal ──────────────────────────────────────────
+          // ── Información principal ─────────────────────────────────────
           IntrinsicHeight(
             child: Row(
               children: [
                 // Barra de estado lateral
-                Container(
-                  width: 4,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: const BorderRadius.horizontal(
-                      left: Radius.circular(6),
-                    ),
-                  ),
-                ),
+                Container(width: 8, color: color),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Estado + badge
+                        // Estado + precio
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: color.withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: color.withOpacity(0.2),
-                                ),
+                                color: Colors.transparent,
+                                border: Border.all(color: color, width: 2),
                               ),
-                              child: Text(
-                                _statusLabel(status),
-                                style: TextStyle(
-                                  color: color,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              child: Text(_statusLabel(status),
+                                style: GoogleFonts.spaceGrotesk(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
                             ),
                             const Spacer(),
-                            Text(
-                              '\$${t['price'] ?? '—'}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                                fontSize: 16,
-                              ),
-                            ),
+                            Text('\$${t['price'] ?? '—'}',
+                              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, color: AppColors.text, fontSize: 24, letterSpacing: -1)),
                           ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          matchDetail,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
-                        ),
+                        SizedBox(height: 20),
+                        Text(matchDetail.toUpperCase(),
+                          style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
                         if (t['stadium'] != null) ...[
-                          const SizedBox(height: 6),
+                          SizedBox(height: 8),
                           Row(
                             children: [
-                              Icon(
-                                Icons.location_on,
-                                size: 14,
-                                color: Colors.grey.shade500,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                t['stadium'],
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 13,
-                                ),
-                              ),
+                              Icon(Icons.stadium_rounded, size: 16, color: AppColors.textMuted),
+                              SizedBox(width: 8),
+                              Text((t['stadium'] as String).toUpperCase(),
+                                style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
                             ],
                           ),
                         ],
                         if (ttl != null) ...[
-                          const SizedBox(height: 12),
+                          SizedBox(height: 20),
                           _TTLWidget(ttl: ttl),
                         ],
-                        const SizedBox(height: 16),
+                        SizedBox(height: 24),
                         _ActionsRow(
                           status: status,
                           acting: _acting,
@@ -677,38 +545,34 @@ class _TicketCardState extends State<_TicketCard> {
           if (status == 'pagada' && _showQR) ...[
             Row(
               children: [
-                Container(width: 4, color: color),
+                Container(width: 8, color: color),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Divider(height: 1, color: Colors.grey.shade200),
-                        const SizedBox(height: 14),
-                        Text(
-                          'Código QR de acceso',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+                        Divider(color: AppColors.border, thickness: 2),
+                        SizedBox(height: 20),
+                        Row(children: [
+                          Icon(Icons.qr_code_rounded, size: 16, color: AppColors.textMuted),
+                          SizedBox(width: 8),
+                          Text('CÓDIGO QR DE ACCESO',
+                            style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textMuted, letterSpacing: 1)),
+                        ]),
+                        SizedBox(height: 20),
                         Center(
                           child: Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey.shade200),
+                              color: AppColors.text,
+                              border: Border.all(color: AppColors.onPrimary, width: 4),
                             ),
                             child: QrImageView(
-                              data:
-                                  'ticket_id:${t['ticketId'] ?? 0},match:${t['matchId'] ?? 0}',
+                              data: 'ticket_id:${t['ticketId'] ?? 0},match:${t['matchId'] ?? 0}',
                               version: QrVersions.auto,
-                              size: 180,
-                              backgroundColor: Colors.white,
+                              size: 200,
+                              backgroundColor: AppColors.text,
                             ),
                           ),
                         ),
@@ -762,27 +626,20 @@ class _TTLWidgetState extends State<_TTLWidget> {
     final min = _remaining.inMinutes.remainder(60).toString().padLeft(2, '0');
     final sec = _remaining.inSeconds.remainder(60).toString().padLeft(2, '0');
     final urgent = _remaining.inMinutes < 3;
-    final color = urgent ? const Color(0xFFBB0014) : Colors.orange.shade800;
+    final color = urgent ? AppColors.error : AppColors.primary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.2)),
+        color: Colors.transparent,
+        border: Border.all(color: color, width: 2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timer_outlined, size: 16, color: color),
-          const SizedBox(width: 8),
-          Text(
-            'Paga antes de que expire: $min:$sec',
-            style: TextStyle(
-              fontSize: 13,
-              color: color,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          Icon(Icons.timer_rounded, size: 16, color: color),
+          SizedBox(width: 8),
+          Text('EXPIRA EN: $min:$sec',
+            style: GoogleFonts.spaceGrotesk(fontSize: 14, color: color, fontWeight: FontWeight.w900, letterSpacing: 1)),
         ],
       ),
     );
@@ -808,53 +665,30 @@ class _ActionsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (acting)
-      return const Center(
+    if (acting) {
+      return Center(
         child: SizedBox(
-          height: 28,
-          width: 28,
-          child: CircularProgressIndicator(strokeWidth: 2),
+          height: 28, width: 28,
+          child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.primary),
         ),
       );
+    }
 
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: 12,
+      runSpacing: 12,
       children: [
         if (onPay != null)
-          _Btn(
-            label: 'Pagar',
-            icon: Icons.payment,
-            color: Colors.green.shade700,
-            onTap: onPay!,
-          ),
+          _Btn(label: 'PAGAR', icon: Icons.payment_rounded, color: AppColors.primary, onTap: onPay!),
         if (onTransfer != null)
-          _Btn(
-            label: 'Transferir',
-            icon: Icons.swap_horiz,
-            color: Colors.blue.shade700,
-            onTap: onTransfer!,
-          ),
+          _Btn(label: 'TRANSFERIR', icon: Icons.swap_horiz_rounded, color: const Color(0xFFFF00FF), onTap: onTransfer!),
         if (onRefund != null)
-          _Btn(
-            label: 'Reembolsar',
-            icon: Icons.refresh,
-            color: const Color(0xFFBB0014),
-            onTap: onRefund!,
-          ),
+          _Btn(label: 'REEMBOLSAR', icon: Icons.undo_rounded, color: AppColors.error, onTap: onRefund!),
         if (onQr != null)
-          _Btn(
-            label: qrActive ? 'Ocultar QR' : 'Ver QR',
-            icon: qrActive ? Icons.qr_code_2 : Icons.qr_code,
-            color: const Color(0xFF00341C),
-            onTap: onQr!,
-          ),
-        _Btn(
-          label: 'Historial',
-          icon: Icons.history,
-          color: Colors.grey.shade700,
-          onTap: onHistory ?? () {},
-        ),
+          _Btn(label: qrActive ? 'OCULTAR QR' : 'VER QR',
+            icon: qrActive ? Icons.qr_code_2_rounded : Icons.qr_code_rounded,
+            color: const Color(0xFF00FFFF), onTap: onQr!),
+        _Btn(label: 'HISTORIAL', icon: Icons.history_rounded, color: AppColors.textMuted, onTap: onHistory ?? () {}),
       ],
     );
   }
@@ -878,12 +712,10 @@ class _Btn extends StatelessWidget {
     label: Text(label),
     style: OutlinedButton.styleFrom(
       foregroundColor: color,
-      side: BorderSide(color: color.withOpacity(0.5)),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      minimumSize: Size.zero,
-      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+      side: BorderSide(color: color, width: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      textStyle: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1),
     ),
   );
 }
@@ -896,86 +728,79 @@ class _StripeModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
       title: Row(
         children: [
-          Icon(Icons.credit_card, size: 20, color: Colors.grey.shade700),
-          const SizedBox(width: 8),
-          const Text(
-            'Pago con Stripe',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              border: Border.all(color: const Color(0xFF6259F5), width: 2),
+            ),
+            child: Icon(Icons.credit_card_rounded, size: 20, color: Color(0xFF6259F5)),
           ),
+          SizedBox(width: 16),
+          Text('PAGO STRIPE', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
         ],
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Total: \$$price',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const _MockField(
-            label: 'Número de tarjeta',
-            hint: '4242 4242 4242 4242',
-          ),
-          const SizedBox(height: 12),
-          const Row(
+          Text('TOTAL: \$$price',
+            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 32, color: AppColors.primary, letterSpacing: -2)),
+          SizedBox(height: 32),
+          const _MockField(label: 'NÚMERO DE TARJETA', hint: '4242 4242 4242 4242'),
+          SizedBox(height: 16),
+          Row(
             children: [
-              Expanded(
-                child: _MockField(label: 'Vencimiento', hint: '12 / 28'),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _MockField(label: 'CVV', hint: '424'),
-              ),
+              Expanded(child: _MockField(label: 'VENCIMIENTO', hint: '12 / 28')),
+              SizedBox(width: 16),
+              Expanded(child: _MockField(label: 'CVV', hint: '424')),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.blue.shade200),
+              color: Colors.transparent,
+              border: Border.all(color: const Color(0xFF6259F5), width: 2),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
-                const SizedBox(width: 8),
+                Icon(Icons.info_rounded, size: 20, color: Color(0xFF6259F5)),
+                SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    'Modo de prueba Stripe. Los datos no se envían a ningún servidor externo.',
-                    style: TextStyle(fontSize: 12, color: Colors.blue.shade800),
-                  ),
+                  child: Text('MODO DE PRUEBA STRIPE. LOS DATOS NO SE ENVÍAN A NINGÚN SERVIDOR EXTERNO.',
+                    style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
                 ),
               ],
             ),
           ),
         ],
       ),
+      actionsPadding: const EdgeInsets.all(24),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.pop(context, false),
-          style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
-          child: const Text('Cancelar'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.text,
+            side: BorderSide(color: AppColors.border, width: 2),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          ),
+          child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
         ),
         ElevatedButton.icon(
           onPressed: () => Navigator.pop(context, true),
-          icon: const Icon(Icons.lock_outline, size: 16),
-          label: Text('Pagar \$$price'),
+          icon: Icon(Icons.lock_rounded, size: 16),
+          label: Text('PAGAR \$$price'),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF6259F5),
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.text,
             elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            side: BorderSide(color: Color(0xFF6259F5), width: 2),
           ),
         ),
       ],
@@ -990,26 +815,15 @@ class _MockField extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
-      ),
-      const SizedBox(height: 6),
+      Text(label, style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primary, letterSpacing: 1)),
+      SizedBox(height: 8),
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(6),
+          color: Colors.transparent,
+          border: Border.all(color: AppColors.border, width: 2),
         ),
-        child: Text(
-          hint,
-          style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
-        ),
+        child: Text(hint, style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 16, fontWeight: FontWeight.bold)),
       ),
     ],
   );
@@ -1031,85 +845,83 @@ class _TransferDialogState extends State<_TransferDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-    title: const Text(
-      'Transferir entrada',
-      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-    ),
+    backgroundColor: AppColors.background,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+    title: Text('TRANSFERIR ENTRADA', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.text, letterSpacing: -1)),
     content: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Correo del destinatario (debe estar registrado en la plataforma):',
-          style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
-        ),
-        const SizedBox(height: 12),
+        Text('CORREO DEL DESTINATARIO (DEBE ESTAR REGISTRADO EN EL HUB):',
+          style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1, height: 1.5)),
+        SizedBox(height: 16),
         TextField(
           controller: _ctrl,
           keyboardType: TextInputType.emailAddress,
           onChanged: (_) => setState(() => _error = null),
+          style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 16),
+          cursorColor: AppColors.primary,
           decoration: InputDecoration(
-            hintText: 'usuario@correo.com',
-            prefixIcon: const Icon(Icons.email_outlined, size: 20),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-            isDense: true,
+            hintText: 'USUARIO@CORREO.COM',
+            hintStyle: GoogleFonts.dmSans(color: AppColors.border),
+            prefixIcon: Icon(Icons.email_rounded, size: 20, color: AppColors.textMuted),
             errorText: _error,
+            filled: true,
+            fillColor: Colors.transparent,
+            border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border, width: 2)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border, width: 2)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.primary, width: 2)),
+            errorBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.error, width: 2)),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 24),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.orange.shade50,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: Colors.orange.shade200),
+            color: Colors.transparent,
+            border: Border.all(color: AppColors.error, width: 2),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.warning_amber_rounded,
-                size: 16,
-                color: Colors.orange.shade800,
-              ),
-              const SizedBox(width: 8),
+              Icon(Icons.warning_amber_rounded, size: 20, color: AppColors.error),
+              SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  'La transferencia de entradas es irreversible',
-                  style: TextStyle(fontSize: 12, color: Colors.orange.shade900),
-                ),
+                child: Text('LA TRANSFERENCIA DE ENTRADAS ES IRREVERSIBLE.',
+                  style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.text, fontWeight: FontWeight.bold, letterSpacing: 1)),
               ),
             ],
           ),
         ),
       ],
     ),
+    actionsPadding: const EdgeInsets.all(24),
     actions: [
-      TextButton(
+      OutlinedButton(
         onPressed: () => Navigator.pop(context),
-        style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
-        child: const Text('Cancelar'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.text,
+          side: BorderSide(color: AppColors.border, width: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
       ),
       ElevatedButton(
         onPressed: () {
           final email = _ctrl.text.trim();
           if (!_validEmail(email)) {
-            setState(() => _error = 'Ingresa un correo válido');
+            setState(() => _error = 'INGRESA UN CORREO VÁLIDO');
             return;
           }
           Navigator.pop(context, email);
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade700,
-          foregroundColor: Colors.white,
+          backgroundColor: const Color(0xFFFF00FF),
+          foregroundColor: AppColors.inverseSurface,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         ),
-        child: const Text(
-          'Transferir',
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
+        child: Text('TRANSFERIR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
       ),
     ],
   );
@@ -1123,80 +935,56 @@ class _HistoryDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-    title: Text(
-      'Historial — Entrada #$ticketId',
-      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-    ),
+    backgroundColor: AppColors.background,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+    title: Text('HISTORIAL — ENTRADA #$ticketId',
+      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
     content: SizedBox(
       width: 400,
       child: history.isEmpty
-          ? Text(
-              'Sin eventos registrados aún.',
-              style: TextStyle(color: Colors.grey.shade600),
-            )
+          ? Text('SIN EVENTOS REGISTRADOS AÚN.',
+              style: GoogleFonts.dmSans(color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1))
           : Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: AppColors.border, width: 2),
               ),
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: history.length,
-                separatorBuilder: (_, __) =>
-                    Divider(height: 1, color: Colors.grey.shade200),
+                separatorBuilder: (_, __) => Divider(height: 2, color: AppColors.border),
                 itemBuilder: (_, i) {
                   final e = history[i];
+                  final sc = _statusColor(e['status'] ?? '');
                   return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     dense: true,
-                    leading: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: _statusColor(
-                        e['status'] ?? '',
-                      ).withOpacity(0.1),
-                      child: Icon(
-                        Icons.circle,
-                        size: 10,
-                        color: _statusColor(e['status'] ?? ''),
-                      ),
+                    leading: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(color: Colors.transparent, border: Border.all(color: sc, width: 2)),
+                      child: Icon(Icons.history_rounded, size: 20, color: sc),
                     ),
-                    title: Text(
-                      _statusLabel(e['status'] ?? ''),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    subtitle: Text(
-                      e['reason'] ?? '—',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
+                    title: Text(_statusLabel(e['status'] ?? ''),
+                      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.text)),
+                    subtitle: Text((e['reason'] ?? '—').toString().toUpperCase(),
+                      style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
                     trailing: Text(
                       (e['changedAt'] as String? ?? '').substring(0, 10),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                      style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.primary, fontWeight: FontWeight.bold)),
                   );
                 },
               ),
             ),
     ),
+    actionsPadding: const EdgeInsets.all(24),
     actions: [
-      TextButton(
+      OutlinedButton(
         onPressed: () => Navigator.pop(context),
-        style: TextButton.styleFrom(foregroundColor: const Color(0xFF00341C)),
-        child: const Text('Cerrar'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          side: BorderSide(color: AppColors.primary, width: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        child: Text('CERRAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
       ),
     ],
   );
@@ -1213,33 +1001,31 @@ class _ConfirmDialog extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => AlertDialog(
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-    title: Text(
-      title,
-      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
-    ),
-    content: Text(
-      content,
-      style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-    ),
+    backgroundColor: AppColors.background,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+    title: Text(title, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.text, letterSpacing: -1)),
+    content: Text(content, style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, height: 1.5, letterSpacing: 1)),
+    actionsPadding: const EdgeInsets.all(24),
     actions: [
-      TextButton(
+      OutlinedButton(
         onPressed: () => Navigator.pop(context, false),
-        style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
-        child: const Text('Cancelar'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.text,
+          side: BorderSide(color: AppColors.border, width: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
+        child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
       ),
       ElevatedButton(
         onPressed: () => Navigator.pop(context, true),
         style: ElevatedButton.styleFrom(
           backgroundColor: confirmColor,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.inverseSurface,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          side: BorderSide(color: confirmColor, width: 2),
         ),
-        child: Text(
-          confirmLabel,
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
+        child: Text(confirmLabel, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
       ),
     ],
   );
@@ -1252,21 +1038,19 @@ class _Empty extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: const EdgeInsets.all(48),
+      padding: const EdgeInsets.all(64),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 48, color: Colors.grey.shade300),
-          const SizedBox(height: 16),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-              height: 1.5,
-              fontSize: 14,
-            ),
+          Container(
+            width: 80, height: 80,
+            decoration: BoxDecoration(color: Colors.transparent, border: Border.all(color: AppColors.border, width: 2)),
+            child: Icon(icon, size: 32, color: AppColors.textMuted),
           ),
+          SizedBox(height: 24),
+          Text(text,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.dmSans(color: AppColors.textMuted, height: 1.6, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
         ],
       ),
     ),

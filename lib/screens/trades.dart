@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:frontend_proyecto/config.dart';
+import 'package:frontend_proyecto/providers/theme_provider.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
 import 'package:http/http.dart' as http;
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
+import '../utils/theme.dart';
 
 class TradesScreen extends StatefulWidget {
   const TradesScreen({super.key});
@@ -34,25 +38,41 @@ class _TradesScreenState extends State<TradesScreen> {
       if (r.statusCode == 200) {
         setState(() { _pending = jsonDecode(r.body); _loading = false; });
       } else {
-        setState(() { _error = 'Error al cargar intercambios'; _loading = false; });
+        setState(() { _error = 'ERROR AL CARGAR INTERCAMBIOS'; _loading = false; });
       }
     } catch (_) {
-      if (mounted) setState(() { _error = 'Sin conexión'; _loading = false; });
+      if (mounted) setState(() { _error = 'SIN CONEXIÓN'; _loading = false; });
     }
   }
 
   Future<void> _accept(int tradeId) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Aceptar intercambio'),
-        content: const Text('¿Confirmas el intercambio? Las láminas se intercambiarán inmediatamente.'),
+      builder: (dlgCtx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+        title: Text('ACEPTAR INTERCAMBIO', style: GoogleFonts.spaceGrotesk(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -1)),
+        content: Text('¿CONFIRMAS EL INTERCAMBIO? LAS LÁMINAS SE INTERCAMBIARÁN INMEDIATAMENTE.', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1, height: 1.5)),
+        actionsPadding: const EdgeInsets.all(24),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(dlgCtx, false),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.text,
+              side: BorderSide(color: AppColors.border, width: 2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00341C)),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Aceptar', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.onPrimary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.pop(dlgCtx, true),
+            child: Text('ACEPTAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -66,30 +86,47 @@ class _TradesScreenState extends State<TradesScreen> {
       if (!mounted) return;
       if (r.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('¡Intercambio completado!'), backgroundColor: Color(0xFF00341C)),
+          SnackBar(content: Text('¡INTERCAMBIO COMPLETADO!', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.primary),
         );
         _load();
       } else {
-        final msg = jsonDecode(r.body)['message'] ?? 'Error al aceptar';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+        final body = jsonDecode(r.body);
+        final msg = body['message'] ?? body['error'] ?? 'Error al aceptar';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
       }
-    } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de conexión')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ERROR: ${e.toString().toUpperCase()}', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
     }
   }
 
   Future<void> _reject(int tradeId) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Rechazar intercambio'),
-        content: const Text('¿Seguro que quieres rechazar esta solicitud?'),
+      builder: (dlgCtx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+        title: Text('RECHAZAR INTERCAMBIO', style: GoogleFonts.spaceGrotesk(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -1)),
+        content: Text('¿SEGURO QUE QUIERES RECHAZAR ESTA SOLICITUD?', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        actionsPadding: const EdgeInsets.all(24),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          OutlinedButton(
+            onPressed: () => Navigator.pop(dlgCtx, false),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.text,
+              side: BorderSide(color: AppColors.border, width: 2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Rechazar', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.inverseSurface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              elevation: 0,
+            ),
+            onPressed: () => Navigator.pop(dlgCtx, true),
+            child: Text('RECHAZAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -103,49 +140,63 @@ class _TradesScreenState extends State<TradesScreen> {
       if (!mounted) return;
       if (r.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Solicitud rechazada')),
+          SnackBar(content: Text('SOLICITUD RECHAZADA', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.primary),
         );
         _load();
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error al rechazar')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ERROR AL RECHAZAR', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
       }
     } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de conexión')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('ERROR DE CONEXIÓN', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Solicitudes de intercambio'),
-        backgroundColor: const Color(0xFF00341C),
-        foregroundColor: Colors.white,
+        title: Text('SOLICITUDES DE INTERCAMBIO', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: -1)),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
+        shape: Border(bottom: BorderSide(color: AppColors.onPrimary, width: 2)),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
+          IconButton(icon: Icon(Icons.refresh_rounded), onPressed: _load),
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _error != null
               ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text(_error!, style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 12),
-                  ElevatedButton(onPressed: _load, child: const Text('Reintentar')),
+                  Text(_error!, style: GoogleFonts.dmSans(color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _load,
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: AppColors.onPrimary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
+                    child: Text('REINTENTAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
+                  ),
                 ]))
               : _pending.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Column(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.swap_horiz, size: 64, color: Colors.grey),
-                        SizedBox(height: 12),
-                        Text('No tienes solicitudes pendientes', style: TextStyle(color: Colors.grey)),
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
+                          child: Icon(Icons.swap_horiz_rounded, size: 48, color: AppColors.textMuted),
+                        ),
+                        SizedBox(height: 24),
+                        Text('NO TIENES SOLICITUDES PENDIENTES', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
                       ]),
                     )
                   : RefreshIndicator(
+                      color: AppColors.onPrimary,
+                      backgroundColor: AppColors.primary,
                       onRefresh: _load,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                      child: ListView.separated(
+                        padding: const EdgeInsets.all(24),
                         itemCount: _pending.length,
+                        separatorBuilder: (_, __) => SizedBox(height: 24),
                         itemBuilder: (_, i) => _TradeCard(
                           trade: _pending[i],
                           onAccept: () => _accept(_pending[i]['id']),
@@ -166,110 +217,165 @@ class _TradeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final offered = trade['offered_sticker'];
+    final offeredList = (trade['offered_stickers'] as List<dynamic>? ?? []);
     final requested = trade['requested_sticker'];
     final proposerName = trade['proposer_name'] ?? trade['proposer_email'] ?? 'Usuario';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(children: [
-              const Icon(Icons.person, size: 16, color: Colors.grey),
-              const SizedBox(width: 4),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.border, width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.onPrimary,
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
+            ),
+            child: Row(children: [
+              Icon(Icons.person_rounded, size: 16, color: Colors.white),
+              SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '$proposerName quiere intercambiar contigo',
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  '${proposerName.toString().toUpperCase()} QUIERE INTERCAMBIAR',
+                  style: GoogleFonts.dmSans(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white, letterSpacing: 1),
                 ),
               ),
             ]),
-            const SizedBox(height: 16),
-            Row(
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
               children: [
-                Expanded(child: _StickerInfo(label: 'Te ofrece', sticker: offered, color: const Color(0xFF00341C))),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(Icons.swap_horiz, color: Colors.grey),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: AppColors.accentText, border: Border.all(color: AppColors.onPrimary, width: 2)),
+                            child: Text('TE OFRECE', style: GoogleFonts.spaceGrotesk(fontSize: 10, color: AppColors.inverseSurface, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                          ),
+                          SizedBox(height: 16),
+                          ...offeredList.map((s) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _StickerInfo(sticker: s as Map<String, dynamic>?, color: AppColors.accentText),
+                          )),
+                          if (offeredList.isEmpty)
+                            _StickerInfo(sticker: null, color: AppColors.accentText),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 36),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(color: Colors.transparent, border: Border.all(color: AppColors.border, width: 2)),
+                        child: Icon(Icons.swap_horiz_rounded, color: AppColors.text, size: 24),
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: const Color(0xFF00FFFF), border: Border.all(color: AppColors.onPrimary, width: 2)),
+                            child: Text('PIDE TU', style: GoogleFonts.spaceGrotesk(fontSize: 10, color: AppColors.onPrimary, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                          ),
+                          SizedBox(height: 16),
+                          _StickerInfo(sticker: requested as Map<String, dynamic>?, color: const Color(0xFF00FFFF)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(child: _StickerInfo(label: 'Pide tu', sticker: requested, color: Colors.orange.shade800)),
+                SizedBox(height: 32),
+                SizedBox(
+                  height: 60,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: onReject,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.error,
+                            side: BorderSide(color: AppColors.error, width: 2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                          ),
+                          child: Text('RECHAZAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: onAccept,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.onPrimary,
+                            side: BorderSide(color: AppColors.primary, width: 2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                            elevation: 0,
+                          ),
+                          child: Text('ACEPTAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: onReject,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                  ),
-                  child: const Text('Rechazar'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: onAccept,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00341C),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('Aceptar'),
-                ),
-              ),
-            ]),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class _StickerInfo extends StatelessWidget {
-  final String label;
-  final dynamic sticker;
+  final String label; // Re-added to fix Hot Reload state
+  final Map<String, dynamic>? sticker;
   final Color color;
+  final bool compact;
 
-  const _StickerInfo({required this.label, required this.sticker, required this.color});
+  const _StickerInfo({this.label = '', required this.sticker, required this.color, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
     if (sticker == null) return const SizedBox.shrink();
+    final imgH = compact ? 60.0 : 100.0;
+    final imgW = compact ? 44.0 : 75.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        if (sticker['photo_url'] != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: Image.network(sticker['photo_url'], height: 70, width: 50, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(height: 70, width: 50, color: Colors.grey.shade200,
-                child: const Icon(Icons.person, color: Colors.grey)),
+        if (sticker!['photo_url'] != null)
+          Container(
+            decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
+            child: Image.network(sticker!['photo_url'], height: imgH, width: imgW, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(height: imgH, width: imgW, color: AppColors.surface,
+                child: Icon(Icons.person, color: AppColors.border)),
             ),
           )
         else
-          Container(height: 70, width: 50, decoration: BoxDecoration(
-            color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-            child: Icon(Icons.sports_soccer, color: color, size: 28),
+          Container(height: imgH, width: imgW, decoration: BoxDecoration(
+            color: AppColors.surface, border: Border.all(color: color, width: 2)),
+            child: Icon(Icons.sports_soccer, color: color, size: compact ? 20 : 32),
           ),
-        const SizedBox(height: 6),
-        Text(sticker['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+        SizedBox(height: 8),
+        Text((sticker!['name'] ?? '').toString().toUpperCase(),
+          style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: compact ? 11 : 14, color: AppColors.text, height: 1.1),
           textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
-        Text(sticker['team'] ?? '', style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+        SizedBox(height: 4),
+        Text((sticker!['team'] ?? '').toString().toUpperCase(),
+          style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
-        Container(
-          margin: const EdgeInsets.only(top: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
-          child: Text(sticker['rarity'] ?? '', style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
-        ),
       ],
     );
   }

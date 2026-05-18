@@ -1,6 +1,8 @@
+import 'package:frontend_proyecto/utils/theme.dart';
 import 'package:flutter/material.dart';
-import '../services/news_service.dart' show NewsArticle, proxiedImageUrl;
-import '../utils/url_opener.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:frontend_proyecto/services/news_service.dart' show NewsArticle, proxiedImageUrl;
+import 'package:frontend_proyecto/utils/url_opener.dart';
 
 /// Muestra el detalle de una noticia como bottom sheet modal.
 void showNewsDetail(BuildContext context, NewsArticle article) {
@@ -21,7 +23,12 @@ class _NewsDetailSheet extends StatelessWidget {
     final ok = await openExternalUrl(article.url);
     if (!ok && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir el enlace')),
+        SnackBar(
+          content: Text('NO SE PUDO ABRIR EL ENLACE', 
+            style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.primary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
       );
     }
   }
@@ -33,23 +40,27 @@ class _NewsDetailSheet extends StatelessWidget {
     final screenH  = MediaQuery.of(context).size.height;
 
     return Container(
-      constraints: BoxConstraints(maxHeight: screenH * 0.88),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      constraints: BoxConstraints(
+        minHeight: 200,
+        maxHeight: screenH * 0.88,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.border, width: 4)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Handle ──────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.only(top: 12, bottom: 4),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+          // ── Header Handle (Brutalist style) ──────────────────────────
+          Container(
+            height: 12,
+            width: double.infinity,
+            color: AppColors.primary,
+            child: Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                color: AppColors.onPrimary,
               ),
             ),
           ),
@@ -57,125 +68,124 @@ class _NewsDetailSheet extends StatelessWidget {
           // ── Contenido scrollable ─────────────────────────────────────
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Imagen
-                  if (hasImage)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: Image.network(
-                          proxiedImageUrl(article.imageUrl),
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _placeholder(),
-                        ),
-                      ),
-                    )
-                  else
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: _placeholder(),
-                      ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      border: Border.all(color: AppColors.border, width: 2),
                     ),
+                    child: AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: hasImage 
+                        ? Image.network(
+                            proxiedImageUrl(article.imageUrl),
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => _placeholder(),
+                          )
+                        : _placeholder(),
+                    ),
+                  ),
 
-                  const SizedBox(height: 20),
+                  SizedBox(height: 32),
 
                   // Fuente + fecha
                   Row(
                     children: [
                       if (article.source.isNotEmpty) ...[
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF00341C).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
+                            color: AppColors.primary,
                           ),
                           child: Text(
-                            article.source,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF00341C),
+                            article.source.toUpperCase(),
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.onPrimary,
+                              letterSpacing: 1,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        SizedBox(width: 12),
                       ],
                       if (article.formattedDate.isNotEmpty)
                         Text(
-                          article.formattedDate,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
+                          article.formattedDate.toUpperCase(),
+                          style: GoogleFonts.dmSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textMuted,
+                            letterSpacing: 1,
                           ),
                         ),
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  SizedBox(height: 16),
 
                   // Título
                   Text(
-                    article.title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                      height: 1.35,
+                    article.title.toUpperCase(),
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.text,
+                      height: 1.1,
+                      letterSpacing: -1,
                     ),
                   ),
 
-                  const SizedBox(height: 16),
-                  Divider(color: Colors.grey.shade200, height: 1),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 24),
+                  Divider(color: AppColors.border, thickness: 2),
+                  SizedBox(height: 24),
 
                   // Descripción
                   if (article.description.isNotEmpty)
                     Text(
                       article.description,
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey.shade800,
-                        height: 1.65,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 16,
+                        color: AppColors.text,
+                        height: 1.6,
                       ),
                     )
                   else
                     Text(
-                      'No hay más detalles disponibles para esta noticia.',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
+                      'NO HAY MÁS DETALLES DISPONIBLES PARA ESTA NOTICIA.',
+                      style: GoogleFonts.dmSans(
+                        color: AppColors.textMuted,
                         fontStyle: FontStyle.italic,
+                        fontSize: 14,
                       ),
                     ),
 
                   if (hasUrl) ...[
-                    const SizedBox(height: 28),
+                    SizedBox(height: 48),
                     SizedBox(
                       width: double.infinity,
+                      height: 60,
                       child: ElevatedButton.icon(
                         onPressed: () => _openUrl(context),
-                        icon: const Icon(Icons.open_in_new, size: 18),
-                        label: const Text(
-                          'Ver artículo completo',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                        icon: Icon(Icons.open_in_new_sharp, size: 20),
+                        label: Text(
+                          'VER ARTÍCULO COMPLETO',
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1,
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF00341C),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.onPrimary,
                           elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                          side: BorderSide(color: AppColors.onPrimary, width: 2),
                         ),
                       ),
                     ),
@@ -190,9 +200,9 @@ class _NewsDetailSheet extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-        color: const Color(0xFF00341C).withValues(alpha: 0.07),
-        child: const Center(
-          child: Icon(Icons.sports_soccer, color: Color(0xFF00341C), size: 48),
+        color: AppColors.primary,
+        child: Center(
+          child: Icon(Icons.sports_soccer_sharp, color: AppColors.onPrimary, size: 48),
         ),
       );
 }

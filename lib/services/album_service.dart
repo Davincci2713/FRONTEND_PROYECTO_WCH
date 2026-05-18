@@ -45,14 +45,15 @@ class AlbumService {
     }
   }
 
-  Future<Map<String, dynamic>> proposeTrade(int proposerId, String receiverEmail, int offeredStickerId, int requestedStickerId) async {
+  Future<Map<String, dynamic>> proposeTrade(
+      int proposerId, String receiverEmail, List<int> offeredStickerIds, int requestedStickerId) async {
     final response = await http.post(
       Uri.parse('$baseUrl/album/exchange/propose'),
       headers: _h,
       body: jsonEncode({
         'proposer_id': proposerId,
         'receiver_email': receiverEmail,
-        'offered_sticker_id': offeredStickerId,
+        'offered_sticker_ids': offeredStickerIds,
         'requested_sticker_id': requestedStickerId,
       }),
     );

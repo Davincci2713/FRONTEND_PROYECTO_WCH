@@ -21,18 +21,25 @@ import 'package:frontend_proyecto/services/fcm_service.dart';
 import 'package:frontend_proyecto/firebase_options.dart';
 
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend_proyecto/providers/album_provider.dart';
+import 'package:frontend_proyecto/providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
   options: DefaultFirebaseOptions.currentPlatform,);
   await AuthService().initialize();
+
+  // Inicializar el tema antes del primer frame para evitar parpadeo
+  final prefs = await SharedPreferences.getInstance();
+  AppColors.isLightMode = prefs.getBool('is_light_mode') ?? false;
   FCMService().setRouter(_router, _rootNavigatorKey);
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AlbumProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -88,8 +95,9 @@ final GoRouter _router = GoRouter(
         if (group == null) {
           WidgetsBinding.instance.addPostFrameCallback(
               (_) => context.go('/comunidades'));
-          return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
+          return Scaffold(
+              backgroundColor: AppColors.background,
+              body: Center(child: CircularProgressIndicator(color: AppColors.primary)));
         }
         return GroupDetailScreen(group: group);
       },
@@ -159,11 +167,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'World Cup Hub',
-      theme: AppTheme.lightTheme,
-      routerConfig: _router,
-      debugShowCheckedModeBanner: false,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        // Sincronizar el getter estático de colores antes de construir la app
+        AppColors.isLightMode = themeProvider.isLightMode;
+        
+        return MaterialApp.router(
+          title: 'World Cup Hub',
+          theme: AppTheme.currentTheme,
+          routerConfig: _router,
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }

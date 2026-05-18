@@ -1,6 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend_proyecto/providers/theme_provider.dart';
+import 'package:frontend_proyecto/utils/theme.dart';
 import '../services/album_service.dart';
 import '../services/auth/auth.dart';
 
@@ -65,21 +69,23 @@ class _AlbumProgressScreenState extends State<AlbumProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
-          'Progreso del álbum',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        title: Text(
+          'PROGRESO DEL ÁLBUM',
+          style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: -1),
         ),
-        backgroundColor: const Color(0xFF00341C),
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.inverseSurface,
         elevation: 0,
+        shape: Border(bottom: BorderSide(color: AppColors.onPrimary, width: 2)),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _data == null
-              ? const Center(child: Text('Error cargando el álbum'))
+              ? Center(child: Text('ERROR CARGANDO EL ÁLBUM', style: GoogleFonts.spaceGrotesk(color: AppColors.text)))
               : Column(
                   children: [
                     _ProgressHeader(data: _data!),
@@ -119,8 +125,8 @@ class _ProgressHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+        color: AppColors.primary,
+        border: Border(bottom: BorderSide(color: AppColors.onPrimary, width: 2)),
       ),
       child: Column(
         children: [
@@ -128,28 +134,29 @@ class _ProgressHeader extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _Stat(
-                label: 'Obtenidas',
+                label: 'OBTENIDAS',
                 value: '$owned',
-                color: Colors.green.shade700,
+                color: AppColors.onPrimary,
               ),
-              _Stat(label: 'Total', value: '$total', color: Colors.black87),
+              _Stat(label: 'TOTAL', value: '$total', color: AppColors.border),
               _Stat(
-                label: 'Completado',
+                label: 'COMPLETADO',
                 value: '${pct.toStringAsFixed(1)}%',
-                color: const Color(0xFF00341C),
+                color: AppColors.onPrimary,
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: total > 0 ? owned / total : 0,
-              minHeight: 6,
-              backgroundColor: Colors.grey.shade200,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF00341C),
-              ),
+          SizedBox(height: 32),
+          Container(
+            height: 16,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.black, width: 2),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: total > 0 ? owned / total : 0,
+              child: Container(color: Colors.black),
             ),
           ),
         ],
@@ -167,19 +174,21 @@ class _Stat extends StatelessWidget {
         children: [
           Text(
             value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
               color: color,
+              letterSpacing: -1,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
+            style: GoogleFonts.dmSans(
+              fontSize: 10,
+              color: color.withValues(alpha: 0.8),
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
             ),
           ),
         ],
@@ -202,74 +211,71 @@ class _FilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+        color: AppColors.background,
+        border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 12,
+            runSpacing: 12,
             children: [
               for (final f in [
-                ('all', 'Todos'),
-                ('special', 'Especiales'),
-                ('team', 'Equipos'),
+                ('all', 'TODOS'),
+                ('special', 'ESPECIALES'),
+                ('team', 'EQUIPOS'),
               ])
-                FilterChip(
-                  label: Text(
-                    f.$2,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: filter == f.$1 ? Colors.white : Colors.black87,
+                GestureDetector(
+                  onTap: () => onFilterChanged(f.$1),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: filter == f.$1 ? AppColors.primary : Colors.transparent,
+                      border: Border.all(
+                        color: filter == f.$1 ? AppColors.primary : AppColors.border,
+                        width: 2,
+                      ),
                     ),
-                  ),
-                  selected: filter == f.$1,
-                  onSelected: (_) => onFilterChanged(f.$1),
-                  backgroundColor: Colors.white,
-                  selectedColor: const Color(0xFF00341C),
-                  checkmarkColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    side: BorderSide(
-                      color: filter == f.$1
-                          ? const Color(0xFF00341C)
-                          : Colors.grey.shade300,
+                    child: Text(
+                      f.$2,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        color: filter == f.$1 ? Colors.black : AppColors.textMuted,
+                        letterSpacing: 1,
+                      ),
                     ),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 24),
           TextField(
             onChanged: onQueryChanged,
+            style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 16),
+            cursorColor: AppColors.primary,
             decoration: InputDecoration(
-              hintText: 'Buscar jugador o equipo...',
-              prefixIcon: Icon(
-                Icons.search,
-                size: 20,
-                color: Colors.grey.shade500,
-              ),
+              hintText: 'BUSCAR JUGADOR O EQUIPO...',
+              hintStyle: GoogleFonts.dmSans(color: AppColors.border, fontSize: 14),
+              prefixIcon: Icon(Icons.search, size: 20, color: AppColors.textMuted),
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 12,
-                horizontal: 16,
-              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              filled: true,
+              fillColor: Colors.transparent,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(color: AppColors.border, width: 2),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: BorderSide(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(color: AppColors.border, width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
               ),
             ),
           ),
@@ -287,38 +293,28 @@ class _SectionTile extends StatelessWidget {
   const _SectionTile({required this.section});
 
   Widget _buildSectionIcon(String type, String? originalFlagUrl, bool complete) {
+    final color = complete ? Colors.black : AppColors.textMuted;
     if (type == 'special') {
-      return Icon(Icons.star,
-          color: complete ? const Color(0xFF00341C) : Colors.grey.shade600, size: 20);
+      return Icon(Icons.star, color: color, size: 24);
     }
 
     if (originalFlagUrl != null && originalFlagUrl.isNotEmpty) {
-      final flagUrl =
-          'http://localhost:5001/api/v1/proxy/image?url=${Uri.encodeComponent(originalFlagUrl)}';
+      final flagUrl = 'http://localhost:5001/api/v1/proxy/image?url=${Uri.encodeComponent(originalFlagUrl)}';
 
       if (originalFlagUrl.endsWith('.svg')) {
         return SvgPicture.network(
-          flagUrl,
-          width: 20,
-          height: 20,
-          fit: BoxFit.contain,
-          placeholderBuilder: (context) => Icon(Icons.flag,
-              color: complete ? const Color(0xFF00341C) : Colors.grey.shade600, size: 20),
+          flagUrl, width: 24, height: 24, fit: BoxFit.contain,
+          placeholderBuilder: (context) => Icon(Icons.flag, color: color, size: 24),
         );
       } else {
         return Image.network(
-          flagUrl,
-          width: 20,
-          height: 20,
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) => Icon(Icons.flag,
-              color: complete ? const Color(0xFF00341C) : Colors.grey.shade600, size: 20),
+          flagUrl, width: 24, height: 24, fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => Icon(Icons.flag, color: color, size: 24),
         );
       }
     }
 
-    return Icon(Icons.flag,
-        color: complete ? const Color(0xFF00341C) : Colors.grey.shade600, size: 20);
+    return Icon(Icons.flag, color: color, size: 24);
   }
 
   @override
@@ -331,45 +327,37 @@ class _SectionTile extends StatelessWidget {
     final flagUrl = section['flagUrl'] as String?;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(6),
+        color: AppColors.surface,
         border: Border.all(
-          color: complete ? const Color(0xFF00341C) : Colors.grey.shade300,
-          width: complete ? 2 : 1,
+          color: complete ? AppColors.primary : AppColors.border,
+          width: 2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          iconColor: Colors.black87,
-          collapsedIconColor: Colors.grey.shade600,
+          iconColor: AppColors.text,
+          collapsedIconColor: AppColors.textMuted,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           leading: Container(
-            width: 40,
-            height: 40,
+            width: 48,
+            height: 48,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: complete
-                  ? const Color(0xFF00341C).withOpacity(0.1)
-                  : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(6),
+              color: complete ? AppColors.primary : Colors.transparent,
+              border: Border.all(color: complete ? Colors.black : AppColors.border, width: 2),
             ),
             child: _buildSectionIcon(section['type'], flagUrl, complete),
           ),
           title: Text(
-            section['label'] as String,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: Colors.black87,
+            (section['label'] as String).toUpperCase(),
+            style: GoogleFonts.spaceGrotesk(
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              color: AppColors.text,
+              letterSpacing: -0.5,
             ),
           ),
           subtitle: Padding(
@@ -382,32 +370,33 @@ class _SectionTile extends StatelessWidget {
                   children: [
                     Text(
                       '$owned / $total',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: complete ? const Color(0xFF00341C) : Colors.grey.shade600,
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: complete ? AppColors.primary : AppColors.textMuted,
                       ),
                     ),
                     Text(
                       '${pct.toStringAsFixed(0)}%',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: complete ? const Color(0xFF00341C) : Colors.grey.shade500,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: complete ? AppColors.primary : AppColors.textMuted,
+                        letterSpacing: 1,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: total > 0 ? owned / total : 0,
-                    minHeight: 4,
-                    backgroundColor: Colors.grey.shade200,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      complete ? const Color(0xFF00341C) : Colors.blue.shade600,
-                    ),
+                SizedBox(height: 8),
+                Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.border, width: 1),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: total > 0 ? owned / total : 0,
+                    child: Container(color: complete ? AppColors.primary : const Color(0xFF00FFFF)),
                   ),
                 ),
               ],
@@ -416,17 +405,17 @@ class _SectionTile extends StatelessWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                border: Border(top: BorderSide(color: AppColors.border, width: 2)),
               ),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
               child: GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 140,
                   childAspectRatio: 0.55,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
                 ),
                 itemCount: stickers.length,
                 itemBuilder: (ctx, i) => _StickerCard(sticker: stickers[i]),
@@ -447,10 +436,10 @@ class _StickerCard extends StatelessWidget {
   const _StickerCard({required this.sticker});
 
   static Color _rarityColor(String r) => switch (r) {
-        'Legendary' => const Color(0xFFFFD700),
-        'Epic' => const Color(0xFF9C27B0),
-        'Rare' => const Color(0xFF1976D2),
-        _ => Colors.grey.shade400,
+        'Legendary' => const Color(0xFFFFD700), // Yellow
+        'Epic' => const Color(0xFFFF00FF), // Magenta
+        'Rare' => const Color(0xFF00FFFF), // Cyan
+        _ => AppColors.text,
       };
 
   @override
@@ -464,11 +453,10 @@ class _StickerCard extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: owned ? Colors.white : Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(6),
+            color: owned ? AppColors.surface : Colors.transparent,
             border: Border.all(
-              color: owned ? color : Colors.grey.shade300,
-              width: owned ? 2 : 1,
+              color: owned ? color : AppColors.border,
+              width: 2,
             ),
           ),
           child: Column(
@@ -476,18 +464,15 @@ class _StickerCard extends StatelessWidget {
             children: [
               // Rarity strip
               Container(
-                height: 4,
+                height: 8,
                 decoration: BoxDecoration(
-                  color: owned ? color : Colors.grey.shade300,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(4),
-                  ),
+                  color: owned ? color : AppColors.border,
                 ),
               ),
               // Card body
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(12),
                   child: owned
                       ? _OwnedContent(sticker: sticker, color: color)
                       : _UnownedContent(sticker: sticker),
@@ -498,20 +483,20 @@ class _StickerCard extends StatelessWidget {
         ),
         if (copies > 1)
           Positioned(
-            top: 8,
-            right: 8,
+            top: 12,
+            right: 12,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.black87,
-                borderRadius: BorderRadius.circular(4),
+                color: AppColors.primary,
+                border: Border.all(color: AppColors.onPrimary, width: 2),
               ),
               child: Text(
-                'x$copies',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+                'X$copies',
+                style: GoogleFonts.spaceGrotesk(
+                  color: AppColors.onPrimary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),
@@ -535,45 +520,48 @@ class _OwnedContent extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: color.withOpacity(0.1),
-          child: Icon(Icons.person, color: color, size: 20),
+        Container(
+          width: 48, height: 48,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Icon(Icons.person, color: color, size: 24),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 16),
         Text(
-          name,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
+          name.toUpperCase(),
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            color: AppColors.text,
+            height: 1.1,
           ),
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         if (position != null) ...[
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
-            position,
-            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+            position.toUpperCase(),
+            style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ],
-        const SizedBox(height: 8),
+        const Spacer(),
         if (panini != null)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(4),
+              color: color,
             ),
             child: Text(
               '#$panini',
-              style: TextStyle(
-                fontSize: 10,
-                color: color,
-                fontWeight: FontWeight.w600,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 12,
+                color: AppColors.onPrimary,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
@@ -607,73 +595,76 @@ class _UnownedContentState extends State<_UnownedContent> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        CircleAvatar(
-          radius: 16,
-          backgroundColor: Colors.grey.shade200,
+        Container(
+          width: 40, height: 40,
+          decoration: BoxDecoration(
+            color: Colors.transparent,
+            border: Border.all(color: AppColors.border, width: 2),
+          ),
           child: Icon(
             Icons.lock_outline,
-            color: Colors.grey.shade400,
-            size: 16,
+            color: AppColors.border,
+            size: 20,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 12),
         Text(
-          name,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade500,
+          name.toUpperCase(),
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            color: AppColors.textMuted,
+            height: 1.1,
           ),
           textAlign: TextAlign.center,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
         if (position != null) ...[
-          const SizedBox(height: 4),
+          SizedBox(height: 4),
           Text(
-            position,
-            style: TextStyle(fontSize: 10, color: Colors.grey.shade400),
+            position.toUpperCase(),
+            style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.border, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ],
-        const SizedBox(height: 8),
+        const Spacer(),
         if (panini != null)
           Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(4),
+              color: Colors.transparent,
+              border: Border.all(color: AppColors.border, width: 1),
             ),
             child: Text(
               '#$panini',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey.shade500,
-                fontWeight: FontWeight.w600,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 12,
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ),
         InkWell(
           onTap: _showTradeDialog,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF00341C).withOpacity(0.05),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: const Color(0xFF00341C).withOpacity(0.2)),
+              color: Colors.transparent,
+              border: Border.all(color: AppColors.accentText, width: 2),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.swap_horiz, size: 12, color: Color(0xFF00341C)),
-                const SizedBox(width: 4),
+                Icon(Icons.swap_horiz, size: 16, color: AppColors.accentText),
+                SizedBox(width: 8),
                 Text(
-                  'Pedir',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: const Color(0xFF00341C),
-                    fontWeight: FontWeight.w600,
+                  'PEDIR',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 12,
+                    color: AppColors.accentText,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
@@ -769,23 +760,19 @@ class _TradeDialogState extends State<_TradeDialog> {
     try {
       final uid = AuthService().currentUserId!;
       final requestedId = widget.requestedSticker['id'] as int;
-      String? lastError;
-      int sent = 0;
-      for (final s in _offered) {
-        final res = await AlbumService().proposeTrade(uid, email, s['id'] as int, requestedId);
-        if (res['success'] == true) sent++; else lastError = res['message'] as String?;
-      }
+      final offeredIds = _offered.map((s) => s['id'] as int).toList();
+      final res = await AlbumService().proposeTrade(uid, email, offeredIds, requestedId);
       if (!mounted) return;
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        sent > 0
-            ? SnackBar(content: Text(sent == 1 ? 'Solicitud enviada' : '$sent solicitudes enviadas'))
-            : SnackBar(content: Text(lastError ?? 'Error'), backgroundColor: const Color(0xFFBB0014)),
+        res['success'] == true
+            ? SnackBar(content: Text('SOLICITUD ENVIADA', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.primary)
+            : SnackBar(content: Text((res['message'] as String? ?? 'ERROR').toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error),
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: const Color(0xFFBB0014)));
+          SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
         setState(() => _submitting = false);
       }
     }
@@ -800,41 +787,49 @@ class _TradeDialogState extends State<_TradeDialog> {
     final panini = s['panini_code'] ?? s['id'];
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420, maxHeight: 640),
+        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 800),
         child: Column(
           children: [
             // ── Header fijo ──────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Solicitar intercambio',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18)),
-                  const SizedBox(height: 16),
-                  Text('Estás pidiendo:',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
+                  Text('SOLICITAR INTERCAMBIO',
+                      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.text, letterSpacing: -1)),
+                  SizedBox(height: 24),
+                  Text('ESTÁS PIDIENDO:',
+                      style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  SizedBox(height: 8),
                   _RequestedCard(name: name, team: team, rarity: rarity, panini: panini.toString()),
-                  const SizedBox(height: 16),
-                  Text('¿A quién se la pides?',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 24),
+                  Text('¿A QUIÉN SE LA PIDES?',
+                      style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  SizedBox(height: 8),
                   TextField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
+                    style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 16),
+                    cursorColor: AppColors.primary,
                     decoration: InputDecoration(
-                      hintText: 'Correo de tu amigo',
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                      isDense: true,
+                      hintText: 'CORREO DE TU AMIGO',
+                      hintStyle: GoogleFonts.dmSans(color: AppColors.border),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border, width: 2)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border, width: 2)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.primary, width: 2)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text('¿Qué lámina ofreces a cambio?',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 24),
+                  Text('¿QUÉ LÁMINA OFRECES A CAMBIO?',
+                      style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  SizedBox(height: 8),
                   // Drop zone
                   DragTarget<Map<String, dynamic>>(
                     onAcceptWithDetails: (d) => _addOffered(d.data),
@@ -843,83 +838,98 @@ class _TradeDialogState extends State<_TradeDialog> {
                       final hasItems = _offered.isNotEmpty;
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
-                        constraints: const BoxConstraints(minHeight: 52),
+                        constraints: const BoxConstraints(minHeight: 64),
                         padding: hasItems
-                            ? const EdgeInsets.symmetric(horizontal: 10, vertical: 8)
+                            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
                             : EdgeInsets.zero,
                         decoration: BoxDecoration(
                           color: hovering
-                              ? const Color(0xFF00341C).withOpacity(0.05)
-                              : Colors.grey.shade50,
+                              ? AppColors.primary.withValues(alpha: 0.1)
+                              : Colors.transparent,
                           border: Border.all(
                             color: hovering || hasItems
-                                ? const Color(0xFF00341C)
-                                : Colors.grey.shade300,
-                            width: hovering || hasItems ? 2 : 1,
+                                ? AppColors.primary
+                                : AppColors.border,
+                            width: 2,
                           ),
-                          borderRadius: BorderRadius.circular(6),
                         ),
                         alignment: hasItems ? Alignment.topLeft : Alignment.center,
                         child: hasItems
                             ? Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: _offered.map((s) => Chip(
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  visualDensity: VisualDensity.compact,
-                                  backgroundColor: const Color(0xFF00341C).withOpacity(0.08),
-                                  side: BorderSide(color: const Color(0xFF00341C).withOpacity(0.3)),
-                                  label: Text(
-                                    '${s['name']}${s['panini_code'] != null ? ' #${s['panini_code']}' : ''}',
-                                    style: const TextStyle(fontSize: 11, color: Color(0xFF00341C), fontWeight: FontWeight.w600),
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _offered.map((s) => Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    border: Border.all(color: AppColors.accentText, width: 2),
                                   ),
-                                  deleteIcon: const Icon(Icons.close, size: 14, color: Color(0xFF00341C)),
-                                  onDeleted: () => _removeOffered(s),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        '${s['name']}${s['panini_code'] != null ? ' #${s['panini_code']}' : ''}'.toUpperCase(),
+                                        style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.text, fontWeight: FontWeight.w900),
+                                      ),
+                                      SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () => _removeOffered(s),
+                                        child: Icon(Icons.close, size: 16, color: AppColors.accentText),
+                                      ),
+                                    ],
+                                  ),
                                 )).toList(),
                               )
                             : Row(mainAxisSize: MainAxisSize.min, children: [
-                                Icon(Icons.drag_indicator, color: Colors.grey.shade400, size: 20),
-                                const SizedBox(width: 6),
-                                Text('Arrastra una o más láminas aquí',
-                                    style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+                                Icon(Icons.drag_indicator, color: AppColors.textMuted, size: 24),
+                                SizedBox(width: 8),
+                                Text('ARRASTRA UNA O MÁS LÁMINAS AQUÍ',
+                                    style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
                               ]),
                       );
                     },
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 16),
                   // Búsqueda
                   TextField(
                     controller: _searchCtrl,
+                    style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 14),
+                    cursorColor: AppColors.primary,
                     decoration: InputDecoration(
-                      hintText: 'Buscar por nombre o equipo...',
-                      prefixIcon: const Icon(Icons.search, size: 18),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      hintText: 'BUSCAR POR NOMBRE O EQUIPO...',
+                      hintStyle: GoogleFonts.dmSans(color: AppColors.border),
+                      prefixIcon: Icon(Icons.search, size: 20, color: AppColors.textMuted),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border, width: 2)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border, width: 2)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.primary, width: 2)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 16),
                 ],
               ),
             ),
             // ── Grid de láminas (scrollable) ─────────────────────────────────
             Flexible(
               child: _loading
-                  ? const Center(child: Padding(
+                  ? Center(child: Padding(
                       padding: EdgeInsets.all(24),
-                      child: CircularProgressIndicator()))
+                      child: CircularProgressIndicator(color: AppColors.primary)))
                   : _filtered.isEmpty
                       ? Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text('No tienes láminas que coincidan',
-                              style: TextStyle(color: Colors.grey.shade500)))
+                          padding: const EdgeInsets.all(48),
+                          child: Text('NO TIENES LÁMINAS QUE COINCIDAN',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.spaceGrotesk(color: AppColors.textMuted, fontWeight: FontWeight.w900, fontSize: 16)))
                       : GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                            childAspectRatio: 0.72,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 0.55,
                           ),
                           itemCount: _filtered.length,
                           itemBuilder: (_, i) => _DraggableSticker(sticker: _filtered[i]),
@@ -927,29 +937,35 @@ class _TradeDialogState extends State<_TradeDialog> {
             ),
             // ── Acciones ─────────────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
               child: Row(children: [
                 Expanded(
-                  child: TextButton(
+                  child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    style: TextButton.styleFrom(foregroundColor: Colors.grey.shade700),
-                    child: const Text('Cancelar'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.text,
+                      side: BorderSide(color: AppColors.border, width: 2),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                    ),
+                    child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: (_offered.isNotEmpty && !_submitting) ? _submit : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00341C),
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.onPrimary,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
                     ),
                     child: _submitting
-                        ? const SizedBox(height: 18, width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Enviar', style: TextStyle(fontWeight: FontWeight.w500)),
+                        ? SizedBox(height: 20, width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.onPrimary))
+                        : Text('ENVIAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
                   ),
                 ),
               ]),
@@ -967,30 +983,29 @@ class _RequestedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(12),
+    padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.grey.shade50,
-      border: Border.all(color: Colors.grey.shade200),
-      borderRadius: BorderRadius.circular(6),
+      color: Colors.transparent,
+      border: Border.all(color: AppColors.border, width: 2),
     ),
     child: Row(children: [
       Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white, shape: BoxShape.circle,
-          border: Border.all(color: Colors.grey.shade300)),
-        child: const Icon(Icons.style, size: 20, color: Color(0xFF00341C)),
+          color: AppColors.primary,
+          border: Border.all(color: AppColors.onPrimary, width: 2)),
+        child: Icon(Icons.style_rounded, size: 24, color: AppColors.onPrimary),
       ),
-      const SizedBox(width: 12),
+      SizedBox(width: 16),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87)),
-        const SizedBox(height: 2),
-        Text('$team • $rarity', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+        Text(name.toUpperCase(), style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 16, color: AppColors.text, letterSpacing: -0.5)),
+        SizedBox(height: 4),
+        Text('$team • $rarity'.toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
       ])),
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4)),
-        child: Text('#$panini', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(color: AppColors.surfaceVariant, border: Border.all(color: AppColors.border, width: 1)),
+        child: Text('#$panini', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 14, color: AppColors.text)),
       ),
     ]),
   );
@@ -1010,47 +1025,45 @@ class _DraggableSticker extends StatelessWidget {
 
     final card = Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade200),
-        borderRadius: BorderRadius.circular(6),
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.border, width: 2),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (photoUrl != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+            Container(
+              decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
               child: Image.network(photoUrl,
                   height: 60, width: 44, fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.person, size: 28, color: Colors.grey)),
+                      Container(color: AppColors.borderLight, width: 44, height: 60, child: Icon(Icons.person, size: 28, color: AppColors.textMuted))),
             )
           else
-            const Icon(Icons.style, size: 28, color: Color(0xFF00341C)),
-          const SizedBox(height: 4),
-          Text(name,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+            Container(width: 44, height: 60, decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)), child: Icon(Icons.style, size: 28, color: AppColors.textMuted)),
+          SizedBox(height: 12),
+          Text(name.toUpperCase(),
+              style: GoogleFonts.spaceGrotesk(fontSize: 10, fontWeight: FontWeight.w900, color: AppColors.text, height: 1.1),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis),
-          Text(team,
-              style: TextStyle(fontSize: 9, color: Colors.grey.shade500),
+          SizedBox(height: 4),
+          Text(team.toUpperCase(),
+              style: GoogleFonts.dmSans(fontSize: 8, color: AppColors.textMuted, fontWeight: FontWeight.bold),
               maxLines: 1, overflow: TextOverflow.ellipsis),
+          const Spacer(),
           if (panini != null)
             Text('#$panini',
-                style: TextStyle(fontSize: 9, color: Colors.grey.shade400,
-                    fontWeight: FontWeight.w600)),
+                style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.text, fontWeight: FontWeight.w900)),
           if (rarity.isNotEmpty)
             Container(
-              margin: const EdgeInsets.only(top: 2),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              margin: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF00341C).withOpacity(0.08),
-                borderRadius: BorderRadius.circular(3)),
-              child: Text(rarity,
-                  style: const TextStyle(fontSize: 8, color: Color(0xFF00341C),
-                      fontWeight: FontWeight.w600)),
+                color: AppColors.borderLight),
+              child: Text(rarity.toUpperCase(),
+                  style: GoogleFonts.spaceGrotesk(fontSize: 8, color: AppColors.text, fontWeight: FontWeight.w900)),
             ),
         ],
       ),
@@ -1062,7 +1075,7 @@ class _DraggableSticker extends StatelessWidget {
         color: Colors.transparent,
         child: Opacity(
           opacity: 0.9,
-          child: SizedBox(width: 90, height: 115, child: card),
+          child: SizedBox(width: 100, height: 140, child: card),
         ),
       ),
       childWhenDragging: Opacity(opacity: 0.35, child: card),
