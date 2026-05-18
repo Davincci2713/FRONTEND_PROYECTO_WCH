@@ -1,11 +1,14 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/community_service.dart';
-import '../services/feed_service.dart';
-import '../services/auth/auth.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend_proyecto/providers/theme_provider.dart';
+import 'package:frontend_proyecto/services/community_service.dart';
+import 'package:frontend_proyecto/services/feed_service.dart';
+import 'package:frontend_proyecto/services/auth/auth.dart';
+import 'package:frontend_proyecto/utils/theme.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Entry point
@@ -15,25 +18,30 @@ class ComunidadesScreen extends StatelessWidget {
   const ComunidadesScreen({super.key});
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade50,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: const Color(0xFF00341C),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          title: const Text('Comunidades',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
-          bottom: TabBar(
-            indicatorColor: Colors.white,
-            indicatorWeight: 3,
-            labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400),
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            tabs: const [Tab(text: 'Feed'), Tab(text: 'Mis grupos')],
+        backgroundColor: AppColors.background,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
+            ),
+            child: TabBar(
+              labelColor: AppColors.accentText,
+              unselectedLabelColor: AppColors.textMuted,
+              indicatorColor: AppColors.accentText,
+              indicatorWeight: 4,
+              indicatorSize: TabBarIndicatorSize.tab,
+              labelStyle: GoogleFonts.spaceGrotesk(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 1),
+              tabs: const [
+                Tab(icon: Icon(Icons.dynamic_feed_rounded, size: 20), text: 'FEED'),
+                Tab(icon: Icon(Icons.groups_rounded, size: 20), text: 'MIS GRUPOS'),
+              ],
+            ),
           ),
         ),
         body: const TabBarView(children: [_FeedTab(), _GruposTab()]),
@@ -138,19 +146,21 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
   Widget build(BuildContext context) {
     super.build(context); // Required by AutomaticKeepAliveClientMixin
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppColors.background,
       floatingActionButton: FloatingActionButton(
         onPressed: _openNewPost,
-        backgroundColor: const Color(0xFF00341C),
-        foregroundColor: Colors.white,
-        elevation: 2,
-        child: const Icon(Icons.add),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.onPrimary, width: 2)),
+        child: Icon(Icons.add, color: AppColors.onPrimary),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF00341C)))
+          ? Center(child: CircularProgressIndicator(color: AppColors.text))
           : RefreshIndicator(
               onRefresh: _load,
-              color: const Color(0xFF00341C),
+              color: AppColors.onPrimary,
+              backgroundColor: AppColors.primary,
               child: _posts.isEmpty
                   ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -162,14 +172,14 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
                   : ListView.builder(
                       controller: _scroll,
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
                       itemCount: _posts.length + (_loadingMore ? 1 : 0),
                       itemBuilder: (ctx, i) {
                         if (i == _posts.length) {
-                          return const Padding(
+                          return Padding(
                             padding: EdgeInsets.all(16),
                             child: Center(child: CircularProgressIndicator(
-                                color: Color(0xFF00341C))),
+                                color: AppColors.primary)),
                           );
                         }
                         return _PostCard(
@@ -184,13 +194,16 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
 
   Widget _emptyFeed() => Center(
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(Icons.dynamic_feed_outlined, size: 64, color: Colors.grey.shade300),
-      const SizedBox(height: 16),
-      Text('Sé el primero en publicar',
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
-      const SizedBox(height: 8),
-      Text('Toca + para crear una publicación',
-          style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+      Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
+        child: Icon(Icons.dynamic_feed_outlined, size: 48, color: AppColors.textMuted),
+      ),
+      SizedBox(height: 24),
+      Text('EL FEED ESTÁ VACÍO', style: GoogleFonts.spaceGrotesk(color: AppColors.text, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: -1)),
+      SizedBox(height: 8),
+      Text('SÉ EL PRIMERO EN COMPARTIR ALGO',
+          style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
     ]),
   );
 }
@@ -242,29 +255,26 @@ class _PostCardState extends State<_PostCard> {
   void _showOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
       builder: (sheetCtx) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(width: 40, height: 4,
             margin: const EdgeInsets.only(top: 12, bottom: 8),
-            decoration: BoxDecoration(color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2))),
+            decoration: BoxDecoration(color: AppColors.border)),
           ListTile(
-            leading: const Icon(Icons.edit_outlined, color: Colors.black87),
-            title: const Text('Editar publicación',
-                style: TextStyle(fontWeight: FontWeight.w500)),
+            leading: Icon(Icons.edit_outlined, color: AppColors.text),
+            title: Text('EDITAR PUBLICACIÓN',
+                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, color: AppColors.text, fontSize: 16)),
             onTap: () { Navigator.pop(sheetCtx); _openEdit(); },
           ),
           ListTile(
-            leading: Icon(Icons.delete_outline, color: Colors.red.shade600),
-            title: Text('Eliminar publicación',
-                style: TextStyle(color: Colors.red.shade600,
-                    fontWeight: FontWeight.w500)),
+            leading: Icon(Icons.delete_outline, color: AppColors.error),
+            title: Text('ELIMINAR PUBLICACIÓN',
+                style: GoogleFonts.spaceGrotesk(color: AppColors.error, fontWeight: FontWeight.w900, fontSize: 16)),
             onTap: () { Navigator.pop(sheetCtx); _confirmDelete(); },
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
         ]),
       ),
     );
@@ -275,28 +285,42 @@ class _PostCardState extends State<_PostCard> {
     showDialog(
       context: context,
       builder: (dlgCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        title: const Text('Editar publicación',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+        title: Text('EDITAR PUBLICACIÓN', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
         content: TextField(
           controller: ctrl, maxLines: 6, minLines: 2, autofocus: true,
+          style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 16),
+          cursorColor: AppColors.primary,
           decoration: InputDecoration(
-            hintText: '¿Qué está pasando en el Mundial?',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            contentPadding: const EdgeInsets.all(12),
+            hintText: '¿QUÉ ESTÁ PASANDO EN EL MUNDIAL?',
+            hintStyle: GoogleFonts.dmSans(color: AppColors.border),
+            filled: true,
+            fillColor: Colors.transparent,
+            border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border, width: 2)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border, width: 2)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.primary, width: 2)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           ),
         ),
+        actionsPadding: const EdgeInsets.all(24),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(dlgCtx),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.text,
+              side: BorderSide(color: AppColors.border, width: 2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00341C),
-                foregroundColor: Colors.white, elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6))),
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.onPrimary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              elevation: 0,
+            ),
             onPressed: () async {
               final newContent = ctrl.text.trim();
               Navigator.pop(dlgCtx);
@@ -308,8 +332,7 @@ class _PostCardState extends State<_PostCard> {
                     .showSnackBar(SnackBar(content: Text(e.toString())));
               }
             },
-            child: const Text('Guardar',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            child: Text('GUARDAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -320,20 +343,28 @@ class _PostCardState extends State<_PostCard> {
     showDialog(
       context: context,
       builder: (dlgCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        title: const Text('Eliminar publicación',
-            style: TextStyle(fontWeight: FontWeight.w600)),
-        content: const Text('¿Estás seguro? Esta acción no se puede deshacer.'),
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+        title: Text('ELIMINAR PUBLICACIÓN', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
+        content: Text('¿ESTÁS SEGURO? ESTA ACCIÓN NO SE PUEDE DESHACER.', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        actionsPadding: const EdgeInsets.all(24),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(dlgCtx),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.text,
+              side: BorderSide(color: AppColors.border, width: 2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade600,
-                foregroundColor: Colors.white, elevation: 0,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6))),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.inverseSurface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+              elevation: 0,
+            ),
             onPressed: () async {
               Navigator.pop(dlgCtx);
               try {
@@ -344,7 +375,7 @@ class _PostCardState extends State<_PostCard> {
                     .showSnackBar(SnackBar(content: Text(e.toString())));
               }
             },
-            child: const Text('Eliminar'),
+            child: Text('ELIMINAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -357,32 +388,29 @@ class _PostCardState extends State<_PostCard> {
     final time  = _formatTime(_post.createdAt);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 6, offset: const Offset(0, 2))],
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.border, width: 2),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // Header
         Padding(
-          padding: const EdgeInsets.fromLTRB(14, 14, 8, 0),
+          padding: const EdgeInsets.fromLTRB(20, 20, 8, 16),
           child: Row(children: [
-            _Avatar(user: _post.user, radius: 18),
-            const SizedBox(width: 10),
+            _Avatar(user: _post.user, radius: 24),
+            SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_post.user.displayName,
-                    style: const TextStyle(fontWeight: FontWeight.w600,
-                        fontSize: 14, color: Colors.black87)),
-                Text(time, style: TextStyle(fontSize: 11,
-                    color: Colors.grey.shade500)),
+                Text(_post.user.displayName.toUpperCase(),
+                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900,
+                        fontSize: 16, color: AppColors.text, letterSpacing: -0.5)),
+                Text(time, style: GoogleFonts.dmSans(fontSize: 10,
+                    color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
               ])),
             if (isOwn)
               IconButton(
-                icon: Icon(Icons.more_vert, color: Colors.grey.shade500, size: 20),
+                icon: Icon(Icons.more_vert, color: AppColors.textMuted, size: 24),
                 onPressed: _showOptions,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -393,32 +421,35 @@ class _PostCardState extends State<_PostCard> {
         // Content
         if (_post.content.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
             child: Text(_post.content,
-                style: const TextStyle(fontSize: 14, color: Colors.black87,
-                    height: 1.45)),
+                style: GoogleFonts.dmSans(fontSize: 16, color: AppColors.text,
+                    height: 1.5)),
           ),
 
         // Images
         if (_post.images.isNotEmpty) ...[
-          const SizedBox(height: 10),
+          SizedBox(height: 16),
           _ImageGrid(images: _post.images),
+          SizedBox(height: 16),
         ],
+
+        Divider(height: 2, color: AppColors.border),
 
         // Actions
         Padding(
-          padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(children: [
             _ActionButton(
               icon: _post.likedByMe ? Icons.favorite : Icons.favorite_border,
-              color: _post.likedByMe ? Colors.red.shade500 : Colors.grey.shade600,
+              color: _post.likedByMe ? AppColors.error : AppColors.textMuted,
               label: '${_post.likeCount}',
               onTap: _toggleLike,
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 16),
             _ActionButton(
               icon: Icons.chat_bubble_outline,
-              color: Colors.grey.shade600,
+              color: AppColors.textMuted,
               label: '${_post.commentCount}',
               onTap: _openComments,
             ),
@@ -441,17 +472,20 @@ class _ImageGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
     if (images.length == 1) {
-      return _FullImage(data: images[0], maxWidth: screenW);
+      return Container(
+        decoration: BoxDecoration(border: Border(top: BorderSide(color: AppColors.border, width: 2), bottom: BorderSide(color: AppColors.border, width: 2))),
+        child: _FullImage(data: images[0], maxWidth: screenW)
+      );
     }
     // Multiple images: horizontal scroll, each shown complete
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: images.asMap().entries.map((e) => Padding(
-          padding: EdgeInsets.only(right: e.key < images.length - 1 ? 8 : 0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+          padding: EdgeInsets.only(right: e.key < images.length - 1 ? 16 : 0),
+          child: Container(
+            decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
             child: ConstrainedBox(
               constraints: BoxConstraints(
                   maxWidth: screenW * 0.72, maxHeight: 360),
@@ -472,32 +506,38 @@ class _FullImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isBase64 = data.startsWith('data:image') || data.length > 200;
+    Widget img;
     if (isBase64) {
       try {
         final bytes = base64Decode(data.contains(',') ? data.split(',').last : data);
-        return ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 480),
-          child: Image.memory(bytes,
-            width: maxWidth, fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => _placeholder()),
-        );
+        img = Image.memory(bytes,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => _placeholder());
       } catch (_) {
         return _placeholder();
       }
+    } else {
+      img = Image.network(data,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => _placeholder());
     }
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: maxWidth, maxHeight: 480),
-      child: Image.network(data,
-        width: maxWidth, fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => _placeholder()),
+
+    return Container(
+      color: AppColors.background,
+      constraints: BoxConstraints(
+        maxWidth: maxWidth, 
+        maxHeight: 480,
+        minHeight: 120,
+      ),
+      child: Center(child: img),
     );
   }
 
   Widget _placeholder() => Container(
     width: maxWidth, height: 120,
-    color: Colors.grey.shade100,
+    color: AppColors.background,
     child: Icon(Icons.broken_image_outlined,
-        color: Colors.grey.shade400, size: 32));
+        color: AppColors.border, size: 48));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -567,38 +607,42 @@ class _CommentsSheetState extends State<_CommentsSheet> {
     return Container(
       constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.border, width: 2)),
       ),
       child: Column(children: [
         // Handle
         Padding(padding: const EdgeInsets.only(top: 12, bottom: 4),
           child: Container(width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2)))),
+            decoration: BoxDecoration(color: AppColors.border))),
         // Title
-        Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        Padding(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Row(children: [
-            Text('Comentarios',
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            Text('COMENTARIOS',
+                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.text, letterSpacing: -1)),
             const Spacer(),
-            Text('${widget.post.commentCount}',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(color: Colors.transparent, border: Border.all(color: AppColors.border, width: 2)),
+              child: Text('${widget.post.commentCount}',
+                  style: GoogleFonts.spaceGrotesk(color: AppColors.text, fontSize: 16, fontWeight: FontWeight.w900)),
+            ),
           ])),
-        Divider(height: 1, color: Colors.grey.shade200),
+        Divider(height: 2, color: AppColors.border),
 
         // List
         Flexible(child: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF00341C)))
+          ? Center(child: CircularProgressIndicator(color: AppColors.text))
           : _comments.isEmpty
-            ? Padding(padding: const EdgeInsets.all(32),
-                child: Text('Sin comentarios aún. ¡Sé el primero!',
+            ? Padding(padding: const EdgeInsets.all(48),
+                child: Text('SIN COMENTARIOS AÚN.\n¡SÉ EL PRIMERO!',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey.shade500)))
-            : ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                    style: GoogleFonts.dmSans(color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)))
+            : ListView.separated(
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 itemCount: _comments.length,
+                separatorBuilder: (_, __) => Divider(color: AppColors.borderLight, indent: 64),
                 itemBuilder: (_, i) => _CommentTile(
                   comment: _comments[i],
                   svc: _svc,
@@ -613,64 +657,66 @@ class _CommentsSheetState extends State<_CommentsSheet> {
         // Reply indicator
         if (_replyingTo != null)
           Container(
-            color: const Color(0xFF00341C).withValues(alpha: 0.06),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: AppColors.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             child: Row(children: [
-              Icon(Icons.reply, size: 16, color: const Color(0xFF00341C)),
-              const SizedBox(width: 8),
+              Icon(Icons.reply, size: 20, color: AppColors.onPrimary),
+              SizedBox(width: 12),
               Expanded(child: Text(
-                'Respondiendo a ${_replyingTo!.user.displayName}',
-                style: const TextStyle(fontSize: 12, color: Color(0xFF00341C),
-                    fontWeight: FontWeight.w500))),
+                'RESPONDIENDO A ${_replyingTo!.user.displayName.toUpperCase()}',
+                style: GoogleFonts.dmSans(fontSize: 12, color: AppColors.onPrimary,
+                    fontWeight: FontWeight.bold, letterSpacing: 1))),
               GestureDetector(
                 onTap: () => setState(() => _replyingTo = null),
-                child: Icon(Icons.close, size: 16, color: Colors.grey.shade600)),
+                child: Icon(Icons.close, size: 20, color: AppColors.onPrimary)),
             ]),
           ),
 
         // Input
         Padding(
-          padding: EdgeInsets.fromLTRB(12, 8, 12, 12 + bottom),
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottom),
           child: Row(children: [
             _Avatar(user: FeedUser(
               id: AuthService().currentUserId ?? 0,
               firstName: AuthService().currentUser?['firstName'] ?? '',
               lastName:  AuthService().currentUser?['lastName'] ?? '',
-            ), radius: 16),
-            const SizedBox(width: 10),
+            ), radius: 24),
+            SizedBox(width: 16),
             Expanded(child: TextField(
               controller: _ctrl,
               focusNode: _focus,
               maxLines: null,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _submit(),
+              style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 16),
+              cursorColor: AppColors.primary,
               decoration: InputDecoration(
-                hintText: _replyingTo != null ? 'Responder...' : 'Añadir comentario...',
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                hintText: _replyingTo != null ? 'RESPONDER...' : 'AÑADIR COMENTARIO...',
+                hintStyle: GoogleFonts.dmSans(color: AppColors.border, fontSize: 14),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 10),
+                    horizontal: 20, vertical: 16),
                 filled: true,
-                fillColor: Colors.grey.shade50,
+                fillColor: Colors.transparent,
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(color: Colors.grey.shade200)),
+                    borderRadius: BorderRadius.zero,
+                    borderSide: BorderSide(color: AppColors.border, width: 2)),
                 enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(color: Colors.grey.shade200)),
+                    borderRadius: BorderRadius.zero,
+                    borderSide: BorderSide(color: AppColors.border, width: 2)),
                 focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(color: Color(0xFF00341C))),
+                    borderRadius: BorderRadius.zero,
+                    borderSide: BorderSide(color: AppColors.primary, width: 2)),
               ),
             )),
-            const SizedBox(width: 8),
+            SizedBox(width: 12),
             GestureDetector(
               onTap: _submit,
               child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                    color: Color(0xFF00341C), shape: BoxShape.circle),
-                child: const Icon(Icons.send, color: Colors.white, size: 18),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                    color: AppColors.primary, border: Border.all(color: AppColors.onPrimary, width: 2)),
+                child: Icon(Icons.send, color: AppColors.onPrimary, size: 24),
               ),
             ),
           ]),
@@ -720,17 +766,21 @@ class _CommentTileState extends State<_CommentTile> {
       _buildComment(widget.comment, indent: 0),
       if (widget.comment.replies.isNotEmpty) ...[
         Padding(
-          padding: const EdgeInsets.only(left: 56),
+          padding: const EdgeInsets.only(left: 64),
           child: GestureDetector(
             onTap: () => setState(() => _showReplies = !_showReplies),
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Text(
-                _showReplies
-                    ? 'Ocultar respuestas'
-                    : 'Ver ${widget.comment.replies.length} respuesta(s)',
-                style: const TextStyle(fontSize: 12,
-                    color: Color(0xFF00341C), fontWeight: FontWeight.w600),
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(border: Border.all(color: AppColors.primary, width: 1)),
+                child: Text(
+                  _showReplies
+                      ? 'OCULTAR RESPUESTAS'
+                      : 'VER ${widget.comment.replies.length} RESPUESTA(S)',
+                  style: GoogleFonts.spaceGrotesk(fontSize: 10,
+                      color: AppColors.accentText, fontWeight: FontWeight.w900, letterSpacing: 1),
+                ),
               ),
             ),
           ),
@@ -743,50 +793,50 @@ class _CommentTileState extends State<_CommentTile> {
 
   Widget _buildComment(FeedComment c, {required double indent}) {
     return Padding(
-      padding: EdgeInsets.fromLTRB(16 + indent, 8, 16, 4),
+      padding: EdgeInsets.fromLTRB(24 + indent, 12, 24, 12),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _Avatar(user: c.user, radius: 14),
-        const SizedBox(width: 10),
+        _Avatar(user: c.user, radius: 16),
+        SizedBox(width: 16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(children: [
-              Text(c.user.displayName,
-                  style: const TextStyle(fontWeight: FontWeight.w600,
-                      fontSize: 13, color: Colors.black87)),
-              const SizedBox(width: 6),
+              Text(c.user.displayName.toUpperCase(),
+                  style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900,
+                      fontSize: 14, color: AppColors.text)),
+              SizedBox(width: 12),
               Text(_formatTime(c.createdAt),
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+                  style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
             ]),
-            const SizedBox(height: 2),
+            SizedBox(height: 8),
             Text(c.content,
-                style: const TextStyle(fontSize: 13, color: Colors.black87,
+                style: GoogleFonts.dmSans(fontSize: 14, color: AppColors.textMuted,
                     height: 1.4)),
-            const SizedBox(height: 4),
+            SizedBox(height: 12),
             Row(children: [
               GestureDetector(
                 onTap: _toggleLike,
                 child: Row(children: [
                   Icon(
                     c.likedByMe ? Icons.favorite : Icons.favorite_border,
-                    size: 14,
-                    color: c.likedByMe ? Colors.red.shade500 : Colors.grey.shade500,
+                    size: 16,
+                    color: c.likedByMe ? AppColors.error : AppColors.textMuted,
                   ),
                   if (c.likeCount > 0) ...[
-                    const SizedBox(width: 3),
+                    SizedBox(width: 6),
                     Text('${c.likeCount}',
-                        style: TextStyle(fontSize: 11,
-                            color: Colors.grey.shade500)),
+                        style: GoogleFonts.spaceGrotesk(fontSize: 14, fontWeight: FontWeight.w900,
+                            color: AppColors.textMuted)),
                   ],
                 ]),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: 24),
               if (indent == 0)
                 GestureDetector(
                   onTap: () => widget.onReply(c),
-                  child: Text('Responder',
-                      style: TextStyle(fontSize: 12,
-                          color: Colors.grey.shade500,
-                          fontWeight: FontWeight.w500)),
+                  child: Text('RESPONDER',
+                      style: GoogleFonts.dmSans(fontSize: 10,
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.bold, letterSpacing: 1)),
                 ),
             ]),
           ])),
@@ -849,65 +899,69 @@ class _NewPostSheetState extends State<_NewPostSheet> {
     final user   = AuthService().currentUser ?? {};
     return Container(
       padding: EdgeInsets.fromLTRB(0, 0, 0, bottom),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.border, width: 2)),
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         // Handle + header
         Padding(padding: const EdgeInsets.only(top: 12, bottom: 4),
           child: Container(width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2)))),
+            decoration: BoxDecoration(color: AppColors.border))),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 12, 8),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
           child: Row(children: [
-            const Text('Nueva publicación',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            Text('NUEVA PUBLICACIÓN',
+                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
             const Spacer(),
             ElevatedButton(
               onPressed: _posting ? null : _post,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00341C),
-                foregroundColor: Colors.white, elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6)),
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary, elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                side: BorderSide(color: AppColors.primary, width: 2),
               ),
               child: _posting
-                  ? const SizedBox(width: 16, height: 16,
-                      child: CircularProgressIndicator(color: Colors.white,
-                          strokeWidth: 2))
-                  : const Text('Publicar',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  ? SizedBox(width: 20, height: 20,
+                      child: CircularProgressIndicator(color: AppColors.onPrimary,
+                          strokeWidth: 3))
+                  : Text('PUBLICAR',
+                      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, letterSpacing: 1)),
             ),
           ]),
         ),
-        Divider(height: 1, color: Colors.grey.shade200),
+        Divider(height: 2, color: AppColors.border),
 
         // Text input
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _Avatar(user: FeedUser(
               id: AuthService().currentUserId ?? 0,
               firstName: user['firstName'] ?? '',
               lastName: user['lastName'] ?? '',
               avatar: user['profilePicture'],
-            ), radius: 18),
-            const SizedBox(width: 12),
+            ), radius: 24),
+            SizedBox(width: 16),
             Expanded(child: TextField(
               controller: _ctrl,
               maxLines: 5,
               minLines: 2,
               autofocus: true,
+              style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 18),
+              cursorColor: AppColors.primary,
               decoration: InputDecoration(
-                hintText: '¿Qué está pasando en el Mundial?',
-                hintStyle: TextStyle(color: Colors.grey.shade400),
+                hintText: '¿QUÉ ESTÁ PASANDO EN EL MUNDIAL?',
+                hintStyle: GoogleFonts.spaceGrotesk(color: AppColors.border, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: -1),
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
                 isDense: true,
+                contentPadding: EdgeInsets.zero,
               ),
-              style: const TextStyle(fontSize: 15, color: Colors.black87),
             )),
           ]),
         ),
@@ -915,31 +969,31 @@ class _NewPostSheetState extends State<_NewPostSheet> {
         // Image previews
         if (_images.isNotEmpty)
           SizedBox(
-            height: 90,
+            height: 120,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               itemCount: _images.length + (_images.length < 4 ? 1 : 0),
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              separatorBuilder: (_, __) => SizedBox(width: 16),
               itemBuilder: (_, i) {
                 if (i == _images.length) return _addImageBtn();
                 return Stack(children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                  Container(
+                    decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
                     child: Image.memory(
                       base64Decode(_images[i].contains(',')
                           ? _images[i].split(',').last : _images[i]),
-                      width: 80, height: 80, fit: BoxFit.cover),
+                      width: 100, height: 100, fit: BoxFit.cover),
                   ),
-                  Positioned(top: 2, right: 2,
+                  Positioned(top: 4, right: 4,
                     child: GestureDetector(
                       onTap: () => setState(() => _images.removeAt(i)),
                       child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                            color: Colors.black54, shape: BoxShape.circle),
-                        child: const Icon(Icons.close,
-                            color: Colors.white, size: 12)),
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                            color: AppColors.onPrimary, border: Border.all(color: AppColors.text, width: 2)),
+                        child: Icon(Icons.close,
+                            color: AppColors.text, size: 16)),
                     )),
                 ]);
               },
@@ -947,11 +1001,11 @@ class _NewPostSheetState extends State<_NewPostSheet> {
           )
         else
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(children: [_addImageBtn()]),
           ),
 
-        const SizedBox(height: 16),
+        SizedBox(height: 32),
       ]),
     );
   }
@@ -959,18 +1013,17 @@ class _NewPostSheetState extends State<_NewPostSheet> {
   Widget _addImageBtn() => GestureDetector(
     onTap: _pickImage,
     child: Container(
-      width: 80, height: 80,
+      width: 100, height: 100,
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade300, width: 1.5),
+        color: Colors.transparent,
+        border: Border.all(color: AppColors.border, width: 2),
       ),
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(Icons.add_photo_alternate_outlined,
-            color: Colors.grey.shade500, size: 28),
-        const SizedBox(height: 4),
-        Text('Foto', style: TextStyle(fontSize: 11,
-            color: Colors.grey.shade500)),
+            color: AppColors.textMuted, size: 32),
+        SizedBox(height: 8),
+        Text('FOTO', style: GoogleFonts.spaceGrotesk(fontSize: 14, fontWeight: FontWeight.w900,
+            color: AppColors.textMuted)),
       ]),
     ),
   );
@@ -1029,34 +1082,42 @@ class _GruposTabState extends State<_GruposTab> {
   void _showJoin() {
     final ctrl = TextEditingController();
     showDialog(context: context, builder: (dlgCtx) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      title: const Text('Unirse con código',
-          style: TextStyle(fontWeight: FontWeight.w600)),
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+      title: Text('UNIRSE CON CÓDIGO',
+          style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
       content: TextField(controller: ctrl, keyboardType: TextInputType.number,
-        decoration: InputDecoration(hintText: 'Código', isDense: true,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10))),
+        style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2),
+        textAlign: TextAlign.center,
+        cursorColor: AppColors.primary,
+        decoration: const InputDecoration(hintText: '000000')),
+      actionsPadding: const EdgeInsets.all(24),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(dlgCtx),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey))),
+        OutlinedButton(onPressed: () => Navigator.pop(dlgCtx),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.text,
+              side: BorderSide(color: AppColors.border, width: 2),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+            child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900))),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00341C),
-              foregroundColor: Colors.white, elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))),
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.onPrimary, elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
           onPressed: () async {
             try {
               await _svc.joinCommunity(int.parse(ctrl.text), _userId);
               if (!mounted) return;
               Navigator.pop(dlgCtx);
               ScaffoldMessenger.of(context)
-                  .showSnackBar(const SnackBar(content: Text('¡Te uniste!')));
+                  .showSnackBar(SnackBar(content: Text('¡TE UNISTE!', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.primary));
               _load();
             } catch (e) {
               if (mounted) ScaffoldMessenger.of(context)
-                  .showSnackBar(SnackBar(content: Text(e.toString())));
+                  .showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
             }
           },
-          child: const Text('Unirse', style: TextStyle(fontWeight: FontWeight.w600)),
+          child: Text('UNIRSE', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
         ),
       ],
     ));
@@ -1064,25 +1125,32 @@ class _GruposTabState extends State<_GruposTab> {
 
   void _showCode(String code) {
     showDialog(context: context, builder: (dlgCtx) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      title: const Text('Grupo creado', style: TextStyle(fontWeight: FontWeight.w600)),
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+      title: Text('GRUPO CREADO', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.primary, letterSpacing: -1)),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text('Comparte este código con tus amigos:',
+        Text('COMPARTE ESTE CÓDIGO CON TUS AMIGOS:',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
-        const SizedBox(height: 16),
+            style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+        SizedBox(height: 24),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           decoration: BoxDecoration(
-            color: const Color(0xFF00341C).withValues(alpha: 0.07),
-            borderRadius: BorderRadius.circular(8)),
-          child: Text(code, style: const TextStyle(fontSize: 36,
-              fontWeight: FontWeight.bold, letterSpacing: 4,
-              color: Color(0xFF00341C))),
+            color: Colors.transparent,
+            border: Border.all(color: AppColors.primary, width: 2)),
+          child: Text(code, style: GoogleFonts.spaceGrotesk(fontSize: 48,
+              fontWeight: FontWeight.w900, letterSpacing: 4,
+              color: AppColors.text)),
         ),
       ]),
-      actions: [TextButton(onPressed: () => Navigator.pop(dlgCtx),
-          child: const Text('Cerrar', style: TextStyle(color: Color(0xFF00341C))))],
+      actionsPadding: const EdgeInsets.all(24),
+      actions: [OutlinedButton(onPressed: () => Navigator.pop(dlgCtx),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.primary,
+            side: BorderSide(color: AppColors.primary, width: 2),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          ),
+          child: Text('CERRAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)))],
     ));
   }
 
@@ -1093,12 +1161,12 @@ class _GruposTabState extends State<_GruposTab> {
       await _svc.joinCommunity(code, _userId);
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('¡Te uniste a ${group['name']}!')));
+            .showSnackBar(SnackBar(content: Text('¡TE UNISTE A ${group['name'].toString().toUpperCase()}!', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.primary));
         _load();
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+          .showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
     }
   }
 
@@ -1106,62 +1174,51 @@ class _GruposTabState extends State<_GruposTab> {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: _load,
-      color: const Color(0xFF00341C),
+      color: AppColors.onPrimary,
+      backgroundColor: AppColors.primary,
       child: _loading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF00341C)))
+          ? Center(child: CircularProgressIndicator(color: AppColors.text))
           : SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 // Acciones
                 Row(children: [
                   Expanded(child: ElevatedButton.icon(
                     onPressed: _showCreate,
-                    icon: const Icon(Icons.add, size: 18),
-                    label: const Text('Crear grupo'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF00341C),
-                      foregroundColor: Colors.white, elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8))),
+                    icon: Icon(Icons.add, size: 20),
+                    label: Text('CREAR GRUPO'),
                   )),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 16),
                   Expanded(child: OutlinedButton.icon(
                     onPressed: _showJoin,
-                    icon: const Icon(Icons.group_add, size: 18),
-                    label: const Text('Unirme'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black87,
-                      side: BorderSide(color: Colors.grey.shade300),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8))),
+                    icon: Icon(Icons.group_add, size: 20),
+                    label: Text('UNIRME'),
                   )),
                 ]),
-                const SizedBox(height: 32),
+                SizedBox(height: 48),
 
                 // Mis grupos
-                _sectionHeader('Mis grupos', '${_mine.length}'),
-                const SizedBox(height: 12),
+                _sectionHeader('MIS GRUPOS', '${_mine.length}'),
+                SizedBox(height: 24),
                 if (_mine.isEmpty)
                   _emptyState(
-                    icon: Icons.group_outlined,
-                    message: 'Aún no perteneces a ningún grupo.',
-                    sub: 'Crea uno o únete con un código.',
+                    icon: Icons.groups_rounded,
+                    message: 'AÚN NO PERTENECES A NINGÚN GRUPO.',
+                    sub: 'CREA UNO O ÚNETE CON UN CÓDIGO.',
                   )
                 else
                   _groupGrid(_mine, isMine: true),
 
-                const SizedBox(height: 32),
+                SizedBox(height: 48),
 
                 // Grupos sugeridos
-                _sectionHeader('Grupos sugeridos', null),
-                const SizedBox(height: 12),
+                _sectionHeader('GRUPOS SUGERIDOS', null),
+                SizedBox(height: 24),
                 if (_suggested.isEmpty)
                   _emptyState(
-                    icon: Icons.explore_outlined,
-                    message: 'No hay grupos sugeridos disponibles.',
+                    icon: Icons.explore_rounded,
+                    message: 'NO HAY GRUPOS SUGERIDOS DISPONIBLES.',
                   )
                 else
                   _groupGrid(_suggested, isMine: false),
@@ -1175,10 +1232,10 @@ class _GruposTabState extends State<_GruposTab> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 200,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        mainAxisExtent: 195,
+        maxCrossAxisExtent: 240,
+        crossAxisSpacing: 24,
+        mainAxisSpacing: 24,
+        mainAxisExtent: 220,
       ),
       itemCount: groups.length,
       itemBuilder: (_, i) => _CommunityCard(
@@ -1190,17 +1247,18 @@ class _GruposTabState extends State<_GruposTab> {
   }
 
   Widget _sectionHeader(String title, String? count) => Row(children: [
-    Text(title, style: const TextStyle(fontSize: 16,
-        fontWeight: FontWeight.w700, color: Colors.black87)),
+    Text(title, style: GoogleFonts.spaceGrotesk(fontSize: 24,
+        fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -1)),
     if (count != null) ...[
-      const SizedBox(width: 8),
+      SizedBox(width: 12),
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFF00341C).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12)),
-        child: Text(count, style: const TextStyle(fontSize: 12,
-            color: Color(0xFF00341C), fontWeight: FontWeight.w600)),
+          color: AppColors.primary,
+          border: Border.all(color: AppColors.onPrimary, width: 2),
+        ),
+        child: Text(count, style: GoogleFonts.spaceGrotesk(fontSize: 16,
+            color: AppColors.onPrimary, fontWeight: FontWeight.w900)),
       ),
     ],
   ]);
@@ -1208,20 +1266,18 @@ class _GruposTabState extends State<_GruposTab> {
   Widget _emptyState({required IconData icon, required String message, String? sub}) =>
     Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.grey.shade200)),
+      padding: const EdgeInsets.all(48),
+      decoration: BoxDecoration(color: Colors.transparent,
+          border: Border.all(color: AppColors.border, width: 2)),
       child: Column(children: [
-        Icon(icon, size: 40, color: Colors.grey.shade300),
-        const SizedBox(height: 10),
+        Icon(icon, size: 48, color: AppColors.border),
+        SizedBox(height: 24),
         Text(message, textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+            style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
         if (sub != null) ...[
-          const SizedBox(height: 4),
+          SizedBox(height: 8),
           Text(sub, textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+              style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
         ],
       ]),
     );
@@ -1239,7 +1295,7 @@ class _CommunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name        = group['name']          as String? ?? 'Sin nombre';
+    final name        = group['name']          as String? ?? 'SIN NOMBRE';
     final description = group['description']  as String?;
     final team        = group['favoriteTeam'] as String?;
     final members     = group['memberCount']  as int?    ?? 0;
@@ -1250,19 +1306,12 @@ class _CommunityCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/group-detail', extra: group),
       child: Container(
-        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.surface,
           border: Border.all(
-            color: isMine
-                ? const Color(0xFF00341C).withValues(alpha: 0.4)
-                : Colors.grey.shade300,
-            width: isMine ? 1.5 : 1,
+            color: isMine ? AppColors.primary : AppColors.border,
+            width: 2,
           ),
-          boxShadow: [BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6, offset: const Offset(0, 2))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1270,34 +1319,31 @@ class _CommunityCard extends StatelessWidget {
             // ── Banner pequeño + ícono superpuesto ─────────────────
             Stack(clipBehavior: Clip.none, children: [
               // Banner
-              SizedBox(
-                height: 72,
+              Container(
+                height: 80,
                 width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
+                ),
                 child: bannerB64 != null
                     ? _b64Img(bannerB64, BoxFit.cover)
-                    : Container(
-                        color: const Color(0xFF00341C).withValues(alpha: 0.08)),
+                    : Container(color: AppColors.onPrimary),
               ),
               // Ícono superpuesto en la esquina inferior izquierda
               Positioned(
-                bottom: -18, left: 10,
+                bottom: -24, left: 16,
                 child: Container(
-                  width: 36, height: 36,
-                  clipBehavior: Clip.antiAlias,
+                  width: 48, height: 48,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: [BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 4)],
+                    color: AppColors.onPrimary,
+                    border: Border.all(color: isMine ? AppColors.primary : AppColors.text, width: 2),
                   ),
                   child: iconB64 != null
                       ? _b64Img(iconB64, BoxFit.cover)
                       : Container(
-                          color: const Color(0xFF00341C).withValues(alpha: 0.1),
-                          child: const Icon(Icons.group,
-                              color: Color(0xFF00341C), size: 18)),
+                          color: AppColors.primary,
+                          child: Icon(Icons.group,
+                              color: AppColors.onPrimary, size: 24)),
                 ),
               ),
             ]),
@@ -1305,61 +1351,51 @@ class _CommunityCard extends StatelessWidget {
             // ── Info ──────────────────────────────────────────────
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 22, 10, 8),
+                padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Nombre
-                    Text(name,
+                    Text(name.toUpperCase(),
                         maxLines: 2, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 12,
-                            color: Colors.black87, height: 1.3)),
-                    const SizedBox(height: 3),
+                        style: GoogleFonts.spaceGrotesk(
+                            fontWeight: FontWeight.w900, fontSize: 16,
+                            color: AppColors.text, letterSpacing: -0.5, height: 1.1)),
+                    SizedBox(height: 8),
                     // Descripción
                     if (description != null && description.isNotEmpty)
                       Text(description,
                           maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 10,
-                              color: Colors.grey.shade500, height: 1.3)),
+                          style: GoogleFonts.dmSans(fontSize: 12,
+                              color: AppColors.textMuted, height: 1.3)),
                     const Spacer(),
                     // Miembros + equipo
                     Row(children: [
                       Icon(Icons.people_outline,
-                          size: 11, color: Colors.grey.shade500),
-                      const SizedBox(width: 3),
+                          size: 14, color: AppColors.textMuted),
+                      SizedBox(width: 6),
                       Text(
                         '$members${maxMembers != null ? '/$maxMembers' : ''}',
-                        style: TextStyle(fontSize: 10,
-                            color: Colors.grey.shade600,
-                            fontWeight: FontWeight.w600),
+                        style: GoogleFonts.spaceGrotesk(fontSize: 14,
+                            color: AppColors.text,
+                            fontWeight: FontWeight.w900),
                       ),
                       if (team != null) ...[
-                        const SizedBox(width: 6),
-                        Expanded(child: Text(team,
+                        SizedBox(width: 12),
+                        Expanded(child: Text(team.toUpperCase(),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 9,
-                                color: Colors.grey.shade400))),
+                            style: GoogleFonts.dmSans(fontSize: 10,
+                                color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 1))),
                       ],
                     ]),
                     // Botón unirse
                     if (!isMine && onJoin != null) ...[
-                      const SizedBox(height: 6),
+                      SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: onJoin,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00341C),
-                            foregroundColor: Colors.white, elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6))),
-                          child: const Text('Unirse',
-                              style: TextStyle(fontSize: 11,
-                                  fontWeight: FontWeight.w600)),
+                          child: Text('UNIRSE'),
                         ),
                       ),
                     ],
@@ -1380,7 +1416,7 @@ class _CommunityCard extends StatelessWidget {
       return Image.memory(bytes, fit: fit, width: double.infinity,
           height: double.infinity);
     } catch (_) {
-      return Container(color: Colors.grey.shade100);
+      return Container(color: AppColors.onPrimary);
     }
   }
 }
@@ -1408,15 +1444,17 @@ class _Avatar extends StatelessWidget {
         img = NetworkImage(avatar);
       }
     }
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: const Color(0xFF00341C),
-      backgroundImage: img,
-      child: img == null
-          ? Text(user.initials,
-              style: TextStyle(color: Colors.white,
-                  fontSize: radius * 0.7, fontWeight: FontWeight.w600))
-          : null,
+    return Container(
+      width: radius * 2,
+      height: radius * 2,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        border: Border.all(color: AppColors.onPrimary, width: 2),
+      ),
+      child: img != null
+          ? Image(image: img, fit: BoxFit.cover)
+          : Center(child: Text(user.initials, style: GoogleFonts.spaceGrotesk(color: AppColors.onPrimary,
+              fontSize: radius * 0.8, fontWeight: FontWeight.w900))),
     );
   }
 }
@@ -1430,14 +1468,15 @@ class _ActionButton extends StatelessWidget {
       required this.label, required this.onTap});
 
   @override
-  Widget build(BuildContext context) => TextButton.icon(
+  Widget build(BuildContext context) => OutlinedButton.icon(
     onPressed: onTap,
     icon: Icon(icon, size: 18, color: color),
-    label: Text(label, style: TextStyle(color: color, fontSize: 13,
-        fontWeight: FontWeight.w500)),
-    style: TextButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+    label: Text(label, style: GoogleFonts.spaceGrotesk(color: color, fontSize: 14,
+        fontWeight: FontWeight.w900)),
+    style: OutlinedButton.styleFrom(
+        side: BorderSide(color: AppColors.border, width: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
   );
 }
 
@@ -1449,10 +1488,10 @@ String _formatTime(String iso) {
   try {
     final dt = DateTime.parse(iso).toLocal();
     final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60)  return 'ahora';
-    if (diff.inMinutes < 60)  return 'hace ${diff.inMinutes} min';
-    if (diff.inHours   < 24)  return 'hace ${diff.inHours} h';
-    if (diff.inDays    < 7)   return 'hace ${diff.inDays} d';
+    if (diff.inSeconds < 60)  return 'AHORA';
+    if (diff.inMinutes < 60)  return 'HACE ${diff.inMinutes} MIN';
+    if (diff.inHours   < 24)  return 'HACE ${diff.inHours} H';
+    if (diff.inDays    < 7)   return 'HACE ${diff.inDays} D';
     return '${dt.day}/${dt.month}/${dt.year}';
   } catch (_) { return ''; }
 }
@@ -1522,7 +1561,7 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
   Future<void> _submit() async {
     if (_nameCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('El nombre es obligatorio')));
+          SnackBar(content: Text('EL NOMBRE ES OBLIGATORIO', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
       return;
     }
     setState(() => _saving = true);
@@ -1540,7 +1579,7 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
       widget.onCreated(r['invitationCode'].toString());
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+          .showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1552,60 +1591,58 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
     return Container(
       constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.92),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        border: Border(top: BorderSide(color: AppColors.border, width: 2)),
       ),
       child: Column(children: [
         // Handle
         Padding(padding: const EdgeInsets.only(top: 12, bottom: 4),
           child: Container(width: 40, height: 4,
-            decoration: BoxDecoration(color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2)))),
+            decoration: BoxDecoration(color: AppColors.border))),
         // Header
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 12, 8),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
           child: Row(children: [
-            const Text('Crear grupo',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+            Text('CREAR GRUPO',
+                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.text, letterSpacing: -1)),
             const Spacer(),
             ElevatedButton(
               onPressed: _saving ? null : _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00341C),
-                foregroundColor: Colors.white, elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6))),
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary, elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                side: BorderSide(color: AppColors.primary, width: 2),
+              ),
               child: _saving
-                  ? const SizedBox(width: 16, height: 16,
+                  ? SizedBox(width: 20, height: 20,
                       child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
-                  : const Text('Crear',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                          color: AppColors.onPrimary, strokeWidth: 3))
+                  : Text('CREAR',
+                      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, letterSpacing: 1)),
             ),
           ]),
         ),
-        Divider(height: 1, color: Colors.grey.shade200),
+        Divider(height: 2, color: AppColors.border),
 
         // Scrollable form
         Flexible(child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottom),
+          padding: EdgeInsets.fromLTRB(24, 32, 24, 32 + bottom),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
             // ── Banner ───────────────────────────────────────────────
-            _label('Banner del grupo'),
-            const SizedBox(height: 8),
+            _label('BANNER DEL GRUPO'),
+            SizedBox(height: 12),
             GestureDetector(
               onTap: _pickBanner,
               child: Container(
-                height: 130,
+                height: 160,
                 width: double.infinity,
-                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF00341C).withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade300),
+                  color: Colors.transparent,
+                  border: Border.all(color: AppColors.border, width: 2),
                 ),
                 child: _bannerB64 != null
                     ? Stack(fit: StackFit.expand, children: [
@@ -1613,106 +1650,98 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
                           base64Decode(_bannerB64!.split(',').last),
                           fit: BoxFit.cover),
                         Positioned(bottom: 8, right: 8,
-                          child: _editChip('Cambiar')),
+                          child: _editChip('CAMBIAR')),
                       ])
                     : Column(mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.add_photo_alternate_outlined,
-                              size: 32, color: Colors.grey.shade400),
-                          const SizedBox(height: 6),
-                          Text('Agregar banner',
-                              style: TextStyle(color: Colors.grey.shade500,
-                                  fontSize: 13)),
+                              size: 40, color: AppColors.textMuted),
+                          SizedBox(height: 12),
+                          Text('AGREGAR BANNER',
+                              style: GoogleFonts.spaceGrotesk(color: AppColors.textMuted, fontWeight: FontWeight.w900, letterSpacing: 1)),
                         ]),
               ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: 32),
 
             // ── Ícono ────────────────────────────────────────────────
-            _label('Ícono del grupo'),
-            const SizedBox(height: 8),
+            _label('ÍCONO DEL GRUPO'),
+            SizedBox(height: 12),
             Row(children: [
               GestureDetector(
                 onTap: _pickIcon,
                 child: Container(
                   width: 80, height: 80,
-                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF00341C).withValues(alpha: 0.06),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey.shade300, width: 2),
+                    color: AppColors.onPrimary,
+                    border: Border.all(color: AppColors.border, width: 2),
                   ),
                   child: _iconB64 != null
                       ? Image.memory(
                           base64Decode(_iconB64!.split(',').last),
                           fit: BoxFit.cover)
-                      : Icon(Icons.group, size: 32, color: Colors.grey.shade400),
+                      : Icon(Icons.group, size: 32, color: AppColors.textMuted),
                 ),
               ),
-              const SizedBox(width: 14),
-              TextButton.icon(
+              SizedBox(width: 24),
+              OutlinedButton.icon(
                 onPressed: _pickIcon,
-                icon: const Icon(Icons.upload_rounded, size: 18),
-                label: Text(_iconB64 == null ? 'Subir ícono' : 'Cambiar ícono'),
-                style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF00341C)),
+                icon: Icon(Icons.upload_rounded, size: 20),
+                label: Text(_iconB64 == null ? 'SUBIR ÍCONO' : 'CAMBIAR ÍCONO'),
               ),
             ]),
-            const SizedBox(height: 20),
+            SizedBox(height: 32),
 
             // ── Nombre ───────────────────────────────────────────────
-            _label('Nombre del grupo *'),
-            const SizedBox(height: 8),
-            _input(_nameCtrl, 'Ej: Los Campeones del Mundo'),
-            const SizedBox(height: 16),
+            _label('NOMBRE DEL GRUPO *'),
+            SizedBox(height: 12),
+            _input(_nameCtrl, 'EJ: LOS CAMPEONES DEL MUNDO'),
+            SizedBox(height: 24),
 
             // ── Descripción ──────────────────────────────────────────
-            _label('Descripción'),
-            const SizedBox(height: 8),
-            _input(_descCtrl, 'Cuéntales a los demás de qué va este grupo...',
+            _label('DESCRIPCIÓN'),
+            SizedBox(height: 12),
+            _input(_descCtrl, 'CUÉNTALES A LOS DEMÁS DE QUÉ VA ESTE GRUPO...',
                 maxLines: 3),
-            const SizedBox(height: 16),
+            SizedBox(height: 24),
 
             // ── Equipo favorito ──────────────────────────────────────
-            _label('Equipo favorito'),
-            const SizedBox(height: 8),
+            _label('EQUIPO FAVORITO'),
+            SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.border, width: 2),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _selectedTeam,
                   isExpanded: true,
-                  hint: Text('Selecciona un equipo',
-                      style: TextStyle(color: Colors.grey.shade400,
-                          fontSize: 14)),
-                  icon: Icon(Icons.expand_more,
-                      color: Colors.grey.shade500),
+                  dropdownColor: AppColors.background,
+                  hint: Text('SELECCIONA UN EQUIPO',
+                      style: GoogleFonts.dmSans(color: AppColors.border, fontWeight: FontWeight.bold)),
+                  icon: Icon(Icons.expand_more, color: AppColors.textMuted),
                   items: [
                     DropdownMenuItem<String>(
                       value: null,
-                      child: Text('Sin equipo favorito',
-                          style: TextStyle(color: Colors.grey.shade500,
-                              fontSize: 14)),
+                      child: Text('SIN EQUIPO FAVORITO',
+                          style: GoogleFonts.dmSans(color: AppColors.textMuted, fontWeight: FontWeight.bold)),
                     ),
                     ..._wc2026Teams.map((t) => DropdownMenuItem(
                       value: t,
-                      child: Text(t, style: const TextStyle(fontSize: 14)),
+                      child: Text(t.toUpperCase(), style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, color: AppColors.text)),
                     )),
                   ],
                   onChanged: (v) => setState(() => _selectedTeam = v),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 24),
 
             // ── Máx. miembros ────────────────────────────────────────
-            _label('Máximo de miembros (opcional)'),
-            const SizedBox(height: 8),
-            _input(_maxCtrl, 'Sin límite',
+            _label('MÁXIMO DE MIEMBROS (OPCIONAL)'),
+            SizedBox(height: 12),
+            _input(_maxCtrl, 'SIN LÍMITE',
                 type: TextInputType.number),
           ]),
         )),
@@ -1721,33 +1750,26 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
   }
 
   Widget _label(String text) => Text(text,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-          color: Colors.black87));
+      style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.bold,
+          color: AppColors.primary, letterSpacing: 1));
 
   Widget _input(TextEditingController ctrl, String hint,
       {int maxLines = 1, TextInputType type = TextInputType.text}) =>
     TextField(
       controller: ctrl, maxLines: maxLines, keyboardType: type,
+      style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 16),
+      cursorColor: AppColors.primary,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade300)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFF00341C))),
       ),
     );
 
   Widget _editChip(String label) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
     decoration: BoxDecoration(
-      color: Colors.black54, borderRadius: BorderRadius.circular(20)),
+      color: AppColors.onPrimary, border: Border.all(color: AppColors.text, width: 2)),
     child: Text(label,
-        style: const TextStyle(color: Colors.white, fontSize: 12,
-            fontWeight: FontWeight.w500)),
+        style: GoogleFonts.spaceGrotesk(color: AppColors.text, fontSize: 12,
+            fontWeight: FontWeight.w900, letterSpacing: 1)),
   );
 }

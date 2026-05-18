@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:frontend_proyecto/providers/theme_provider.dart';
 import 'package:frontend_proyecto/utils/responsive.dart';
-import 'package:frontend_proyecto/screens/inicio.dart';
+import 'package:frontend_proyecto/utils/theme.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
 
-// Contador global de notificaciones no leídas; se resetea al abrir el drawer.
 final _notifCount = ValueNotifier<int>(0);
 
 class AppScaffold extends StatelessWidget {
@@ -21,83 +23,204 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return ResponsiveLayout(
-      mobile: Scaffold(
-        endDrawer: const _NotificationsDrawer(),
-        body: SafeArea(
-          child: Column(
-            children: [
-              _MobileHeader(),
-              Expanded(child: child),
-            ],
-          ),
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: currentIndex,
-          type: BottomNavigationBarType.fixed,
-          selectedFontSize: 10,
-          unselectedFontSize: 10,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-            BottomNavigationBarItem(icon: Icon(Icons.book), label: 'Álbum'),
-            BottomNavigationBarItem(icon: Icon(Icons.sports_soccer), label: 'Pollas'),
-            BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Comunidades'),
-            BottomNavigationBarItem(icon: Icon(Icons.confirmation_number), label: 'Tickets'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
-          ],
-          onTap: (index) => _onTap(context, index),
-        ),
-      ),
-      web: Scaffold(
-        endDrawer: const _NotificationsDrawer(),
-        body: Row(
-          children: [
-            Container(
-              width: 280,
-              color: Theme.of(context).colorScheme.primary,
-              child: AppSidebar(currentIndex: currentIndex),
-            ),
-            Expanded(
-              child: Column(
-                children: [
-                  const AppTopBar(),
-                  Expanded(child: child),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      mobile: _MobileScaffold(currentIndex: currentIndex, child: child),
+      web: _WebScaffold(currentIndex: currentIndex, child: child),
     );
-  }
-
-  void _onTap(BuildContext context, int index) {
-    const routes = ['/home', '/album', '/pollas', '/comunidades', '/tickets', '/profile'];
-    if (index < routes.length) context.go(routes[index]);
   }
 }
 
+// ── Mobile ────────────────────────────────────────────────────────────────────
+class _MobileScaffold extends StatelessWidget {
+  final int currentIndex;
+  final Widget child;
+  const _MobileScaffold({required this.currentIndex, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      endDrawer: const _NotificationsDrawer(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _MobileHeader(),
+            Expanded(child: child),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: AppColors.border, width: 2)),
+        ),
+        child: _AppBottomNav(currentIndex: currentIndex),
+      ),
+    );
+  }
+}
+
+class _AppBottomNav extends StatelessWidget {
+  final int currentIndex;
+  const _AppBottomNav({required this.currentIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      selectedIndex: currentIndex,
+      onDestinationSelected: (i) {
+        const routes = ['/home', '/album', '/pollas', '/comunidades', '/tickets', '/profile'];
+        if (i < routes.length) context.go(routes[i]);
+      },
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home_rounded),
+          label: 'INICIO',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.book_outlined),
+          selectedIcon: Icon(Icons.book_rounded),
+          label: 'ÁLBUM',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.sports_soccer_outlined),
+          selectedIcon: Icon(Icons.sports_soccer),
+          label: 'POLLAS',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.groups_outlined),
+          selectedIcon: Icon(Icons.groups_rounded),
+          label: 'GRUPOS',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.confirmation_number_outlined),
+          selectedIcon: Icon(Icons.confirmation_number),
+          label: 'TICKETS',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.person_outline_rounded),
+          selectedIcon: Icon(Icons.person_rounded),
+          label: 'PERFIL',
+        ),
+      ],
+    );
+  }
+}
+
+// ── Web ───────────────────────────────────────────────────────────────────────
+class _WebScaffold extends StatelessWidget {
+  final int currentIndex;
+  final Widget child;
+  const _WebScaffold({required this.currentIndex, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      endDrawer: const _NotificationsDrawer(),
+      body: Row(
+        children: [
+          Container(
+            width: 260,
+            decoration: BoxDecoration(
+              border: Border(right: BorderSide(color: AppColors.border, width: 2)),
+            ),
+            child: AppSidebar(currentIndex: currentIndex),
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                const AppTopBar(),
+                Expanded(child: child),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
 class AppSidebar extends StatelessWidget {
   final int currentIndex;
   const AppSidebar({super.key, required this.currentIndex});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 48),
-        const Icon(Icons.sports_soccer, size: 64, color: Colors.white),
-        const SizedBox(height: 48),
-        _SidebarItem(icon: Icons.home, label: 'Inicio', active: currentIndex == 0, onTap: () => context.go('/home')),
-        _SidebarItem(icon: Icons.book, label: 'Mi Álbum', active: currentIndex == 1, onTap: () => context.go('/album')),
-        _SidebarItem(icon: Icons.sports_soccer, label: 'Mis Pollas', active: currentIndex == 2, onTap: () => context.go('/pollas')),
-        _SidebarItem(icon: Icons.groups, label: 'Comunidades', active: currentIndex == 3, onTap: () => context.go('/comunidades')),
-        _SidebarItem(icon: Icons.confirmation_number, label: 'Tickets', active: currentIndex == 4, onTap: () => context.go('/tickets')),
-        const Spacer(),
-        _SidebarItem(icon: Icons.person, label: 'Mi Perfil', active: currentIndex == 5, onTap: () => context.go('/profile')),
-        _SidebarItem(icon: Icons.logout, label: 'Cerrar Sesión', onTap: () => context.go('/login')),
-        const SizedBox(height: 24),
-      ],
+    return Container(
+      color: AppColors.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(height: 32),
+          // Logo
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    border: Border.all(color: AppColors.onPrimary, width: 2),
+                  ),
+                  child: Icon(Icons.sports_soccer, color: AppColors.onPrimary, size: 24),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'WCH.26',
+                    style: GoogleFonts.spaceGrotesk(
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 24,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 48),
+          _SidebarSection(label: 'PRINCIPAL'),
+          _SidebarItem(icon: Icons.home_rounded,      label: 'INICIO',       active: currentIndex == 0, onTap: () => context.go('/home')),
+          _SidebarItem(icon: Icons.book_rounded,       label: 'MI ÁLBUM',     active: currentIndex == 1, onTap: () => context.go('/album')),
+          _SidebarItem(icon: Icons.sports_soccer,      label: 'MIS POLLAS',   active: currentIndex == 2, onTap: () => context.go('/pollas')),
+          SizedBox(height: 16),
+          _SidebarSection(label: 'SOCIAL'),
+          _SidebarItem(icon: Icons.groups_rounded,     label: 'COMUNIDADES',  active: currentIndex == 3, onTap: () => context.go('/comunidades')),
+          _SidebarItem(icon: Icons.confirmation_number,label: 'TICKETS',      active: currentIndex == 4, onTap: () => context.go('/tickets')),
+          const Spacer(),
+          Divider(),
+          _SidebarItem(icon: Icons.person_rounded,  label: 'MI PERFIL',   active: currentIndex == 5, onTap: () => context.go('/profile')),
+          _SidebarItem(icon: Icons.logout_rounded,  label: 'CERRAR SESIÓN', onTap: () => context.go('/login')),
+          SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
+
+class _SidebarSection extends StatelessWidget {
+  final String label;
+  const _SidebarSection({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+      child: Text(
+        label,
+        style: GoogleFonts.dmSans(
+          color: AppColors.textMuted,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 2,
+        ),
+      ),
     );
   }
 }
@@ -117,15 +240,41 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: active ? Colors.white : Colors.white70),
-      title: Text(label, style: TextStyle(color: active ? Colors.white : Colors.white70, fontWeight: active ? FontWeight.bold : FontWeight.normal)),
+    return InkWell(
       onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary : Colors.transparent,
+          border: Border(
+            bottom: BorderSide(color: active ? Colors.black : Colors.transparent, width: 2),
+            top: BorderSide(color: active ? Colors.black : Colors.transparent, width: 2),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: active ? Colors.black : AppColors.textMuted, size: 20),
+            SizedBox(width: 16),
+            Text(
+              label,
+              style: GoogleFonts.dmSans(
+                color: active ? Colors.black : AppColors.textMuted,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                letterSpacing: 1,
+              ),
+            ),
+            const Spacer(),
+            if (active)
+              Icon(Icons.arrow_forward, color: AppColors.onPrimary, size: 16),
+          ],
+        ),
+      ),
     );
   }
 }
 
-// ── Header mobile: nombre + campana ──────────────────────────────────────────
+// ── Mobile Header ─────────────────────────────────────────────────────────────
 class _MobileHeader extends StatefulWidget {
   @override
   State<_MobileHeader> createState() => _MobileHeaderState();
@@ -168,66 +317,98 @@ class _MobileHeaderState extends State<_MobileHeader> {
         ImageProvider? imageProvider;
         if (profilePicture != null && profilePicture.isNotEmpty) {
           if (profilePicture.startsWith('data:image')) {
-            final base64Str = profilePicture.split(',').last;
-            imageProvider = MemoryImage(base64Decode(base64Str));
+            imageProvider = MemoryImage(base64Decode(profilePicture.split(',').last));
           } else if (profilePicture.startsWith('http')) {
             imageProvider = NetworkImage(profilePicture);
           }
         }
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            color: AppColors.surface,
+            border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
           ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 15,
-                backgroundColor: const Color(0xFF00341C),
-                backgroundImage: imageProvider,
-                child: imageProvider == null
-                    ? const Icon(Icons.person, color: Colors.white, size: 15)
-                    : null,
+              // Avatar
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.text, width: 2),
+                ),
+                child: imageProvider != null
+                    ? Image(image: imageProvider, width: 32, height: 32, fit: BoxFit.cover)
+                    : Container(
+                        width: 32,
+                        height: 32,
+                        color: AppColors.primary,
+                        child: Icon(Icons.person, color: AppColors.onPrimary, size: 20),
+                      ),
               ),
-              const SizedBox(width: 8),
-              Text(firstName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              SizedBox(width: 12),
+              Text(
+                firstName.toUpperCase(),
+                style: GoogleFonts.spaceGrotesk(
+                  color: AppColors.text,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
+              ),
               const Spacer(),
+              // Notif badge
               Builder(
                 builder: (ctx) => ValueListenableBuilder<int>(
                   valueListenable: _notifCount,
-                  builder: (_, count, __) => Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                        onPressed: () {
-                          _notifCount.value = 0;
-                          Scaffold.of(ctx).openEndDrawer();
-                        },
-                      ),
-                      if (count > 0)
-                        Positioned(
-                          top: -2,
-                          right: -2,
-                          child: Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-                            child: Text(
-                              count > 99 ? '99+' : '$count',
-                              style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
+                  builder: (_, count, __) => GestureDetector(
+                    onTap: () {
+                      _notifCount.value = 0;
+                      Scaffold.of(ctx).openEndDrawer();
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: count > 0 ? AppColors.primary : Colors.transparent,
+                            border: Border.all(color: count > 0 ? AppColors.primary : AppColors.border, width: 2),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              count > 0 ? Icons.notifications_active : Icons.notifications_outlined,
+                              size: 20,
+                              color: count > 0 ? Colors.black : AppColors.text,
                             ),
                           ),
                         ),
-                    ],
+                        if (count > 0)
+                          Positioned(
+                            top: -6,
+                            right: -6,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: AppColors.error,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.background, width: 1.5),
+                              ),
+                              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                              child: Text(
+                                count > 99 ? '99+' : '$count',
+                                style: GoogleFonts.dmSans(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -239,20 +420,134 @@ class _MobileHeaderState extends State<_MobileHeader> {
   }
 }
 
-// ── Utilidades de notificaciones ──────────────────────────────────────────────
+// ── Top bar (web) ─────────────────────────────────────────────────────────────
+class AppTopBar extends StatelessWidget {
+  const AppTopBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AuthService(),
+      builder: (context, child) {
+        final user = AuthService().currentUser ?? {};
+        final fullName = '${user['firstName'] ?? ''} ${user['lastName'] ?? ''}'.trim();
+        final displayName = fullName.isEmpty ? 'USUARIO' : fullName.toUpperCase();
+        final profilePicture = user['profilePicture'] as String?;
+        ImageProvider? imageProvider;
+        if (profilePicture != null && profilePicture.isNotEmpty) {
+          if (profilePicture.startsWith('data:image')) {
+            imageProvider = MemoryImage(base64Decode(profilePicture.split(',').last));
+          } else if (profilePicture.startsWith('http')) {
+            imageProvider = NetworkImage(profilePicture);
+          }
+        }
+
+        return Container(
+          height: 80,
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                displayName,
+                style: GoogleFonts.spaceGrotesk(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                  color: AppColors.text,
+                  letterSpacing: 1,
+                ),
+              ),
+              SizedBox(width: 24),
+              Builder(
+                builder: (ctx) => ValueListenableBuilder<int>(
+                  valueListenable: _notifCount,
+                  builder: (_, count, __) => GestureDetector(
+                    onTap: () {
+                      _notifCount.value = 0;
+                      Scaffold.of(ctx).openEndDrawer();
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: count > 0 ? AppColors.primary : Colors.transparent,
+                            border: Border.all(color: count > 0 ? AppColors.primary : AppColors.border, width: 2),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              count > 0 ? Icons.notifications_active : Icons.notifications_outlined,
+                              size: 24,
+                              color: count > 0 ? Colors.black : AppColors.text,
+                            ),
+                          ),
+                        ),
+                        if (count > 0)
+                          Positioned(
+                            top: -6,
+                            right: -6,
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: AppColors.error,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.background, width: 1.5),
+                              ),
+                              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                              child: Text(
+                                count > 99 ? '99+' : '$count',
+                                style: GoogleFonts.dmSans(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, height: 1),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 16),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.text, width: 2),
+                ),
+                child: imageProvider != null
+                    ? Image(image: imageProvider, width: 44, height: 44, fit: BoxFit.cover)
+                    : Container(
+                        width: 44,
+                        height: 44,
+                        color: AppColors.primary,
+                        child: Icon(Icons.person, color: AppColors.onPrimary, size: 24),
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Notif meta ────────────────────────────────────────────────────────────────
 ({IconData icon, Color color, String? route}) _notifMeta(String? type) {
   return switch (type) {
     'trade' || 'trade_accepted' || 'trade_rejected' =>
-      (icon: Icons.swap_horiz, color: const Color(0xFF00341C), route: '/trades'),
+      (icon: Icons.swap_horiz_rounded, color: AppColors.primary, route: '/trades'),
     'ticket' =>
-      (icon: Icons.confirmation_number_outlined, color: const Color(0xFF1565C0), route: '/tickets'),
+      (icon: Icons.confirmation_number_rounded, color: const Color(0xFF00FFFF), route: '/tickets'),
     'packs' || 'album_milestone' =>
-      (icon: Icons.style_outlined, color: const Color(0xFFE65100), route: '/album'),
+      (icon: Icons.style_rounded, color: const Color(0xFFFF00FF), route: '/album'),
     'community_like' || 'community_comment' || 'community_reply' =>
-      (icon: Icons.groups_outlined, color: const Color(0xFF6A1B9A), route: '/comunidades'),
+      (icon: Icons.groups_rounded, color: const Color(0xFFFF3333), route: '/comunidades'),
     'bet' || 'bet_result' =>
-      (icon: Icons.sports_soccer_outlined, color: const Color(0xFF00796B), route: '/pollas'),
-    _ => (icon: Icons.notifications_outlined, color: Colors.grey.shade600, route: null),
+      (icon: Icons.sports_soccer_rounded, color: AppColors.text, route: '/pollas'),
+    _ => (icon: Icons.notifications_rounded, color: AppColors.textMuted, route: null),
   };
 }
 
@@ -261,17 +556,15 @@ String _timeAgo(String? iso) {
   try {
     final dt = DateTime.parse(iso).toLocal();
     final diff = DateTime.now().difference(dt);
-    if (diff.inSeconds < 60) return 'ahora';
-    if (diff.inMinutes < 60) return 'hace ${diff.inMinutes} min';
-    if (diff.inHours < 24) return 'hace ${diff.inHours} h';
-    if (diff.inDays < 7) return 'hace ${diff.inDays} d';
+    if (diff.inSeconds < 60) return 'AHORA';
+    if (diff.inMinutes < 60) return 'HACE ${diff.inMinutes} MIN';
+    if (diff.inHours < 24) return 'HACE ${diff.inHours} H';
+    if (diff.inDays < 7) return 'HACE ${diff.inDays} D';
     return '${dt.day}/${dt.month}/${dt.year}';
-  } catch (_) {
-    return '';
-  }
+  } catch (_) { return ''; }
 }
 
-// ── Drawer de notificaciones ──────────────────────────────────────────────────
+// ── Notifications drawer ──────────────────────────────────────────────────────
 class _NotificationsDrawer extends StatefulWidget {
   const _NotificationsDrawer();
   @override
@@ -291,10 +584,7 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
   Future<void> _load() async {
     final data = await AuthService().getNotifications();
     if (!mounted) return;
-    setState(() {
-      _items = data;
-      _loading = false;
-    });
+    setState(() { _items = data; _loading = false; });
   }
 
   void _onTap(dynamic n) {
@@ -307,77 +597,104 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Drawer(
-      width: 340,
+      width: 380,
+      backgroundColor: AppColors.background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+        side: BorderSide(color: AppColors.border, width: 2),
+      ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
-              child: Row(children: [
-                Text('Notificaciones',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                const Spacer(),
-                IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context)),
-              ]),
+              padding: const EdgeInsets.fromLTRB(24, 24, 16, 24),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      border: Border.all(color: AppColors.onPrimary, width: 2),
+                    ),
+                    child: Icon(Icons.notifications_rounded, color: AppColors.onPrimary, size: 24),
+                  ),
+                  SizedBox(width: 16),
+                  Text('NOTIFICACIONES', style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -1)),
+                  const Spacer(),
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, size: 28),
+                    color: AppColors.text,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
             ),
-            const Divider(height: 1),
+            Divider(),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(child: CircularProgressIndicator(color: AppColors.primary))
                   : _items.isEmpty
                       ? Center(
                           child: Column(mainAxisSize: MainAxisSize.min, children: [
-                            Icon(Icons.notifications_off_outlined,
-                                size: 48, color: Colors.grey.shade300),
-                            const SizedBox(height: 12),
-                            Text('Sin notificaciones',
-                                style: TextStyle(color: Colors.grey.shade500)),
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                border: Border.all(color: AppColors.border, width: 2),
+                              ),
+                              child: Icon(Icons.notifications_off_outlined, size: 32, color: AppColors.textMuted),
+                            ),
+                            SizedBox(height: 24),
+                            Text('SIN NOTIFICACIONES', style: GoogleFonts.dmSans(fontWeight: FontWeight.bold, color: AppColors.textMuted, letterSpacing: 1)),
                           ]),
                         )
                       : RefreshIndicator(
+                          color: AppColors.onPrimary,
+                          backgroundColor: AppColors.primary,
                           onRefresh: _load,
                           child: ListView.separated(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             itemCount: _items.length,
-                            separatorBuilder: (_, __) =>
-                                Divider(height: 1, indent: 56, color: Colors.grey.shade200),
+                            separatorBuilder: (_, __) => Divider(indent: 88, color: AppColors.borderLight),
                             itemBuilder: (_, i) {
                               final n = _items[i];
                               final meta = _notifMeta(n['notifType'] as String?);
-                              final timeStr = _timeAgo(n['createdAt'] as String?);
                               return ListTile(
                                 onTap: () => _onTap(n),
-                                leading: CircleAvatar(
-                                  backgroundColor: meta.color.withOpacity(0.1),
-                                  child: Icon(meta.icon, color: meta.color, size: 20),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                                leading: Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: meta.color.withValues(alpha: 0.15),
+                                    border: Border.all(color: meta.color, width: 2),
+                                  ),
+                                  child: Icon(meta.icon, color: meta.color, size: 24),
                                 ),
                                 title: Text(
                                   n['title'] ?? '',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                      color: Colors.black87),
+                                  style: GoogleFonts.dmSans(color: AppColors.text, fontWeight: FontWeight.bold, fontSize: 14),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    SizedBox(height: 4),
                                     Text(
                                       n['message'] ?? '',
-                                      style: TextStyle(
-                                          fontSize: 12, color: Colors.grey.shade700),
+                                      style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 13, height: 1.4),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    if (timeStr.isNotEmpty) ...[
-                                      const SizedBox(height: 2),
-                                      Text(timeStr,
-                                          style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.grey.shade400)),
-                                    ],
+                                    SizedBox(height: 8),
+                                    Text(
+                                      _timeAgo(n['createdAt'] as String?),
+                                      style: GoogleFonts.dmSans(color: AppColors.accentText, fontWeight: FontWeight.bold, fontSize: 10, letterSpacing: 1),
+                                    ),
                                   ],
                                 ),
                                 isThreeLine: true,
