@@ -196,7 +196,7 @@ class _TradesScreenState extends State<TradesScreen> {
                       child: ListView.separated(
                         padding: const EdgeInsets.all(24),
                         itemCount: _pending.length,
-                        separatorBuilder: (_, _) => SizedBox(height: 24),
+                        separatorBuilder: (_, __) => SizedBox(height: 24),
                         itemBuilder: (_, i) => _TradeCard(
                           trade: _pending[i],
                           onAccept: () => _accept(_pending[i]['id']),
@@ -358,7 +358,7 @@ class _StickerInfo extends StatelessWidget {
           Container(
             decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
             child: Image.network(sticker!['photo_url'], height: imgH, width: imgW, fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(height: imgH, width: imgW, color: AppColors.surface,
+              errorBuilder: (_, __, ___) => Container(height: imgH, width: imgW, color: AppColors.surface,
                 child: Icon(Icons.person, color: AppColors.border)),
             ),
           )

@@ -115,7 +115,7 @@ class _BuyTabState extends State<_BuyTab> {
       child: ListView.separated(
         padding: const EdgeInsets.all(24),
         itemCount: _matches.length,
-        separatorBuilder: (_, _) => SizedBox(height: 24),
+        separatorBuilder: (_, __) => SizedBox(height: 24),
         itemBuilder: (ctx, i) => _MatchCard(
           match: _matches[i],
           onReserve: () => _reserve(_matches[i]),
@@ -328,7 +328,7 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
       child: ListView.separated(
         padding: const EdgeInsets.all(24),
         itemCount: _tickets.length,
-        separatorBuilder: (_, _) => SizedBox(height: 24),
+        separatorBuilder: (_, __) => SizedBox(height: 24),
         itemBuilder: (_, i) => _TicketCard(
           ticket: _tickets[i],
           userId: _uid,
@@ -953,7 +953,7 @@ class _HistoryDialog extends StatelessWidget {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: history.length,
-                separatorBuilder: (_, _) => Divider(height: 2, color: AppColors.border),
+                separatorBuilder: (_, __) => Divider(height: 2, color: AppColors.border),
                 itemBuilder: (_, i) {
                   final e = history[i];
                   final sc = _statusColor(e['status'] ?? '');
