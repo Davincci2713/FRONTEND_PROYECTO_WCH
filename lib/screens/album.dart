@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/album_provider.dart';
 import '../utils/theme.dart';
+import '../config.dart';
 
 class AlbumScreen extends StatefulWidget {
   const AlbumScreen({super.key});
@@ -14,7 +15,7 @@ class AlbumScreen extends StatefulWidget {
 }
 
 class _AlbumScreenState extends State<AlbumScreen> {
-  static const String _proxyBase = 'http://localhost:5001/api/v1/proxy/image?url=';
+  static String get _proxyBase => '$kBaseUrl/proxy/image?url=';
 
   static Widget _buildFlag(String? rawUrl, {double size = 40}) {
     if (rawUrl == null || rawUrl.isEmpty) {
@@ -30,7 +31,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
     }
     return Image.network(
       url, width: size, height: size, fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) =>
+      errorBuilder: (_, _, _) =>
           Icon(Icons.flag, size: size, color: AppColors.border),
     );
   }

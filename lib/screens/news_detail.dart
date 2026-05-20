@@ -84,7 +84,7 @@ class _NewsDetailSheet extends StatelessWidget {
                         ? Image.network(
                             proxiedImageUrl(article.imageUrl),
                             fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => _placeholder(),
+                            errorBuilder: (_, _, _) => _placeholder(),
                           )
                         : _placeholder(),
                     ),

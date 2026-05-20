@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:frontend_proyecto/providers/theme_provider.dart';
 import 'package:frontend_proyecto/utils/theme.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
-import 'package:frontend_proyecto/services/album_service.dart';
 import 'package:frontend_proyecto/services/match_service.dart';
 import 'package:frontend_proyecto/services/news_service.dart' show NewsArticle, NewsService, proxiedImageUrl;
 import 'package:frontend_proyecto/screens/news_detail.dart';
@@ -191,7 +189,7 @@ class _InicioState extends State<Inicio> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _articles.length,
-                separatorBuilder: (_, __) => SizedBox(height: 24),
+                separatorBuilder: (_, _) => SizedBox(height: 24),
                 itemBuilder: (_, i) => _NewsCard(article: _articles[i]),
               ),
 
@@ -235,7 +233,7 @@ class _NewsCard extends StatelessWidget {
                   ? Image.network(
                       proxiedImageUrl(article.imageUrl),
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => _ImagePlaceholder(),
+                      errorBuilder: (_, _, _) => _ImagePlaceholder(),
                     )
                   : _ImagePlaceholder(),
             ),
@@ -370,7 +368,7 @@ class _NewsError extends StatelessWidget {
 }
 
 class _NewsEmpty extends StatelessWidget {
-  const _NewsEmpty({super.key});
+  const _NewsEmpty();
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(48),

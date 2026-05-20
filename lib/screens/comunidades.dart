@@ -328,8 +328,10 @@ class _PostCardState extends State<_PostCard> {
                 final updated = await _svc.editPost(_post.id, newContent);
                 if (mounted) setState(() => _post.content = updated.content);
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context)
+                if (mounted) {
+                  ScaffoldMessenger.of(context)
                     .showSnackBar(SnackBar(content: Text(e.toString())));
+                }
               }
             },
             child: Text('GUARDAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
@@ -371,8 +373,10 @@ class _PostCardState extends State<_PostCard> {
                 await _svc.deletePost(_post.id);
                 if (mounted) widget.onDelete();
               } catch (e) {
-                if (mounted) ScaffoldMessenger.of(context)
+                if (mounted) {
+                  ScaffoldMessenger.of(context)
                     .showSnackBar(SnackBar(content: Text(e.toString())));
+                }
               }
             },
             child: Text('ELIMINAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
@@ -512,14 +516,14 @@ class _FullImage extends StatelessWidget {
         final bytes = base64Decode(data.contains(',') ? data.split(',').last : data);
         img = Image.memory(bytes,
             fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => _placeholder());
+            errorBuilder: (_, _, _) => _placeholder());
       } catch (_) {
         return _placeholder();
       }
     } else {
       img = Image.network(data,
           fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => _placeholder());
+          errorBuilder: (_, _, _) => _placeholder());
     }
 
     return Container(
@@ -596,8 +600,10 @@ class _CommentsSheetState extends State<_CommentsSheet> {
         widget.onCommentAdded();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
+      if (mounted) {
+        ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     }
   }
 
@@ -642,7 +648,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             : ListView.separated(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 itemCount: _comments.length,
-                separatorBuilder: (_, __) => Divider(color: AppColors.borderLight, indent: 64),
+                separatorBuilder: (_, _) => Divider(color: AppColors.borderLight, indent: 64),
                 itemBuilder: (_, i) => _CommentTile(
                   comment: _comments[i],
                   svc: _svc,
@@ -860,7 +866,7 @@ class _NewPostSheetState extends State<_NewPostSheet> {
   final _svc     = FeedService();
   final _ctrl    = TextEditingController();
   final _picker  = ImagePicker();
-  List<String> _images = [];
+  final List<String> _images = [];
   bool _posting = false;
 
   @override
@@ -886,8 +892,10 @@ class _NewPostSheetState extends State<_NewPostSheet> {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
+      if (mounted) {
+        ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     } finally {
       if (mounted) setState(() => _posting = false);
     }
@@ -974,7 +982,7 @@ class _NewPostSheetState extends State<_NewPostSheet> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 24),
               itemCount: _images.length + (_images.length < 4 ? 1 : 0),
-              separatorBuilder: (_, __) => SizedBox(width: 16),
+              separatorBuilder: (_, _) => SizedBox(width: 16),
               itemBuilder: (_, i) {
                 if (i == _images.length) return _addImageBtn();
                 return Stack(children: [
@@ -1057,11 +1065,13 @@ class _GruposTabState extends State<_GruposTab> {
         _svc.getMyCommunities(_userId),
         _svc.getSuggestedCommunities(_userId),
       ]);
-      if (mounted) setState(() {
+      if (mounted) {
+        setState(() {
         _mine      = results[0];
         _suggested = results[1];
         _loading   = false;
       });
+      }
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
@@ -1113,8 +1123,10 @@ class _GruposTabState extends State<_GruposTab> {
                   .showSnackBar(SnackBar(content: Text('¡TE UNISTE!', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.primary));
               _load();
             } catch (e) {
-              if (mounted) ScaffoldMessenger.of(context)
+              if (mounted) {
+                ScaffoldMessenger.of(context)
                   .showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
+              }
             }
           },
           child: Text('UNIRSE', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
@@ -1165,8 +1177,10 @@ class _GruposTabState extends State<_GruposTab> {
         _load();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
+      if (mounted) {
+        ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
+      }
     }
   }
 
@@ -1578,8 +1592,10 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
       Navigator.pop(context);
       widget.onCreated(r['invitationCode'].toString());
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
+      if (mounted) {
+        ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)), backgroundColor: AppColors.error));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

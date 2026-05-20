@@ -454,7 +454,7 @@ class _PrefTile extends StatelessWidget {
     subtitle: subtitle != null ? Text(subtitle!.toUpperCase(), style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, letterSpacing: 1)) : null,
     value: value,
     onChanged: onChanged,
-    activeColor: AppColors.inverseSurface,
+    activeThumbColor: AppColors.inverseSurface,
     activeTrackColor: AppColors.primary,
     inactiveTrackColor: AppColors.toggleInactiveTrack,
     inactiveThumbColor: AppColors.toggleInactiveThumb,
