@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend_proyecto/utils/theme.dart';
@@ -268,7 +267,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   subtitle: Text('Recomendado para no perderte nada', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12)),
                   value: _prefPush,
                   onChanged: (val) => setState(() => _prefPush = val),
-                  activeColor: AppColors.inverseSurface,
+                  activeThumbColor: AppColors.inverseSurface,
                   activeTrackColor: AppColors.primary,
                   inactiveTrackColor: AppColors.toggleInactiveTrack,
                   inactiveThumbColor: AppColors.toggleInactiveThumb,
@@ -296,7 +295,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       subtitle: Text('Cuando alguien quiera cambiar una lámina', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12)),
                       value: _prefTrades,
                       onChanged: (val) => setState(() => _prefTrades = val),
-                      activeColor: AppColors.inverseSurface,
+                      activeThumbColor: AppColors.inverseSurface,
                       activeTrackColor: AppColors.primary,
                       inactiveTrackColor: AppColors.borderLight,
                       inactiveThumbColor: AppColors.textMuted,
@@ -307,7 +306,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       subtitle: Text('Inicio y final de partidos de tu selección', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12)),
                       value: _prefMatches,
                       onChanged: (val) => setState(() => _prefMatches = val),
-                      activeColor: AppColors.inverseSurface,
+                      activeThumbColor: AppColors.inverseSurface,
                       activeTrackColor: AppColors.primary,
                       inactiveTrackColor: AppColors.borderLight,
                       inactiveThumbColor: AppColors.textMuted,
@@ -318,7 +317,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       subtitle: Text('Aciertos y subidas en el ranking', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12)),
                       value: _prefBets,
                       onChanged: (val) => setState(() => _prefBets = val),
-                      activeColor: AppColors.inverseSurface,
+                      activeThumbColor: AppColors.inverseSurface,
                       activeTrackColor: AppColors.primary,
                       inactiveTrackColor: AppColors.borderLight,
                       inactiveThumbColor: AppColors.textMuted,

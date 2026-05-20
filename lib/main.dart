@@ -116,8 +116,9 @@ final GoRouter _router = GoRouter(
       navigatorKey: _shellNavigatorKey,
       builder: (context, state, child) {
         int index = 0;
-        if (state.fullPath == '/home')        index = 0;
-        else if (state.fullPath == '/album')       index = 1;
+        if (state.fullPath == '/home') {
+          index = 0;
+        } else if (state.fullPath == '/album')       index = 1;
         else if (state.fullPath == '/pollas')      index = 2;
         else if (state.fullPath == '/comunidades') index = 3;
         else if (state.fullPath == '/tickets')     index = 4;

@@ -42,7 +42,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   void _onScroll() {
     if (!_scroll.hasClients) return;
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 300 &&
-        !_loadingMore && _hasMore) _loadMore();
+        !_loadingMore && _hasMore) {
+      _loadMore();
+    }
   }
 
   Future<void> _load() async {
@@ -490,7 +492,7 @@ class _GroupPostSheetState extends State<_GroupPostSheet> {
   final _svc    = FeedService();
   final _ctrl   = TextEditingController();
   final _picker = ImagePicker();
-  List<String> _images = [];
+  final List<String> _images = [];
   bool _posting = false;
 
   @override
@@ -513,8 +515,10 @@ class _GroupPostSheetState extends State<_GroupPostSheet> {
           _ctrl.text.trim(), _images, groupId: widget.groupId);
       if (mounted) { widget.onCreated(post); Navigator.pop(context); }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
+      if (mounted) {
+        ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(fontWeight: FontWeight.bold))));
+      }
     } finally {
       if (mounted) setState(() => _posting = false);
     }
@@ -591,7 +595,7 @@ class _GroupPostSheetState extends State<_GroupPostSheet> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: _images.length + (_images.length < 4 ? 1 : 0),
-              separatorBuilder: (_, __) => SizedBox(width: 12),
+              separatorBuilder: (_, _) => SizedBox(width: 12),
               itemBuilder: (_, i) {
                 if (i == _images.length) return _addBtn();
                 return Stack(children: [
@@ -682,8 +686,10 @@ class _SimpleCommentsSheetState extends State<_SimpleCommentsSheet> {
         widget.onCommentAdded();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context)
+      if (mounted) {
+        ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString().toUpperCase())));
+      }
     }
   }
 
@@ -933,7 +939,7 @@ class _PostImages extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: images.length,
-        separatorBuilder: (_, __) => SizedBox(width: 12),
+        separatorBuilder: (_, _) => SizedBox(width: 12),
         itemBuilder: (_, i) => Container(
           decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
           child: _img(images[i], sw * 0.75, 220)),
@@ -948,11 +954,11 @@ class _PostImages extends StatelessWidget {
         final bytes = base64Decode(
             data.contains(',') ? data.split(',').last : data);
         img = Image.memory(bytes, fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => _ph(w, h));
+            errorBuilder: (_, _, _) => _ph(w, h));
       } catch (_) { return _ph(w, h); }
     } else {
       img = Image.network(data, fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => _ph(w, h));
+          errorBuilder: (_, _, _) => _ph(w, h));
     }
     return Container(
       width: w, height: h,
