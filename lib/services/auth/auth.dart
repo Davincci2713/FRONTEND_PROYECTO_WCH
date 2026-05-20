@@ -220,15 +220,16 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    if (_accessToken != null) {
+    final token = _accessToken;
+    await _clearSession();
+    if (token != null) {
       try {
         await http.post(
           Uri.parse('$baseUrl/auth/logout'),
-          headers: getAuthHeaders(),
+          headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
         );
       } catch (_) {}
     }
-    await _clearSession();
   }
 
   // ------------------------------------------------------------------
