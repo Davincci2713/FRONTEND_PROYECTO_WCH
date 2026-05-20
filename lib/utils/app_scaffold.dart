@@ -360,7 +360,7 @@ class _MobileHeaderState extends State<_MobileHeader> {
               Builder(
                 builder: (ctx) => ValueListenableBuilder<int>(
                   valueListenable: _notifCount,
-                  builder: (_, count, __) => GestureDetector(
+                  builder: (_, count, _) => GestureDetector(
                     onTap: () {
                       _notifCount.value = 0;
                       Scaffold.of(ctx).openEndDrawer();
@@ -465,7 +465,7 @@ class AppTopBar extends StatelessWidget {
               Builder(
                 builder: (ctx) => ValueListenableBuilder<int>(
                   valueListenable: _notifCount,
-                  builder: (_, count, __) => GestureDetector(
+                  builder: (_, count, _) => GestureDetector(
                     onTap: () {
                       _notifCount.value = 0;
                       Scaffold.of(ctx).openEndDrawer();
@@ -595,7 +595,6 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Drawer(
       width: 380,
       backgroundColor: AppColors.background,
@@ -658,7 +657,7 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
                           child: ListView.separated(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             itemCount: _items.length,
-                            separatorBuilder: (_, __) => Divider(indent: 88, color: AppColors.borderLight),
+                            separatorBuilder: (_, _) => Divider(indent: 88, color: AppColors.borderLight),
                             itemBuilder: (_, i) {
                               final n = _items[i];
                               final meta = _notifMeta(n['notifType'] as String?);

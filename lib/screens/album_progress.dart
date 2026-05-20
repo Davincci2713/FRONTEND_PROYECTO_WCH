@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +6,7 @@ import 'package:frontend_proyecto/providers/theme_provider.dart';
 import 'package:frontend_proyecto/utils/theme.dart';
 import '../services/album_service.dart';
 import '../services/auth/auth.dart';
+import '../config.dart';
 
 class AlbumProgressScreen extends StatefulWidget {
   final String? initialTeam;
@@ -299,7 +299,7 @@ class _SectionTile extends StatelessWidget {
     }
 
     if (originalFlagUrl != null && originalFlagUrl.isNotEmpty) {
-      final flagUrl = 'http://localhost:5001/api/v1/proxy/image?url=${Uri.encodeComponent(originalFlagUrl)}';
+      final flagUrl = '$kBaseUrl/proxy/image?url=${Uri.encodeComponent(originalFlagUrl)}';
 
       if (originalFlagUrl.endsWith('.svg')) {
         return SvgPicture.network(
@@ -692,7 +692,7 @@ class _TradeDialogState extends State<_TradeDialog> {
 
   List<Map<String, dynamic>> _owned = [];
   List<Map<String, dynamic>> _filtered = [];
-  List<Map<String, dynamic>> _offered = [];
+  final List<Map<String, dynamic>> _offered = [];
   bool _loading = true;
   bool _submitting = false;
 
@@ -833,7 +833,7 @@ class _TradeDialogState extends State<_TradeDialog> {
                   // Drop zone
                   DragTarget<Map<String, dynamic>>(
                     onAcceptWithDetails: (d) => _addOffered(d.data),
-                    builder: (_, candidates, __) {
+                    builder: (_, candidates, _) {
                       final hovering = candidates.isNotEmpty;
                       final hasItems = _offered.isNotEmpty;
                       return AnimatedContainer(
@@ -1037,7 +1037,7 @@ class _DraggableSticker extends StatelessWidget {
               decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
               child: Image.network(photoUrl,
                   height: 60, width: 44, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
+                  errorBuilder: (_, _, _) =>
                       Container(color: AppColors.borderLight, width: 44, height: 60, child: Icon(Icons.person, size: 28, color: AppColors.textMuted))),
             )
           else

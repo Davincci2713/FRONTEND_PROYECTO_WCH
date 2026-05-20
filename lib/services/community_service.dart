@@ -27,12 +27,12 @@ class CommunityService {
       body: jsonEncode({
         'name': name,
         'userId': userId,
-        if (maxMembers != null)    'maxMembers': maxMembers,
-        if (favoriteTeam != null)  'favoriteTeam': favoriteTeam,
-        if (favoritePlayers != null) 'favoritePlayers': favoritePlayers,
-        if (description != null)   'description': description,
-        if (icon != null)          'icon': icon,
-        if (banner != null)        'banner': banner,
+        'maxMembers': ?maxMembers,
+        'favoriteTeam': ?favoriteTeam,
+        'favoritePlayers': ?favoritePlayers,
+        'description': ?description,
+        'icon': ?icon,
+        'banner': ?banner,
       }),
     );
 
