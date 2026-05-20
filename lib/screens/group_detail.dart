@@ -595,7 +595,7 @@ class _GroupPostSheetState extends State<_GroupPostSheet> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: _images.length + (_images.length < 4 ? 1 : 0),
-              separatorBuilder: (_, _) => SizedBox(width: 12),
+              separatorBuilder: (_, __) => SizedBox(width: 12),
               itemBuilder: (_, i) {
                 if (i == _images.length) return _addBtn();
                 return Stack(children: [
@@ -939,7 +939,7 @@ class _PostImages extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: images.length,
-        separatorBuilder: (_, _) => SizedBox(width: 12),
+        separatorBuilder: (_, __) => SizedBox(width: 12),
         itemBuilder: (_, i) => Container(
           decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
           child: _img(images[i], sw * 0.75, 220)),
@@ -954,11 +954,11 @@ class _PostImages extends StatelessWidget {
         final bytes = base64Decode(
             data.contains(',') ? data.split(',').last : data);
         img = Image.memory(bytes, fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => _ph(w, h));
+            errorBuilder: (_, __, ___) => _ph(w, h));
       } catch (_) { return _ph(w, h); }
     } else {
       img = Image.network(data, fit: BoxFit.contain,
-          errorBuilder: (_, _, _) => _ph(w, h));
+          errorBuilder: (_, __, ___) => _ph(w, h));
     }
     return Container(
       width: w, height: h,

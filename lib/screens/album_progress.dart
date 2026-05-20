@@ -833,7 +833,7 @@ class _TradeDialogState extends State<_TradeDialog> {
                   // Drop zone
                   DragTarget<Map<String, dynamic>>(
                     onAcceptWithDetails: (d) => _addOffered(d.data),
-                    builder: (_, candidates, _) {
+                    builder: (_, candidates, __) {
                       final hovering = candidates.isNotEmpty;
                       final hasItems = _offered.isNotEmpty;
                       return AnimatedContainer(
@@ -1037,7 +1037,7 @@ class _DraggableSticker extends StatelessWidget {
               decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2)),
               child: Image.network(photoUrl,
                   height: 60, width: 44, fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) =>
+                  errorBuilder: (_, __, ___) =>
                       Container(color: AppColors.borderLight, width: 44, height: 60, child: Icon(Icons.person, size: 28, color: AppColors.textMuted))),
             )
           else
