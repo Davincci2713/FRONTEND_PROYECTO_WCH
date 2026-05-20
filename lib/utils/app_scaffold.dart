@@ -196,7 +196,7 @@ class AppSidebar extends StatelessWidget {
           const Spacer(),
           Divider(),
           _SidebarItem(icon: Icons.person_rounded,  label: 'MI PERFIL',   active: currentIndex == 5, onTap: () => context.go('/profile')),
-          _SidebarItem(icon: Icons.logout_rounded,  label: 'CERRAR SESIÓN', onTap: () => context.go('/login')),
+          _SidebarItem(icon: Icons.logout_rounded,  label: 'CERRAR SESIÓN', onTap: () => AuthService().logout()),
           SizedBox(height: 24),
         ],
       ),

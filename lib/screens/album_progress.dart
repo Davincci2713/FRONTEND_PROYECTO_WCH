@@ -96,12 +96,21 @@ class _AlbumProgressScreenState extends State<AlbumProgressScreen> {
                       onQueryChanged: (v) => setState(() => _query = v),
                     ),
                     Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(24),
-                        itemCount: _filteredSections.length,
-                        itemBuilder: (ctx, i) =>
-                            _SectionTile(section: _filteredSections[i]),
-                      ),
+                      child: Builder(builder: (ctx) {
+                        final allOwned = [
+                          for (final sec in (_data!['sections'] as List))
+                            for (final s in (sec['stickers'] as List))
+                              if (s['owned'] == true) Map<String, dynamic>.from(s as Map),
+                        ];
+                        return ListView.builder(
+                          padding: const EdgeInsets.all(24),
+                          itemCount: _filteredSections.length,
+                          itemBuilder: (ctx, i) => _SectionTile(
+                            section: _filteredSections[i],
+                            allOwnedStickers: allOwned,
+                          ),
+                        );
+                      }),
                     ),
                   ],
                 ),
@@ -290,7 +299,8 @@ class _FilterBar extends StatelessWidget {
 // ---------------------------------------------------------------------------
 class _SectionTile extends StatelessWidget {
   final Map<String, dynamic> section;
-  const _SectionTile({required this.section});
+  final List<Map<String, dynamic>> allOwnedStickers;
+  const _SectionTile({required this.section, required this.allOwnedStickers});
 
   Widget _buildSectionIcon(String type, String? originalFlagUrl, bool complete) {
     final color = complete ? Colors.black : AppColors.textMuted;
@@ -418,7 +428,7 @@ class _SectionTile extends StatelessWidget {
                   mainAxisSpacing: 16,
                 ),
                 itemCount: stickers.length,
-                itemBuilder: (ctx, i) => _StickerCard(sticker: stickers[i]),
+                itemBuilder: (ctx, i) => _StickerCard(sticker: stickers[i], allOwnedStickers: allOwnedStickers),
               ),
             ),
           ],
@@ -433,7 +443,8 @@ class _SectionTile extends StatelessWidget {
 // ---------------------------------------------------------------------------
 class _StickerCard extends StatelessWidget {
   final Map<String, dynamic> sticker;
-  const _StickerCard({required this.sticker});
+  final List<Map<String, dynamic>> allOwnedStickers;
+  const _StickerCard({required this.sticker, required this.allOwnedStickers});
 
   static Color _rarityColor(String r) => switch (r) {
         'Legendary' => const Color(0xFFFFD700), // Yellow
@@ -475,7 +486,7 @@ class _StickerCard extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   child: owned
                       ? _OwnedContent(sticker: sticker, color: color)
-                      : _UnownedContent(sticker: sticker),
+                      : _UnownedContent(sticker: sticker, allOwnedStickers: allOwnedStickers),
                 ),
               ),
             ],
@@ -572,7 +583,8 @@ class _OwnedContent extends StatelessWidget {
 
 class _UnownedContent extends StatefulWidget {
   final Map<String, dynamic> sticker;
-  const _UnownedContent({required this.sticker});
+  final List<Map<String, dynamic>> allOwnedStickers;
+  const _UnownedContent({required this.sticker, required this.allOwnedStickers});
 
   @override
   State<_UnownedContent> createState() => _UnownedContentState();
@@ -582,7 +594,10 @@ class _UnownedContentState extends State<_UnownedContent> {
   void _showTradeDialog() {
     showDialog(
       context: context,
-      builder: (_) => _TradeDialog(requestedSticker: widget.sticker),
+      builder: (_) => _TradeDialog(
+        requestedSticker: widget.sticker,
+        preloadedOwnedStickers: widget.allOwnedStickers,
+      ),
     );
   }
 
@@ -681,7 +696,8 @@ class _UnownedContentState extends State<_UnownedContent> {
 // ══════════════════════════════════════════════════════════════════════════════
 class _TradeDialog extends StatefulWidget {
   final Map<String, dynamic> requestedSticker;
-  const _TradeDialog({required this.requestedSticker});
+  final List<Map<String, dynamic>>? preloadedOwnedStickers;
+  const _TradeDialog({required this.requestedSticker, this.preloadedOwnedStickers});
   @override
   State<_TradeDialog> createState() => _TradeDialogState();
 }
@@ -699,8 +715,15 @@ class _TradeDialogState extends State<_TradeDialog> {
   @override
   void initState() {
     super.initState();
-    _loadOwned();
     _searchCtrl.addListener(_filter);
+    final preloaded = widget.preloadedOwnedStickers;
+    if (preloaded != null) {
+      _owned = List.from(preloaded);
+      _filtered = List.from(preloaded);
+      _loading = false;
+    } else {
+      _loadOwned();
+    }
   }
 
   @override
