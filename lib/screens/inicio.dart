@@ -189,7 +189,7 @@ class _InicioState extends State<Inicio> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _articles.length,
-                separatorBuilder: (_, _) => SizedBox(height: 24),
+                separatorBuilder: (_, __) => SizedBox(height: 24),
                 itemBuilder: (_, i) => _NewsCard(article: _articles[i]),
               ),
 
@@ -233,7 +233,7 @@ class _NewsCard extends StatelessWidget {
                   ? Image.network(
                       proxiedImageUrl(article.imageUrl),
                       fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) => _ImagePlaceholder(),
+                      errorBuilder: (_, __, ___) => _ImagePlaceholder(),
                     )
                   : _ImagePlaceholder(),
             ),

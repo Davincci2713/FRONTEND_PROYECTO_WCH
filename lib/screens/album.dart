@@ -31,7 +31,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
     }
     return Image.network(
       url, width: size, height: size, fit: BoxFit.contain,
-      errorBuilder: (_, _, _) =>
+      errorBuilder: (_, __, ___) =>
           Icon(Icons.flag, size: size, color: AppColors.border),
     );
   }

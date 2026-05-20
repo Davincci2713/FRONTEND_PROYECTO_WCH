@@ -114,7 +114,7 @@ class _HistoryTabState extends State<_HistoryTab> {
       child: ListView.separated(
         padding: const EdgeInsets.all(24),
         itemCount: _bets.length,
-        separatorBuilder: (_, _) => SizedBox(height: 16),
+        separatorBuilder: (_, __) => SizedBox(height: 16),
         itemBuilder: (_, i) => _BetHistoryRow(bet: _bets[i]),
       ),
     );
@@ -254,7 +254,7 @@ class _BettingTabState extends State<_BettingTab> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: _myBets.length > 10 ? 10 : _myBets.length,
-                          separatorBuilder: (_, _) => Divider(),
+                          separatorBuilder: (context, index) => Divider(),
                           itemBuilder: (_, i) => _BetHistoryRow(bet: _myBets[i], compact: true),
                         ),
                       ),

@@ -516,14 +516,14 @@ class _FullImage extends StatelessWidget {
         final bytes = base64Decode(data.contains(',') ? data.split(',').last : data);
         img = Image.memory(bytes,
             fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => _placeholder());
+            errorBuilder: (_, __, ___) => _placeholder());
       } catch (_) {
         return _placeholder();
       }
     } else {
       img = Image.network(data,
           fit: BoxFit.contain,
-          errorBuilder: (_, _, _) => _placeholder());
+          errorBuilder: (_, __, ___) => _placeholder());
     }
 
     return Container(
@@ -648,7 +648,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             : ListView.separated(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 itemCount: _comments.length,
-                separatorBuilder: (_, _) => Divider(color: AppColors.borderLight, indent: 64),
+                separatorBuilder: (_, __) => Divider(color: AppColors.borderLight, indent: 64),
                 itemBuilder: (_, i) => _CommentTile(
                   comment: _comments[i],
                   svc: _svc,
@@ -982,7 +982,7 @@ class _NewPostSheetState extends State<_NewPostSheet> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 24),
               itemCount: _images.length + (_images.length < 4 ? 1 : 0),
-              separatorBuilder: (_, _) => SizedBox(width: 16),
+              separatorBuilder: (_, __) => SizedBox(width: 16),
               itemBuilder: (_, i) {
                 if (i == _images.length) return _addImageBtn();
                 return Stack(children: [
