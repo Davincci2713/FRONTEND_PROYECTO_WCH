@@ -60,7 +60,9 @@ jobs:
         run: flutter pub get
 
       - name: Build Web Application
-        run: flutter build web --release
+        run: |
+          flutter build web --release \
+            --dart-define=API_BASE_URL=https://api.worldcuphub.online/api/v1
 
       - name: Upload Web Artifact
         uses: actions/upload-artifact@v4
@@ -101,3 +103,47 @@ jobs:
           name: world-cup-hub-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 7
+
+  deploy-web:
+    name: Deploy Web to S3 + CloudFront
+    needs: build-web
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download web artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: world-cup-hub-web
+          path: build/web
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Sync to S3
+        run: |
+          aws s3 sync build/web/ s3://${{ secrets.S3_FRONTEND_BUCKET }} \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html" \
+            --exclude "flutter_service_worker.js" \
+            --exclude "manifest.json"
+
+          # index.html y service worker sin cache para que siempre sirvan la versión actual
+          aws s3 cp build/web/index.html s3://${{ secrets.S3_FRONTEND_BUCKET }}/index.html \
+            --cache-control "no-cache, no-store, must-revalidate"
+          aws s3 cp build/web/flutter_service_worker.js s3://${{ secrets.S3_FRONTEND_BUCKET }}/flutter_service_worker.js \
+            --cache-control "no-cache, no-store, must-revalidate"
+          aws s3 cp build/web/manifest.json s3://${{ secrets.S3_FRONTEND_BUCKET }}/manifest.json \
+            --cache-control "no-cache, no-store, must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+          echo "✓ CloudFront invalidation triggered"

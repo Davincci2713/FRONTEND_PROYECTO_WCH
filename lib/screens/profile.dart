@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -235,10 +234,7 @@ class _ProfileFormState extends State<ProfileForm> {
               ),
               SizedBox(height: 24),
               OutlinedButton.icon(
-                onPressed: () {
-                  AuthService().logout();
-                  context.go('/login');
-                },
+                onPressed: () => AuthService().logout(),
                 icon: Icon(Icons.logout_rounded, size: 15),
                 label: Text('CERRAR SESIÓN'),
                 style: OutlinedButton.styleFrom(
