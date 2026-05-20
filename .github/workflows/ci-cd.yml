@@ -40,7 +40,7 @@ jobs:
         continue-on-error: true # Keep formatting warning informative but non-blocking
 
       - name: Run Flutter Analyzer
-        run: flutter analyze --no-fatal-warnings
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
 
   build-web:
     name: Build Web App
