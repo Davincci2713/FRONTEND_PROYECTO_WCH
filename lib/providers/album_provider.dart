@@ -21,7 +21,7 @@ class AlbumProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _albumData = await _albumService.getUserAlbum(_currentUserId);
+      _albumData = await _albumService.getAlbumProgress(_currentUserId);
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -44,10 +44,8 @@ class AlbumProvider extends ChangeNotifier {
 
   Future<void> _refreshAlbumSilently() async {
     try {
-      _albumData = await _albumService.getUserAlbum(_currentUserId);
+      _albumData = await _albumService.getAlbumProgress(_currentUserId);
       notifyListeners();
-    } catch (_) {
-      // Ignorar errores en refresh silencioso
-    }
+    } catch (_) {}
   }
 }
