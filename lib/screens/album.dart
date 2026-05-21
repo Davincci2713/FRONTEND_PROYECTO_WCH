@@ -84,8 +84,8 @@ class _AlbumScreenState extends State<AlbumScreen> {
 
     final collections = albumData['collections'] as List<dynamic>? ?? [];
     final pct = (albumData['completion_percentage'] as num?)?.toDouble() ?? 0.0;
-    final totalStickers = albumData['total_stickers'] ?? 0;
-    final maxStickers   = albumData['max_stickers'] ?? 0;
+    final totalStickers = albumData['total_owned'] ?? albumData['total_stickers'] ?? 0;
+    final maxStickers   = albumData['total_unique'] ?? albumData['max_stickers'] ?? 0;
     final repeated      = albumData['repeated_stickers'] ?? 0;
     final packBalance   = albumData['pack_balance'] ?? 0;
 
