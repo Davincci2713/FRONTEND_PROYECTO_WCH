@@ -112,6 +112,14 @@ class _InicioState extends State<Inicio> {
                 spacing: 24,
                 runSpacing: 24,
                 children: [
+                  DashboardCard(
+                    title: 'BACKOFFICE CORE',
+                    subtitle: 'GESTIÓN DE INCIDENTES, AUDITORÍA Y COMPLIANCE',
+                    icon: Icons.admin_panel_settings_sharp,
+                    onTap: () {
+                    context.push('/backoffice');
+                    },
+                  ),
                   SizedBox(
                     width: cardWidth,
                     child: DashboardCard(

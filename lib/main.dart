@@ -19,6 +19,7 @@ import 'package:frontend_proyecto/screens/trades.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
 import 'package:frontend_proyecto/services/fcm_service.dart';
 import 'package:frontend_proyecto/firebase_options.dart';
+import 'package:frontend_proyecto/screens/admin_screen.dart';
 
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,15 +57,16 @@ final _auth = AuthService();
 
 final GoRouter _router = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/home',
+  initialLocation: '/backoffice',
   refreshListenable: _auth,
   redirect: (context, state) {
     final loggedIn = _auth.isAuthenticated;
     final hasSeenOnboarding = _auth.hasSeenOnboarding;
     final isPublic = state.matchedLocation == '/login' ||
-                     state.matchedLocation == '/register';
+                     state.matchedLocation == '/register' ||
+                     state.matchedLocation == '/backoffice';
 
-    if (!loggedIn && !isPublic) return '/login';
+    if (!loggedIn && !isPublic) return '/backoffice';
 
     if (loggedIn) {
       if (!hasSeenOnboarding && state.matchedLocation != '/onboarding') {
@@ -157,6 +159,11 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/trades',
           pageBuilder: (context, state) => const MaterialPage(child: TradesScreen()),
+        ),
+        GoRoute(
+          path: '/backoffice',
+          name: 'backoffice',
+          builder: (context, state) => const AdminScreen(),
         ),
       ],
     ),
