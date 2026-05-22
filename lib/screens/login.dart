@@ -53,7 +53,7 @@ class LoginWeb extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.sports_soccer, size: 80, color: AppColors.primary),
+                        Icon(Icons.sports_soccer, size: 80, color: AppColors.accentIcon),
                         SizedBox(height: 24),
                         Text(
                           'WORLD\nCUP\nHUB.',
@@ -69,12 +69,12 @@ class LoginWeb extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.primary, width: 2),
+                            border: Border.all(color: AppColors.accentIcon, width: 2),
                           ),
                           child: Text(
                             'EL COMPAÑERO DIGITAL OFICIAL ✦ 2026',
                             style: GoogleFonts.dmSans(
-                              color: AppColors.primary,
+                              color: AppColors.accentText,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 2,
@@ -375,7 +375,7 @@ class _BrutalistInput extends StatelessWidget {
         Text(
           label,
           style: GoogleFonts.dmSans(
-            color: AppColors.primary,
+            color: AppColors.accentText,
             fontWeight: FontWeight.bold,
             fontSize: 12,
             letterSpacing: 1,
@@ -386,10 +386,10 @@ class _BrutalistInput extends StatelessWidget {
           controller: controller,
           obscureText: obscureText,
           style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 16),
-          cursorColor: AppColors.primary,
+          cursorColor: AppColors.accentText,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.dmSans(color: AppColors.border),
+            hintStyle: GoogleFonts.dmSans(color: AppColors.textMuted),
             prefixIcon: Icon(icon, color: AppColors.textMuted),
             suffixIcon: suffixIcon,
             filled: true,

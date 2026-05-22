@@ -1139,7 +1139,7 @@ class _GruposTabState extends State<_GruposTab> {
     showDialog(context: context, builder: (dlgCtx) => AlertDialog(
       backgroundColor: AppColors.background,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
-      title: Text('GRUPO CREADO', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.primary, letterSpacing: -1)),
+      title: Text('GRUPO CREADO', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.accentText, letterSpacing: -1)),
       content: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('COMPARTE ESTE CÓDIGO CON TUS AMIGOS:',
             textAlign: TextAlign.center,
@@ -1399,7 +1399,7 @@ class _CommunityCard extends StatelessWidget {
                         Expanded(child: Text(team.toUpperCase(),
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.dmSans(fontSize: 10,
-                                color: AppColors.primary, fontWeight: FontWeight.bold, letterSpacing: 1))),
+                                color: AppColors.accentText, fontWeight: FontWeight.bold, letterSpacing: 1))),
                       ],
                     ]),
                     // Botón unirse
@@ -1767,14 +1767,14 @@ class _CreateGroupSheetState extends State<_CreateGroupSheet> {
 
   Widget _label(String text) => Text(text,
       style: GoogleFonts.dmSans(fontSize: 12, fontWeight: FontWeight.bold,
-          color: AppColors.primary, letterSpacing: 1));
+          color: AppColors.accentText, letterSpacing: 1));
 
   Widget _input(TextEditingController ctrl, String hint,
       {int maxLines = 1, TextInputType type = TextInputType.text}) =>
     TextField(
       controller: ctrl, maxLines: maxLines, keyboardType: type,
       style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 16),
-      cursorColor: AppColors.primary,
+      cursorColor: AppColors.accentText,
       decoration: InputDecoration(
         hintText: hint,
       ),

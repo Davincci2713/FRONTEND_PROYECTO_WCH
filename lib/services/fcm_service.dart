@@ -79,10 +79,16 @@ class FCMService {
   }
 
   void _navigateFromMessage(RemoteMessage message) {
-    final data = message.data;
-    final notifType = data['notif_type'] ?? '';
-    if (notifType == 'trade') {
-      _router?.push('/trades');
+    final notifType = message.data['notif_type'] ?? '';
+    switch (notifType) {
+      case 'trade':
+        _router?.push('/trades');
+      case 'bet':
+        _router?.push('/pollas');
+      case 'ticket':
+        _router?.push('/tickets');
+      case 'packs':
+        _router?.push('/album');
     }
   }
 
@@ -92,6 +98,27 @@ class FCMService {
     final context = _navigatorKey?.currentContext;
     if (context == null) return;
 
+    final notifType = message.data['notif_type'] ?? '';
+    final String? actionLabel;
+    final String? actionRoute;
+    switch (notifType) {
+      case 'trade':
+        actionLabel = 'Ver intercambio';
+        actionRoute = '/trades';
+      case 'bet':
+        actionLabel = 'Ver apuesta';
+        actionRoute = '/pollas';
+      case 'ticket':
+        actionLabel = 'Ver entrada';
+        actionRoute = '/tickets';
+      case 'packs':
+        actionLabel = 'Abrir sobres';
+        actionRoute = '/album';
+      default:
+        actionLabel = null;
+        actionRoute = null;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Column(
@@ -100,25 +127,22 @@ class FCMService {
           children: [
             Text(
               notification.title ?? '',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             if (notification.body != null)
               Text(notification.body!, maxLines: 2, overflow: TextOverflow.ellipsis),
           ],
         ),
         duration: const Duration(seconds: 5),
-        action: _isTrade(message)
+        action: actionLabel != null
             ? SnackBarAction(
-                label: 'Ver',
-                onPressed: () => _router?.go('/pollas'),
+                label: actionLabel,
+                onPressed: () => _router?.go(actionRoute!),
               )
             : null,
       ),
     );
   }
-
-  bool _isTrade(RemoteMessage message) =>
-      message.data['notif_type'] == 'trade';
 
   void _onAuthChanged() {
     if (AuthService().isAuthenticated) {
