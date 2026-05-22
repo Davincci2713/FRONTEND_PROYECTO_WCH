@@ -332,7 +332,7 @@ class _AlbumStatCard extends StatelessWidget {
           SizedBox(height: 24),
           Text(value, style: GoogleFonts.spaceGrotesk(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -1)),
           SizedBox(height: 4),
-          Text(label, style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: color)),
+          Text(label, style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: AppColors.textMuted)),
         ],
       ),
     );

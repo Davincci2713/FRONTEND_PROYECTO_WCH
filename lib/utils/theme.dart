@@ -29,6 +29,8 @@ class AppColors {
 
   // Accent text: lime on dark backgrounds, dark-green on light (WCAG AA)
   static Color get accentText    => isLightMode ? secondary : primary;
+  // Accent icon/decorative: same logic — ensures 3:1 on light, full lime on dark
+  static Color get accentIcon    => isLightMode ? secondary : primary;
 
   // Toggle inactive colors
   static Color get toggleInactiveTrack => isLightMode ? const Color(0xFFCCCCCC) : Colors.white12;
@@ -131,8 +133,8 @@ class AppTheme {
           borderSide: BorderSide(color: AppColors.error, width: 2),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        hintStyle: GoogleFonts.dmSans(color: AppColors.border, fontSize: 16),
-        labelStyle: GoogleFonts.dmSans(color: AppColors.primary, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+        hintStyle: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 16),
+        labelStyle: GoogleFonts.dmSans(color: AppColors.accentText, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
       ),
       cardTheme: CardThemeData(
         elevation: 0,

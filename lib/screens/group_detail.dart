@@ -808,7 +808,7 @@ class _CommentRowState extends State<_CommentRow> {
               _showReplies ? 'OCULTAR RESPUESTAS'
                   : 'VER ${widget.comment.replies.length} RESPUESTA(S)',
               style: GoogleFonts.dmSans(fontSize: 10,
-                  color: AppColors.primaryDark, fontWeight: FontWeight.w900, letterSpacing: 1)))),
+                  color: AppColors.accentText, fontWeight: FontWeight.w900, letterSpacing: 1)))),
       if (_showReplies)
         ...widget.comment.replies.map((r) => _tile(r, 48)),
     ],
@@ -860,7 +860,7 @@ class _CommentRowState extends State<_CommentRow> {
             GestureDetector(
               onTap: () => widget.onReply(c),
               child: Text('RESPONDER',
-                  style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.primaryDark,
+                  style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.accentText,
                       fontWeight: FontWeight.w900, letterSpacing: 1))),
           ],
         ]),
