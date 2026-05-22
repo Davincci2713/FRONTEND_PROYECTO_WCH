@@ -14,7 +14,7 @@ final _notifCount = ValueNotifier<int>(0);
 void refreshNotificationCount() {
   if (!AuthService().isAuthenticated) return;
   AuthService().getNotifications().then((items) {
-    _notifCount.value = items.length;
+    _notifCount.value = items.where((item) => item['status'] == 'sent').length;
   }).catchError((_) {});
 }
 
@@ -73,44 +73,83 @@ class _AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: (i) {
-        const routes = ['/home', '/album', '/pollas', '/comunidades', '/tickets', '/profile'];
-        if (i < routes.length) context.go(routes[i]);
-      },
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined),
-          selectedIcon: Icon(Icons.home_rounded),
-          label: 'INICIO',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.book_outlined),
-          selectedIcon: Icon(Icons.book_rounded),
-          label: 'ÁLBUM',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.sports_soccer_outlined),
-          selectedIcon: Icon(Icons.sports_soccer),
-          label: 'POLLAS',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.groups_outlined),
-          selectedIcon: Icon(Icons.groups_rounded),
-          label: 'GRUPOS',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.confirmation_number_outlined),
-          selectedIcon: Icon(Icons.confirmation_number),
-          label: 'TICKETS',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline_rounded),
-          selectedIcon: Icon(Icons.person_rounded),
-          label: 'PERFIL',
-        ),
-      ],
+    final items = [
+      (
+        icon: Icons.home_outlined,
+        selectedIcon: Icons.home_rounded,
+        label: 'INICIO',
+        route: '/home'
+      ),
+      (
+        icon: Icons.book_outlined,
+        selectedIcon: Icons.book_rounded,
+        label: 'ÁLBUM',
+        route: '/album'
+      ),
+      (
+        icon: Icons.sports_soccer_outlined,
+        selectedIcon: Icons.sports_soccer,
+        label: 'POLLAS',
+        route: '/pollas'
+      ),
+      (
+        icon: Icons.groups_outlined,
+        selectedIcon: Icons.groups_rounded,
+        label: 'GRUPOS',
+        route: '/comunidades'
+      ),
+      (
+        icon: Icons.confirmation_number_outlined,
+        selectedIcon: Icons.confirmation_number,
+        label: 'TICKETS',
+        route: '/tickets'
+      ),
+      (
+        icon: Icons.person_outline_rounded,
+        selectedIcon: Icons.person_rounded,
+        label: 'PERFIL',
+        route: '/profile'
+      ),
+    ];
+
+    return Container(
+      height: 64,
+      color: AppColors.surface,
+      child: Row(
+        children: List.generate(items.length, (index) {
+          final item = items[index];
+          final active = currentIndex == index;
+          return Expanded(
+            child: InkWell(
+              onTap: () => context.go(item.route),
+              child: Container(
+                color: active ? AppColors.primary : Colors.transparent,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      active ? item.selectedIcon : item.icon,
+                      color: active ? Colors.black : AppColors.textMuted,
+                      size: 22,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.label,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 10,
+                        fontWeight: active ? FontWeight.bold : FontWeight.w600,
+                        color: active ? Colors.black : AppColors.textMuted,
+                        letterSpacing: 1,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
     );
   }
 }
@@ -307,7 +346,7 @@ class _MobileHeaderState extends State<_MobileHeader> {
     if (!AuthService().isAuthenticated) return;
     try {
       final items = await AuthService().getNotifications();
-      _notifCount.value = items.length;
+      _notifCount.value = items.where((item) => item['status'] == 'sent').length;
     } catch (_) {}
   }
 
@@ -371,6 +410,7 @@ class _MobileHeaderState extends State<_MobileHeader> {
                     onTap: () {
                       _notifCount.value = 0;
                       Scaffold.of(ctx).openEndDrawer();
+                      AuthService().markNotificationsAsRead();
                     },
                     child: Stack(
                       clipBehavior: Clip.none,
@@ -476,6 +516,7 @@ class AppTopBar extends StatelessWidget {
                     onTap: () {
                       _notifCount.value = 0;
                       Scaffold.of(ctx).openEndDrawer();
+                      AuthService().markNotificationsAsRead();
                     },
                     child: Stack(
                       clipBehavior: Clip.none,

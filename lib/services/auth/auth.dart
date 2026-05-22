@@ -326,6 +326,17 @@ class AuthService extends ChangeNotifier {
     return [];
   }
 
+  Future<void> markNotificationsAsRead() async {
+    final uid = currentUserId;
+    if (uid == null) return;
+    try {
+      await http.put(
+        Uri.parse('$baseUrl/users/$uid/notifications/read'),
+        headers: getAuthHeaders(),
+      );
+    } catch (_) {}
+  }
+
   // ------------------------------------------------------------------
   // Helpers
   // ------------------------------------------------------------------
