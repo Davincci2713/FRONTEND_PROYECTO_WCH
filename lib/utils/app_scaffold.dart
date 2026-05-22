@@ -11,6 +11,13 @@ import 'package:frontend_proyecto/services/auth/auth.dart';
 
 final _notifCount = ValueNotifier<int>(0);
 
+void refreshNotificationCount() {
+  if (!AuthService().isAuthenticated) return;
+  AuthService().getNotifications().then((items) {
+    _notifCount.value = items.length;
+  }).catchError((_) {});
+}
+
 class AppScaffold extends StatelessWidget {
   final Widget child;
   final int currentIndex;
