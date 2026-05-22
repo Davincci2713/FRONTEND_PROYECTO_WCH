@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
+import 'package:frontend_proyecto/utils/app_scaffold.dart' show refreshNotificationCount;
 
 @pragma('vm:entry-point')
 Future<void> _backgroundMessageHandler(RemoteMessage message) async {
@@ -59,6 +60,7 @@ class FCMService {
         print('[FCM] Foreground: ${message.notification?.title} — ${message.notification?.body}');
       }
       _showInAppBanner(message);
+      refreshNotificationCount(); // Real-time notification badge update!
     });
 
     // App en background: usuario toca la notificación
