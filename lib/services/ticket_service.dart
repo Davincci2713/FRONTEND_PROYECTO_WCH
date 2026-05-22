@@ -23,6 +23,12 @@ class TicketService {
     throw Exception('Error cargando entradas');
   }
 
+  Future<Map<String, dynamic>> getUserDailyStats(int userId) async {
+    final r = await http.get(Uri.parse('$baseUrl/users/$userId/tickets/daily-stats'), headers: _h);
+    if (r.statusCode == 200) return Map<String, dynamic>.from(jsonDecode(r.body));
+    throw Exception('Error cargando estadísticas de límites');
+  }
+
   Future<Map<String, dynamic>> reserveTicket(int userId, int matchId) async {
     final r = await http.post(Uri.parse('$baseUrl/tickets/reserve'),
         headers: _h, body: jsonEncode({'userId': userId, 'matchId': matchId}));

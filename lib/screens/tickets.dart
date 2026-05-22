@@ -28,6 +28,15 @@ String _statusLabel(String s) => switch (s.toLowerCase()) {
   _ => s.toUpperCase(),
 };
 
+String _statusIcon(String s) => switch (s.toLowerCase()) {
+  'pagada'      => '✅ ',
+  'reservada'   => '⏳ ',
+  'transferida' => '✉️ ',
+  'reembolsada' => '❌ ',
+  'expirada'    => '⚠️ ',
+  _             => '',
+};
+
 // ── Pantalla principal ────────────────────────────────────────────────────────
 class TicketsScreen extends StatelessWidget {
   const TicketsScreen({super.key});
@@ -65,9 +74,6 @@ class TicketsScreen extends StatelessWidget {
   }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// TAB 1 — COMPRAR
-// ══════════════════════════════════════════════════════════════════════════════
 class _BuyTab extends StatefulWidget {
   const _BuyTab();
   @override
@@ -77,6 +83,7 @@ class _BuyTab extends StatefulWidget {
 class _BuyTabState extends State<_BuyTab> {
   final _svc = TicketService();
   List<dynamic> _matches = [];
+  Map<String, dynamic> _dailyStats = {};
   bool _loading = true;
   int get _uid => AuthService().currentUserId ?? 1;
 
@@ -89,10 +96,12 @@ class _BuyTabState extends State<_BuyTab> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final data = await _svc.getAvailableMatches();
+      final matchesData = await _svc.getAvailableMatches();
+      final statsData = await _svc.getUserDailyStats(_uid);
       if (mounted) {
         setState(() {
-          _matches = data;
+          _matches = matchesData;
+          _dailyStats = statsData;
           _loading = false;
         });
       }
@@ -104,22 +113,73 @@ class _BuyTabState extends State<_BuyTab> {
   @override
   Widget build(BuildContext context) {
     if (_loading) return Center(child: CircularProgressIndicator(color: AppColors.primary));
-    if (_matches.isEmpty) {
-      return const _Empty(icon: Icons.event_busy_rounded, text: 'NO HAY PARTIDOS DISPONIBLES.');
-    }
+
+    final purchasesToday = _dailyStats['purchasesToday'] ?? 0;
+    final maxPurchases = _dailyStats['maxPurchasesPerDay'] ?? 4;
+    final limitReached = purchasesToday >= maxPurchases;
 
     return RefreshIndicator(
       color: AppColors.onPrimary,
       backgroundColor: AppColors.primary,
       onRefresh: _load,
-      child: ListView.separated(
+      child: ListView(
         padding: const EdgeInsets.all(24),
-        itemCount: _matches.length,
-        separatorBuilder: (_, __) => SizedBox(height: 24),
-        itemBuilder: (ctx, i) => _MatchCard(
-          match: _matches[i],
-          onReserve: () => _reserve(_matches[i]),
-        ),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 24),
+            decoration: BoxDecoration(
+              color: limitReached ? AppColors.error.withValues(alpha: 0.1) : AppColors.surface,
+              border: Border.all(
+                color: limitReached ? AppColors.error : AppColors.border,
+                width: 2,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  limitReached ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+                  color: limitReached ? AppColors.error : AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    limitReached
+                        ? 'LÍMITE DIARIO DE COMPRAS ALCANZADO ($purchasesToday/$maxPurchases)'
+                        : 'COMPRAS REALIZADAS HOY: $purchasesToday DE $maxPurchases TICKETS MÁXIMO.',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: limitReached ? AppColors.error : AppColors.text,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_matches.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: _Empty(icon: Icons.event_busy_rounded, text: 'NO HAY PARTIDOS DISPONIBLES.'),
+              ),
+            )
+          else
+            ..._matches.map((match) {
+              final avail = match['available'] as int? ?? 0;
+              final sold = avail == 0;
+              final disabled = sold || limitReached;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: _MatchCard(
+                  match: match,
+                  limitReached: limitReached,
+                  onReserve: disabled ? null : () => _reserve(match),
+                ),
+              );
+            }),
+        ],
       ),
     );
   }
@@ -142,7 +202,7 @@ class _BuyTabState extends State<_BuyTab> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('ENTRADA RESERVADA. VE A "MIS ENTRADAS" PARA PAGAR.', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
+          content: Text('✅ ENTRADA RESERVADA. VE A "MIS ENTRADAS" PARA PAGAR.', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -151,7 +211,7 @@ class _BuyTabState extends State<_BuyTab> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.toString().toUpperCase(), style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
+            content: Text('❌ ${e.toString().toUpperCase()}', style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
             backgroundColor: AppColors.error,
           ),
         );
@@ -162,8 +222,9 @@ class _BuyTabState extends State<_BuyTab> {
 
 class _MatchCard extends StatelessWidget {
   final Map<String, dynamic> match;
-  final VoidCallback onReserve;
-  const _MatchCard({required this.match, required this.onReserve});
+  final bool limitReached;
+  final VoidCallback? onReserve;
+  const _MatchCard({required this.match, required this.limitReached, required this.onReserve});
 
   String _fmt(String? iso) {
     if (iso == null) return '—';
@@ -259,9 +320,18 @@ class _MatchCard extends StatelessWidget {
                 ]),
                 const Spacer(),
                 ElevatedButton.icon(
-                  onPressed: sold ? null : onReserve,
-                  icon: Icon(sold ? Icons.block_rounded : Icons.confirmation_number_rounded, size: 20),
-                  label: Text(sold ? 'AGOTADO' : 'RESERVAR'),
+                  onPressed: onReserve,
+                  icon: Icon(
+                    sold
+                        ? Icons.block_rounded
+                        : (limitReached ? Icons.warning_amber_rounded : Icons.confirmation_number_rounded),
+                    size: 20,
+                  ),
+                  label: Text(
+                    sold
+                        ? 'AGOTADO'
+                        : (limitReached ? 'LÍMITE ALCANZADO' : 'RESERVAR'),
+                  ),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   ),
@@ -287,6 +357,7 @@ class _MyTicketsTab extends StatefulWidget {
 class _MyTicketsTabState extends State<_MyTicketsTab> {
   final _svc = TicketService();
   List<dynamic> _tickets = [];
+  Map<String, dynamic> _dailyStats = {};
   bool _loading = true;
   int get _uid => AuthService().currentUserId ?? 1;
 
@@ -299,10 +370,12 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final data = await _svc.getUserTickets(_uid);
+      final ticketsData = await _svc.getUserTickets(_uid);
+      final statsData = await _svc.getUserDailyStats(_uid);
       if (mounted) {
         setState(() {
-          _tickets = data;
+          _tickets = ticketsData;
+          _dailyStats = statsData;
           _loading = false;
         });
       }
@@ -314,27 +387,73 @@ class _MyTicketsTabState extends State<_MyTicketsTab> {
   @override
   Widget build(BuildContext context) {
     if (_loading) return Center(child: CircularProgressIndicator(color: AppColors.primary));
-    if (_tickets.isEmpty) {
-      return const _Empty(
-        icon: Icons.confirmation_number_rounded,
-        text: 'NO TIENES ENTRADAS AÚN.\nVE A "COMPRAR" PARA RESERVAR LA TUYA.',
-      );
-    }
+
+    final transfersToday = _dailyStats['transfersToday'] ?? 0;
+    final maxTransfers = _dailyStats['maxTransfersPerDay'] ?? 3;
+    final limitReached = transfersToday >= maxTransfers;
 
     return RefreshIndicator(
       color: AppColors.onPrimary,
       backgroundColor: AppColors.primary,
       onRefresh: _load,
-      child: ListView.separated(
+      child: ListView(
         padding: const EdgeInsets.all(24),
-        itemCount: _tickets.length,
-        separatorBuilder: (_, __) => SizedBox(height: 24),
-        itemBuilder: (_, i) => _TicketCard(
-          ticket: _tickets[i],
-          userId: _uid,
-          service: _svc,
-          onRefresh: _load,
-        ),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 24),
+            decoration: BoxDecoration(
+              color: limitReached ? AppColors.error.withValues(alpha: 0.1) : AppColors.surface,
+              border: Border.all(
+                color: limitReached ? AppColors.error : AppColors.border,
+                width: 2,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  limitReached ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+                  color: limitReached ? AppColors.error : AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    limitReached
+                        ? 'LÍMITE DIARIO DE TRANSFERENCIAS ALCANZADO ($transfersToday/$maxTransfers)'
+                        : 'TRANSFERENCIAS REALIZADAS HOY: $transfersToday DE $maxTransfers MÁXIMO.',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: limitReached ? AppColors.error : AppColors.text,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (_tickets.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: _Empty(
+                  icon: Icons.confirmation_number_rounded,
+                  text: 'NO TIENES ENTRADAS AÚN.\nVE A "COMPRAR" PARA RESERVAR LA TUYA.',
+                ),
+              ),
+            )
+          else
+            ..._tickets.map((t) => Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: _TicketCard(
+                ticket: t,
+                userId: _uid,
+                service: _svc,
+                dailyStats: _dailyStats,
+                onRefresh: _load,
+              ),
+            )),
+        ],
       ),
     );
   }
@@ -345,11 +464,13 @@ class _TicketCard extends StatefulWidget {
   final Map<String, dynamic> ticket;
   final int userId;
   final TicketService service;
+  final Map<String, dynamic> dailyStats;
   final VoidCallback onRefresh;
   const _TicketCard({
     required this.ticket,
     required this.userId,
     required this.service,
+    required this.dailyStats,
     required this.onRefresh,
   });
   @override
@@ -397,6 +518,19 @@ class _TicketCardState extends State<_TicketCard> {
   }
 
   Future<void> _transfer() async {
+    final transfersToday = widget.dailyStats['transfersToday'] ?? 0;
+    final maxTransfers = widget.dailyStats['maxTransfersPerDay'] ?? 3;
+    if (transfersToday >= maxTransfers) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('⚠️ LÍMITE DIARIO DE TRANSFERENCIAS ALCANZADO ($transfersToday/$maxTransfers)',
+              style: GoogleFonts.dmSans(color: AppColors.onPrimary, fontWeight: FontWeight.bold)),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     final email = await showDialog<String>(
       context: context,
       builder: (_) => const _TransferDialog(),
@@ -497,7 +631,7 @@ class _TicketCardState extends State<_TicketCard> {
                                 color: Colors.transparent,
                                 border: Border.all(color: color, width: 2),
                               ),
-                              child: Text(_statusLabel(status),
+                              child: Text(_statusIcon(status) + _statusLabel(status),
                                 style: GoogleFonts.spaceGrotesk(color: color, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
                             ),
                             const Spacer(),
@@ -723,89 +857,129 @@ class _Btn extends StatelessWidget {
 }
 
 // ── Modal pago Stripe (simulado) ──────────────────────────────────────────────
-class _StripeModal extends StatelessWidget {
+class _StripeModal extends StatefulWidget {
   final dynamic price;
   const _StripeModal({required this.price});
+  @override
+  State<_StripeModal> createState() => _StripeModalState();
+}
+
+class _StripeModalState extends State<_StripeModal> {
+  bool _processing = false;
+
+  Future<void> _startPayment() async {
+    setState(() => _processing = true);
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      Navigator.pop(context, true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      backgroundColor: AppColors.background,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
-      title: Row(
-        children: [
-          Container(
-            width: 40, height: 40,
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              border: Border.all(color: const Color(0xFF6259F5), width: 2),
+    return PopScope(
+      canPop: !_processing,
+      child: AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
+        title: Row(
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                border: Border.all(color: const Color(0xFF6259F5), width: 2),
+              ),
+              child: Icon(Icons.credit_card_rounded, size: 20, color: Color(0xFF6259F5)),
             ),
-            child: Icon(Icons.credit_card_rounded, size: 20, color: Color(0xFF6259F5)),
-          ),
-          SizedBox(width: 16),
-          Text('PAGO STRIPE', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('TOTAL: \$$price',
-            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 32, color: AppColors.primary, letterSpacing: -2)),
-          SizedBox(height: 32),
-          const _MockField(label: 'NÚMERO DE TARJETA', hint: '4242 4242 4242 4242'),
-          SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _MockField(label: 'VENCIMIENTO', hint: '12 / 28')),
-              SizedBox(width: 16),
-              Expanded(child: _MockField(label: 'CVV', hint: '424')),
-            ],
-          ),
-          SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              border: Border.all(color: const Color(0xFF6259F5), width: 2),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_rounded, size: 20, color: Color(0xFF6259F5)),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text('MODO DE PRUEBA STRIPE. LOS DATOS NO SE ENVÍAN A NINGÚN SERVIDOR EXTERNO.',
-                    style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+            SizedBox(width: 16),
+            Text('PAGO STRIPE', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
+          ],
+        ),
+        content: _processing
+            ? SizedBox(
+                height: 200,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: const Color(0xFF6259F5)),
+                      const SizedBox(height: 24),
+                      Text(
+                        'PROCESANDO PAGO...',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          color: AppColors.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('TOTAL: \$${widget.price}',
+                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 32, color: AppColors.primary, letterSpacing: -2)),
+                  SizedBox(height: 32),
+                  const _MockField(label: 'NÚMERO DE TARJETA', hint: '4242 4242 4242 4242'),
+                  SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(child: _MockField(label: 'VENCIMIENTO', hint: '12 / 28')),
+                      SizedBox(width: 16),
+                      Expanded(child: _MockField(label: 'CVV', hint: '424')),
+                    ],
+                  ),
+                  SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(color: const Color(0xFF6259F5), width: 2),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_rounded, size: 20, color: Color(0xFF6259F5)),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: Text('MODO DE PRUEBA STRIPE. LOS DATOS NO SE ENVÍAN A NINGÚN SERVIDOR EXTERNO.',
+                            style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+        actionsPadding: const EdgeInsets.all(24),
+        actions: _processing
+            ? []
+            : [
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.text,
+                    side: BorderSide(color: AppColors.border, width: 2),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                  ),
+                  child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
+                ),
+                ElevatedButton.icon(
+                  onPressed: _startPayment,
+                  icon: Icon(Icons.lock_rounded, size: 16),
+                  label: Text('PAGAR \$${widget.price}'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6259F5),
+                    foregroundColor: AppColors.text,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                    side: BorderSide(color: Color(0xFF6259F5), width: 2),
+                  ),
                 ),
               ],
-            ),
-          ),
-        ],
       ),
-      actionsPadding: const EdgeInsets.all(24),
-      actions: [
-        OutlinedButton(
-          onPressed: () => Navigator.pop(context, false),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.text,
-            side: BorderSide(color: AppColors.border, width: 2),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-          ),
-          child: Text('CANCELAR', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
-        ),
-        ElevatedButton.icon(
-          onPressed: () => Navigator.pop(context, true),
-          icon: Icon(Icons.lock_rounded, size: 16),
-          label: Text('PAGAR \$$price'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF6259F5),
-            foregroundColor: AppColors.text,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-            side: BorderSide(color: Color(0xFF6259F5), width: 2),
-          ),
-        ),
-      ],
     );
   }
 }
