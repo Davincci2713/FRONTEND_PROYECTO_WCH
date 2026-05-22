@@ -112,8 +112,14 @@ class _AppBottomNav extends StatelessWidget {
       ),
     ];
 
+    final s = R.scale(context);
+    final navHeight = (64 * s).clamp(52.0, 72.0);
+    final iconSize  = (22 * s).clamp(18.0, 26.0);
+    final labelSize = (10 * s).clamp(8.0, 12.0);
+    final spacing   = s < 0.88 ? 0.0 : 1.0;
+
     return Container(
-      height: 64,
+      height: navHeight,
       color: AppColors.surface,
       child: Row(
         children: List.generate(items.length, (index) {
@@ -130,18 +136,19 @@ class _AppBottomNav extends StatelessWidget {
                     Icon(
                       active ? item.selectedIcon : item.icon,
                       color: active ? Colors.black : AppColors.textMuted,
-                      size: 22,
+                      size: iconSize,
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: s < 0.88 ? 2 : 4),
                     Text(
                       item.label,
                       style: GoogleFonts.dmSans(
-                        fontSize: 10,
+                        fontSize: labelSize,
                         fontWeight: active ? FontWeight.bold : FontWeight.w600,
                         color: active ? Colors.black : AppColors.textMuted,
-                        letterSpacing: 1,
+                        letterSpacing: spacing,
                       ),
                       textAlign: TextAlign.center,
+                      overflow: TextOverflow.clip,
                     ),
                   ],
                 ),
@@ -643,8 +650,9 @@ class _NotificationsDrawerState extends State<_NotificationsDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final drawerWidth = (MediaQuery.sizeOf(context).width * 0.92).clamp(0.0, 380.0);
     return Drawer(
-      width: 380,
+      width: drawerWidth,
       backgroundColor: AppColors.background,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.zero,

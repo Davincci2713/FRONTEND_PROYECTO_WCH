@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:frontend_proyecto/providers/theme_provider.dart';
+import 'package:frontend_proyecto/utils/responsive.dart';
 import 'package:frontend_proyecto/utils/theme.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
 import 'package:frontend_proyecto/services/match_service.dart';
@@ -56,7 +57,6 @@ class _InicioState extends State<Inicio> {
     context.watch<ThemeProvider>();
     final user = AuthService().currentUser ?? {};
     final firstName = user['firstName'] ?? 'FANÁTICO';
-
     return RefreshIndicator(
       color: AppColors.onPrimary,
       backgroundColor: AppColors.primary,
@@ -66,14 +66,14 @@ class _InicioState extends State<Inicio> {
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(left: 24, right: 24, top: 48, bottom: 24),
+        padding: EdgeInsets.only(left: 24, right: 24, top: R.s(context, 32), bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'BIENVENIDO,\n${firstName.toUpperCase()}.',
               style: GoogleFonts.spaceGrotesk(
-                fontSize: 48,
+                fontSize: R.fs(context, 48),
                 fontWeight: FontWeight.w900,
                 color: AppColors.text,
                 letterSpacing: -2,
@@ -152,7 +152,7 @@ class _InicioState extends State<Inicio> {
                 Text(
                   'NOTICIAS DEL MUNDIAL',
                   style: GoogleFonts.spaceGrotesk(
-                    fontSize: 24,
+                    fontSize: R.fs(context, 24),
                     fontWeight: FontWeight.w900,
                     color: AppColors.text,
                     letterSpacing: -1,
