@@ -214,7 +214,7 @@ class _NewsCard extends StatelessWidget {
     return GestureDetector(
       onTap: () => showNewsDetail(context, article),
       child: Container(
-        height: 140,
+        height: 150,
         decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border.all(color: AppColors.border, width: 2),
@@ -232,7 +232,7 @@ class _NewsCard extends StatelessWidget {
               child: hasImage
                   ? Image.network(
                       proxiedImageUrl(article.imageUrl),
-                      fit: BoxFit.contain,
+                      fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _ImagePlaceholder(),
                     )
                   : _ImagePlaceholder(),
@@ -241,7 +241,7 @@ class _NewsCard extends StatelessWidget {
             // Contenido
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -272,7 +272,7 @@ class _NewsCard extends StatelessWidget {
                             ),
                         ],
                       ),
-                    SizedBox(height: 12),
+                    SizedBox(height: 8),
                     Text(
                       article.title.toUpperCase(),
                       maxLines: 2,
@@ -285,15 +285,17 @@ class _NewsCard extends StatelessWidget {
                       ),
                     ),
                     if (article.description.isNotEmpty) ...[
-                      SizedBox(height: 8),
-                      Text(
-                        article.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 12,
-                          color: AppColors.textMuted,
-                          height: 1.4,
+                      SizedBox(height: 6),
+                      Flexible(
+                        child: Text(
+                          article.description,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                            height: 1.4,
+                          ),
                         ),
                       ),
                     ],

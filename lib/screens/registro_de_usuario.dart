@@ -415,6 +415,7 @@ class _RegistroFormState extends State<RegistroForm> {
                     foregroundColor: AppColors.text,
                     side: BorderSide(color: AppColors.text, width: 2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                   ),
                   child: Text(
                     'INICIAR SESIÓN',
