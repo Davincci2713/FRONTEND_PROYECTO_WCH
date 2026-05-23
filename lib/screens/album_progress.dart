@@ -147,7 +147,7 @@ class _ProgressHeader extends StatelessWidget {
                 value: '$owned',
                 color: AppColors.onPrimary,
               ),
-              _Stat(label: 'TOTAL', value: '$total', color: AppColors.border),
+              _Stat(label: 'TOTAL', value: '$total', color: AppColors.onPrimary),
               _Stat(
                 label: 'COMPLETADO',
                 value: '${pct.toStringAsFixed(1)}%',
