@@ -1022,6 +1022,7 @@ class _TransferDialogState extends State<_TransferDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     backgroundColor: AppColors.background,
+    scrollable: true,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
     title: Text('TRANSFERIR ENTRADA', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.text, letterSpacing: -1)),
     content: Column(
@@ -1178,6 +1179,7 @@ class _ConfirmDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AlertDialog(
     backgroundColor: AppColors.background,
+    scrollable: true,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
     title: Text(title, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 24, color: AppColors.text, letterSpacing: -1)),
     content: Text(content, style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, height: 1.5, letterSpacing: 1)),

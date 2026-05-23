@@ -50,6 +50,7 @@ class _TradesScreenState extends State<TradesScreen> {
       context: context,
       builder: (dlgCtx) => AlertDialog(
         backgroundColor: AppColors.background,
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
         title: Text('ACEPTAR INTERCAMBIO', style: GoogleFonts.spaceGrotesk(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -1)),
         content: Text('¿CONFIRMAS EL INTERCAMBIO? LAS LÁMINAS SE INTERCAMBIARÁN INMEDIATAMENTE.', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1, height: 1.5)),
@@ -104,6 +105,7 @@ class _TradesScreenState extends State<TradesScreen> {
       context: context,
       builder: (dlgCtx) => AlertDialog(
         backgroundColor: AppColors.background,
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
         title: Text('RECHAZAR INTERCAMBIO', style: GoogleFonts.spaceGrotesk(color: AppColors.text, fontWeight: FontWeight.w900, fontSize: 20, letterSpacing: -1)),
         content: Text('¿SEGURO QUE QUIERES RECHAZAR ESTA SOLICITUD?', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
