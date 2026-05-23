@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/album_provider.dart';
+import '../utils/responsive.dart';
 import '../utils/theme.dart';
 import '../config.dart';
 
@@ -168,7 +169,7 @@ class _AlbumScreenState extends State<AlbumScreen> {
                 Row(children: [
                   Expanded(
                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('COLECCIONES.', style: GoogleFonts.spaceGrotesk(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -1)),
+                      Text('COLECCIONES.', style: GoogleFonts.spaceGrotesk(fontSize: R.fs(context, 32), fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -1)),
                       SizedBox(height: 4),
                       Text('${collections.length} EQUIPOS • TOCA PARA VER DETALLE',
                           style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
@@ -237,9 +238,10 @@ class _AlbumHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final vPad = R.s(context, 40);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 48, 24, 48),
+      padding: EdgeInsets.fromLTRB(24, vPad, 24, vPad),
       decoration: BoxDecoration(
         color: AppColors.primary,
         border: Border(bottom: BorderSide(color: AppColors.onPrimary, width: 2)),
@@ -250,7 +252,7 @@ class _AlbumHero extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('MI ÁLBUM.', style: GoogleFonts.spaceGrotesk(fontSize: 48, height: 0.9, color: AppColors.onPrimary, fontWeight: FontWeight.w900, letterSpacing: -2)),
+                Text('MI ÁLBUM.', style: GoogleFonts.spaceGrotesk(fontSize: R.fs(context, 48), height: 0.9, color: AppColors.onPrimary, fontWeight: FontWeight.w900, letterSpacing: -2)),
                 SizedBox(height: 8),
                 Text('FIFA WORLD CUP 2026', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 2)),
                 SizedBox(height: 32),
@@ -330,7 +332,7 @@ class _AlbumStatCard extends StatelessWidget {
             child: Icon(icon, color: AppColors.onPrimary, size: 24),
           ),
           SizedBox(height: 24),
-          Text(value, style: GoogleFonts.spaceGrotesk(fontSize: 32, fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -1)),
+          Text(value, style: GoogleFonts.spaceGrotesk(fontSize: R.fs(context, 32), fontWeight: FontWeight.w900, color: AppColors.text, letterSpacing: -1)),
           SizedBox(height: 4),
           Text(label, style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: AppColors.textMuted)),
         ],

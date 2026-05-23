@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:frontend_proyecto/utils/responsive.dart';
+
 import '../services/auth/auth.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -121,16 +122,16 @@ class LoginMobile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(height: 24),
+            SizedBox(height: R.s(context, 16)),
             // Header Brutalista
             Row(
               children: [
-                Icon(Icons.sports_soccer, size: 40, color: AppColors.primary),
+                Icon(Icons.sports_soccer, size: R.s(context, 36), color: AppColors.primary),
                 SizedBox(width: 16),
                 Text(
                   'WCH.26',
                   style: GoogleFonts.spaceGrotesk(
-                    fontSize: 32,
+                    fontSize: R.fs(context, 32),
                     fontWeight: FontWeight.w900,
                     color: AppColors.text,
                     letterSpacing: -2,
@@ -138,7 +139,7 @@ class LoginMobile extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: 48),
+            SizedBox(height: R.s(context, 36)),
             const LoginForm(),
           ],
         ),
@@ -205,7 +206,7 @@ class _LoginFormState extends State<LoginForm> {
         Text(
           'INICIAR\nSESIÓN',
           style: GoogleFonts.spaceGrotesk(
-            fontSize: 48,
+            fontSize: R.fs(context, 48),
             height: 1.0,
             fontWeight: FontWeight.w900,
             color: AppColors.text,

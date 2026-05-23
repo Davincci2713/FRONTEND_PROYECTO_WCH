@@ -29,11 +29,11 @@ String _statusLabel(String s) => switch (s.toLowerCase()) {
 };
 
 String _statusIcon(String s) => switch (s.toLowerCase()) {
-  'pagada'      => '✅ ',
-  'reservada'   => '⏳ ',
-  'transferida' => '✉️ ',
-  'reembolsada' => '❌ ',
-  'expirada'    => '⚠️ ',
+  'pagada'      => '',
+  'reservada'   => '',
+  'transferida' => '',
+  'reembolsada' => '',
+  'expirada'    => '',
   _             => '',
 };
 
