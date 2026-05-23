@@ -376,6 +376,7 @@ class _GroupPostCardState extends State<_GroupPostCard> {
     if (!isOwn) return;
     showDialog(context: context, builder: (dlgCtx) => AlertDialog(
       backgroundColor: AppColors.background,
+      scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
       title: Text('ELIMINAR PUBLICACIÓN',
           style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, color: AppColors.text)),

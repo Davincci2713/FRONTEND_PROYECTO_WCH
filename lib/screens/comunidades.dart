@@ -286,6 +286,7 @@ class _PostCardState extends State<_PostCard> {
       context: context,
       builder: (dlgCtx) => AlertDialog(
         backgroundColor: AppColors.background,
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
         title: Text('EDITAR PUBLICACIÓN', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
         content: TextField(
@@ -346,6 +347,7 @@ class _PostCardState extends State<_PostCard> {
       context: context,
       builder: (dlgCtx) => AlertDialog(
         backgroundColor: AppColors.background,
+        scrollable: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
         title: Text('ELIMINAR PUBLICACIÓN', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
         content: Text('¿ESTÁS SEGURO? ESTA ACCIÓN NO SE PUEDE DESHACER.', style: GoogleFonts.dmSans(color: AppColors.textMuted, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
@@ -1093,6 +1095,7 @@ class _GruposTabState extends State<_GruposTab> {
     final ctrl = TextEditingController();
     showDialog(context: context, builder: (dlgCtx) => AlertDialog(
       backgroundColor: AppColors.background,
+      scrollable: true,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero, side: BorderSide(color: AppColors.border, width: 2)),
       title: Text('UNIRSE CON CÓDIGO',
           style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 20, color: AppColors.text, letterSpacing: -1)),
