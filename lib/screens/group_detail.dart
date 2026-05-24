@@ -141,7 +141,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       builder: (_) => _GroupPostSheet(
         groupId: _groupId,
         groupName: widget.group['name'] as String? ?? '',
-        onCreated: (post) => setState(() => _posts.insert(0, post)),
+        onCreated: (post) => _load(),
       ),
     );
   }
@@ -198,7 +198,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                           height: MediaQuery.of(context).size.height * 0.5,
                           child: _emptyFeed(),
                         )],
-                      )
+                    )
                     : ListView.builder(
                         controller: _scroll,
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -217,8 +217,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                             key: ValueKey(post.id),
                             post: post,
                             svc: _svc,
-                            onDelete: () =>
-                                setState(() => _posts.removeWhere((p) => p.id == post.id)),
+                            onDelete: _load,
                           );
                         },
                       ),
