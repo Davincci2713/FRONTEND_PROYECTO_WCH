@@ -38,6 +38,11 @@ class FCMService {
 
     if (granted) {
       await _syncToken();
+      try {
+        await _messaging.subscribeToTopic('feed');
+      } catch (e) {
+        if (kDebugMode) print('[FCM] Failed to subscribe to feed topic: $e');
+      }
     }
 
     // iOS: mostrar notificaciones con la app en primer plano

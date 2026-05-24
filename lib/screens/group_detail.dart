@@ -1,10 +1,12 @@
 import 'package:frontend_proyecto/utils/theme.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:frontend_proyecto/providers/theme_provider.dart';
 import 'package:frontend_proyecto/services/feed_service.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
@@ -26,6 +28,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   bool _loadingMore = false;
   bool _hasMore = true;
   int _page = 1;
+  StreamSubscription<RemoteMessage>? _fcmSubscription;
 
   int get _groupId => widget.group['idCommunity'] as int;
 
@@ -34,10 +37,42 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     super.initState();
     _load();
     _scroll.addListener(_onScroll);
+    _listenToRealtimeUpdates();
   }
 
   @override
-  void dispose() { _scroll.dispose(); super.dispose(); }
+  void dispose() {
+    _scroll.dispose();
+    _fcmSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _listenToRealtimeUpdates() {
+    _fcmSubscription = FirebaseMessaging.onMessage.listen((message) {
+      final notifType = message.data['notif_type'];
+      if (notifType == 'post_edited') {
+        final postId = int.tryParse(message.data['post_id'] ?? '');
+        final content = message.data['content'];
+        if (postId != null && content != null) {
+          final index = _posts.indexWhere((p) => p.id == postId);
+          if (index != -1 && mounted) {
+            setState(() {
+              _posts[index].content = content;
+            });
+          }
+        }
+      } else if (notifType == 'post_deleted') {
+        final postId = int.tryParse(message.data['post_id'] ?? '');
+        if (postId != null) {
+          if (mounted) {
+            setState(() {
+              _posts.removeWhere((p) => p.id == postId);
+            });
+          }
+        }
+      }
+    });
+  }
 
   void _onScroll() {
     if (!_scroll.hasClients) return;
@@ -162,11 +197,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                                   color: AppColors.primary)),
                             );
                           }
+                          final post = _posts[i];
                           return _GroupPostCard(
-                            post: _posts[i],
+                            key: ValueKey(post.id),
+                            post: post,
                             svc: _svc,
                             onDelete: () =>
-                                setState(() => _posts.removeAt(i)),
+                                setState(() => _posts.removeWhere((p) => p.id == post.id)),
                           );
                         },
                       ),
