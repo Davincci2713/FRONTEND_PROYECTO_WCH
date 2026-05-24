@@ -402,7 +402,7 @@ class _GroupPostCardState extends State<_GroupPostCard> {
   @override
   void didUpdateWidget(_GroupPostCard old) {
     super.didUpdateWidget(old);
-    if (old.post.id != widget.post.id) _post = widget.post;
+    _post = widget.post;
   }
 
   Future<void> _toggleLike() async {
