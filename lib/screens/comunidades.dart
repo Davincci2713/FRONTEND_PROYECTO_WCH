@@ -11,6 +11,7 @@ import 'package:frontend_proyecto/services/community_service.dart';
 import 'package:frontend_proyecto/services/feed_service.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
 import 'package:frontend_proyecto/utils/theme.dart';
+import 'package:frontend_proyecto/utils/platform_reload.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Entry point
@@ -183,7 +184,7 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _NewPostSheet(onCreated: (post) {
-        _load();
+        reloadPlatform(_load);
       }),
     );
     if (ok == true) {}
@@ -233,7 +234,7 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
                         return _PostCard(
                           key: ValueKey(post.id),
                           post: post,
-                          onDelete: _load,
+                          onDelete: () => reloadPlatform(_load),
                         );
                       },
                     ),
