@@ -10,6 +10,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:frontend_proyecto/providers/theme_provider.dart';
 import 'package:frontend_proyecto/services/feed_service.dart';
 import 'package:frontend_proyecto/services/auth/auth.dart';
+import 'package:frontend_proyecto/utils/platform_reload.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final Map<String, dynamic> group;
@@ -141,7 +142,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       builder: (_) => _GroupPostSheet(
         groupId: _groupId,
         groupName: widget.group['name'] as String? ?? '',
-        onCreated: (post) => _load(),
+        onCreated: (post) => reloadPlatform(_load),
       ),
     );
   }
@@ -217,7 +218,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                             key: ValueKey(post.id),
                             post: post,
                             svc: _svc,
-                            onDelete: _load,
+                            onDelete: () => reloadPlatform(_load),
                           );
                         },
                       ),
