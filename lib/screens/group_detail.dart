@@ -29,6 +29,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   bool _hasMore = true;
   int _page = 1;
   StreamSubscription<RemoteMessage>? _fcmSubscription;
+  Timer? _pollTimer;
 
   int get _groupId => widget.group['idCommunity'] as int;
 
@@ -38,13 +39,27 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     _load();
     _scroll.addListener(_onScroll);
     _listenToRealtimeUpdates();
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _silentRefresh());
   }
 
   @override
   void dispose() {
     _scroll.dispose();
     _fcmSubscription?.cancel();
+    _pollTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _silentRefresh() async {
+    try {
+      final latest = await _svc.getFeed(page: 1, groupId: _groupId);
+      if (!mounted || latest.isEmpty) return;
+      final existingIds = _posts.map((p) => p.id).toSet();
+      final newPosts = latest.where((p) => !existingIds.contains(p.id)).toList();
+      if (newPosts.isNotEmpty) {
+        setState(() => _posts.insertAll(0, newPosts));
+      }
+    } catch (_) {}
   }
 
   void _listenToRealtimeUpdates() {
@@ -374,7 +389,7 @@ class _GroupPostCard extends StatefulWidget {
   final FeedService svc;
   final VoidCallback onDelete;
   const _GroupPostCard(
-      {required this.post, required this.svc, required this.onDelete});
+      {super.key, required this.post, required this.svc, required this.onDelete});
   @override
   State<_GroupPostCard> createState() => _GroupPostCardState();
 }
@@ -383,6 +398,12 @@ class _GroupPostCardState extends State<_GroupPostCard> {
   late FeedPost _post;
   @override
   void initState() { super.initState(); _post = widget.post; }
+
+  @override
+  void didUpdateWidget(_GroupPostCard old) {
+    super.didUpdateWidget(old);
+    if (old.post.id != widget.post.id) _post = widget.post;
+  }
 
   Future<void> _toggleLike() async {
     final prev = _post.likedByMe;

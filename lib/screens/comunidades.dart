@@ -71,6 +71,7 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
   bool _hasMore = true;
   int _page = 1;
   StreamSubscription<RemoteMessage>? _fcmSubscription;
+  Timer? _pollTimer;
 
   @override
   bool get wantKeepAlive => true;
@@ -81,13 +82,27 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
     _load();
     _scroll.addListener(_onScroll);
     _listenToRealtimeUpdates();
+    _pollTimer = Timer.periodic(const Duration(seconds: 30), (_) => _silentRefresh());
   }
 
   @override
   void dispose() {
     _scroll.dispose();
     _fcmSubscription?.cancel();
+    _pollTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _silentRefresh() async {
+    try {
+      final latest = await _svc.getFeed(page: 1);
+      if (!mounted || latest.isEmpty) return;
+      final existingIds = _posts.map((p) => p.id).toSet();
+      final newPosts = latest.where((p) => !existingIds.contains(p.id)).toList();
+      if (newPosts.isNotEmpty) {
+        setState(() => _posts.insertAll(0, newPosts));
+      }
+    } catch (_) {}
   }
 
   void _listenToRealtimeUpdates() {
@@ -249,7 +264,7 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
 class _PostCard extends StatefulWidget {
   final FeedPost post;
   final VoidCallback onDelete;
-  const _PostCard({required this.post, required this.onDelete});
+  const _PostCard({super.key, required this.post, required this.onDelete});
   @override
   State<_PostCard> createState() => _PostCardState();
 }
@@ -260,6 +275,12 @@ class _PostCardState extends State<_PostCard> {
 
   @override
   void initState() { super.initState(); _post = widget.post; }
+
+  @override
+  void didUpdateWidget(_PostCard old) {
+    super.didUpdateWidget(old);
+    if (old.post.id != widget.post.id) _post = widget.post;
+  }
 
   Future<void> _toggleLike() async {
     final prev = _post.likedByMe;
