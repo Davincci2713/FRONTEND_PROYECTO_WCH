@@ -279,7 +279,7 @@ class _PostCardState extends State<_PostCard> {
   @override
   void didUpdateWidget(_PostCard old) {
     super.didUpdateWidget(old);
-    if (old.post.id != widget.post.id) _post = widget.post;
+    _post = widget.post;
   }
 
   Future<void> _toggleLike() async {
