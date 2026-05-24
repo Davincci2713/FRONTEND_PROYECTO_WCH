@@ -183,7 +183,7 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _NewPostSheet(onCreated: (post) {
-        setState(() => _posts.insert(0, post));
+        _load();
       }),
     );
     if (ok == true) {}
@@ -233,7 +233,7 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
                         return _PostCard(
                           key: ValueKey(post.id),
                           post: post,
-                          onDelete: () => setState(() => _posts.removeWhere((p) => p.id == post.id)),
+                          onDelete: _load,
                         );
                       },
                     ),
