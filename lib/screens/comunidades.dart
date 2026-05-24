@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:frontend_proyecto/providers/theme_provider.dart';
 import 'package:frontend_proyecto/services/community_service.dart';
 import 'package:frontend_proyecto/services/feed_service.dart';
@@ -68,6 +70,7 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
   bool _loadingMore = false;
   bool _hasMore = true;
   int _page = 1;
+  StreamSubscription<RemoteMessage>? _fcmSubscription;
 
   @override
   bool get wantKeepAlive => true;
@@ -77,12 +80,41 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
     super.initState();
     _load();
     _scroll.addListener(_onScroll);
+    _listenToRealtimeUpdates();
   }
 
   @override
   void dispose() {
     _scroll.dispose();
+    _fcmSubscription?.cancel();
     super.dispose();
+  }
+
+  void _listenToRealtimeUpdates() {
+    _fcmSubscription = FirebaseMessaging.onMessage.listen((message) {
+      final notifType = message.data['notif_type'];
+      if (notifType == 'post_edited') {
+        final postId = int.tryParse(message.data['post_id'] ?? '');
+        final content = message.data['content'];
+        if (postId != null && content != null) {
+          final index = _posts.indexWhere((p) => p.id == postId);
+          if (index != -1 && mounted) {
+            setState(() {
+              _posts[index].content = content;
+            });
+          }
+        }
+      } else if (notifType == 'post_deleted') {
+        final postId = int.tryParse(message.data['post_id'] ?? '');
+        if (postId != null) {
+          if (mounted) {
+            setState(() {
+              _posts.removeWhere((p) => p.id == postId);
+            });
+          }
+        }
+      }
+    });
   }
 
   void _onScroll() {
@@ -182,9 +214,11 @@ class _FeedTabState extends State<_FeedTab> with AutomaticKeepAliveClientMixin {
                                 color: AppColors.primary)),
                           );
                         }
+                        final post = _posts[i];
                         return _PostCard(
-                          post: _posts[i],
-                          onDelete: () => setState(() => _posts.removeAt(i)),
+                          key: ValueKey(post.id),
+                          post: post,
+                          onDelete: () => setState(() => _posts.removeWhere((p) => p.id == post.id)),
                         );
                       },
                     ),
