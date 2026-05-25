@@ -10,6 +10,7 @@ import 'package:frontend_proyecto/screens/inicio.dart';
 import 'package:frontend_proyecto/screens/profile.dart';
 import 'package:frontend_proyecto/screens/album.dart';
 import 'package:frontend_proyecto/screens/pollas.dart';
+import 'package:frontend_proyecto/screens/admin_screen.dart';
 import 'package:frontend_proyecto/screens/tickets.dart';
 import 'package:frontend_proyecto/screens/open_pack.dart';
 import 'package:frontend_proyecto/screens/album_progress.dart';
@@ -63,10 +64,26 @@ final GoRouter _router = GoRouter(
     final hasSeenOnboarding = _auth.hasSeenOnboarding;
     final isPublic = state.matchedLocation == '/login' ||
                      state.matchedLocation == '/register';
+    
 
     if (!loggedIn && !isPublic) return '/login';
 
     if (loggedIn) {
+      final int? userRoleId = _auth.idRole;
+      final bool isAdmin = userRoleId == 1;
+
+      if (isAdmin) {
+        if (isPublic || state.matchedLocation == '/home' || state.matchedLocation == '/onboarding') {
+          return '/admin';
+        }
+        return null;
+      }
+
+      //seguridad pa q no intenten entrar al backoffice los usuarios regulares
+      if (state.matchedLocation == '/admin') {
+        return '/home';
+      }
+
       if (!hasSeenOnboarding && state.matchedLocation != '/onboarding') {
         return '/onboarding';
       } else if (hasSeenOnboarding && (isPublic || state.matchedLocation == '/onboarding')) {
@@ -157,6 +174,10 @@ final GoRouter _router = GoRouter(
         GoRoute(
           path: '/trades',
           pageBuilder: (context, state) => const MaterialPage(child: TradesScreen()),
+        ),
+        GoRoute(
+          path: '/admin',
+          builder: (context, state) => const AdminScreen(),
         ),
       ],
     ),

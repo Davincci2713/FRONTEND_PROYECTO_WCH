@@ -4,8 +4,8 @@ import 'package:frontend_proyecto/config.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-const _kToken    = 'auth_token';
-const _kUser     = 'auth_user';
+const _kToken     = 'auth_token';
+const _kUser      = 'auth_user';
 const _kOnboarding = 'auth_onboarding';
 const _kPendingOnboarding = 'pending_onboarding_email';
 
@@ -22,6 +22,8 @@ class AuthService extends ChangeNotifier {
 
   bool get isAuthenticated => _accessToken != null;
   int?  get currentUserId  => _currentUser?['userId'];
+  // ⚡ GETTER AGREGADO: Expone el rol de manera transparente a toda la app
+  int?  get idRole         => _currentUser?['idRole']; 
   Map<String, dynamic>? get currentUser => _currentUser;
   bool get hasSeenOnboarding => _hasSeenOnboarding;
 
@@ -72,10 +74,11 @@ class AuthService extends ChangeNotifier {
         // Mapea los campos del backend al formato del cliente
         final refreshed = {
           ..._currentUser!,
-          'firstName':      data['firstName']     ?? _currentUser!['firstName'],
-          'lastName':       data['lastName']      ?? _currentUser!['lastName'],
-          'email':          data['email']         ?? _currentUser!['email'],
+          'firstName':      data['firstName']      ?? _currentUser!['firstName'],
+          'lastName':       data['lastName']       ?? _currentUser!['lastName'],
+          'email':          data['email']          ?? _currentUser!['email'],
           'profilePicture': data['profilePicture'] ?? _currentUser!['profilePicture'],
+          'idRole':         data['idRole'] ?? data['roleId'] ?? _currentUser!['idRole'],
         };
         await _saveSession(_accessToken!, refreshed);
       }
@@ -124,7 +127,14 @@ class AuthService extends ChangeNotifier {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        await _saveSession(data['token'] as String, data['user'] as Map<String, dynamic>);
+        final userMap = Map<String, dynamic>.from(data['user'] as Map);
+        
+        // ⚡ ARREGLADO AQUÍ: Normaliza y mapea el rol al entrar para que siempre use la clave 'idRole'
+        if (userMap.containsKey('roleId')) {
+          userMap['idRole'] = userMap['roleId'];
+        }
+
+        await _saveSession(data['token'] as String, userMap);
 
         // If the user didn't just register, mark onboarding as done so it never shows again
         if (!_hasSeenOnboarding) {
