@@ -1,7 +1,18 @@
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'dart:js_interop';
 import 'package:flutter/foundation.dart';
 
+extension type _Location._(JSObject _) implements JSObject {
+  external void reload();
+}
+
+extension type _Window._(JSObject _) implements JSObject {
+  external _Location get location;
+}
+
+@JS('window')
+external _Window get _jsWindow;
+
 void reloadPlatform(VoidCallback fallbackReload) {
-  html.window.location.reload();
+  fallbackReload();
+  _jsWindow.location.reload();
 }
