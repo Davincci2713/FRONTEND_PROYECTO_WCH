@@ -1,399 +1,889 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:frontend_proyecto/utils/theme.dart'; // Contiene AppColors.border, primary,etc.
+import 'package:frontend_proyecto/utils/theme.dart';
 import 'package:frontend_proyecto/models/admin_models.dart';
 import 'package:frontend_proyecto/services/admin_service.dart';
 
+class ExtendedColors {
+  static const Color accentYellow = Color(0xFFFFDE4D);
+  static const Color accentGreen = Color(0xFF4E9F3D);
+  static const Color cardShadow = Color(0xFF000000);
+}
+
 class AdminScreen extends StatelessWidget {
-const AdminScreen({super.key});
-@override
-Widget build(BuildContext context) {
-return DefaultTabController(
-length: 3,
-child: Scaffold(
-backgroundColor: AppColors.background,
-appBar: AppBar(
-backgroundColor: AppColors.surface,
-elevation: 0,
-shape: Border(bottom: BorderSide(color: AppColors.border, width: 3)),
-title: Text(
-'BACKOFFICE OPERATIVO',
-style: GoogleFonts.spaceGrotesk(color: AppColors.text, fontWeight: FontWeight.w900,
-fontSize: 18),
-),
-bottom: TabBar(
-indicatorColor: AppColors.error,
-labelColor: AppColors.text,
-unselectedLabelColor: AppColors.textMuted,
-labelStyle: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.bold, fontSize: 12),
-tabs: const [
-Tab(text: 'DASHBOARD & TICKETS'),
-Tab(text: 'CRUD USUARIOS'),
-Tab(text: 'AUDITORÍA LOGS'),
-],
-),
-),
-body: const TabBarView(
-children: [
-_DashboardTab(),
-_UsuariosTab(),
-_AuditTabGeneral(),
-],
-),
-),
-);
-}
-}
-// ── PESTAÑA 1: METRICAS & TICKETS ──────────────────────────────────────────
-class _DashboardTab extends StatelessWidget {
-const _DashboardTab();
-@override
+  const AdminScreen({super.key});
 
-
-Widget build(BuildContext context) {
-final svc = AdminService();
-return FutureBuilder<ComplianceReportModel>(
-future: svc.getComplianceReport(),
-builder: (context, snapshot) {
-if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-final data = snapshot.data!;
-return ListView(
-padding: const EdgeInsets.all(16),
-children: [
-Text('MÉTRICAS CORE DE SISTEMA', style: GoogleFonts.spaceGrotesk(fontWeight:
-FontWeight.w900, fontSize: 14)),
-const SizedBox(height: 12),
-Row(
-children: [
-Expanded(child: _buildMetricCard('USUARIOS', '${data.activeUsers} / ${data.totalUsers}', 'ACTIVOS / TOTALES')),
-const SizedBox(width: 12),
-Expanded(child: _buildMetricCard('REVENUE', '\$${data.totalRevenue.toStringAsFixed(0)}', 'USD RECAUDADOS')),
-],
-),
-const SizedBox(height: 24),
-Text('ESTADO DE LA BOLETERÍA (TICKETS)', style:
-GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 14)),
-const SizedBox(height: 12),
-Container(
-decoration: BoxDecoration(border: Border.all(color: AppColors.border, width: 2),
-color: AppColors.surface),
-padding: const EdgeInsets.all(16),
-child: Column(
-children: [
-_buildTicketRow('TOTAL DE TIQUETES PROVISTOS', '${data.totalTickets}',
-Colors.blue.shade800),
-const Divider(height: 20, thickness: 2, color: Colors.black12),
-_buildTicketRow('TIQUETES PAGADOS EN FIRME', '${data.paidTickets}',
-Colors.green.shade800),
-const Divider(height: 20, thickness: 2, color: Colors.black12),
-_buildTicketRow('RESERVAS EXPIRABLES ACTIVAS', '${data.reservedTickets}',
-Colors.amber.shade900),
-],
-),
-)
-],
-);
-},
-);
-}
-Widget _buildMetricCard(String title, String val, String sub) {
-return Container(
-padding: const EdgeInsets.all(16),
-decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color:
-AppColors.border, width: 2)),
-child: Column(
-crossAxisAlignment: CrossAxisAlignment.start,
-children: [
-Text(title, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize:
-11, color: AppColors.error)),
-const SizedBox(height: 6),
-Text(val, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize:
-18)),
-Text(sub, style: GoogleFonts.dmSans(fontSize: 10, color: AppColors.textMuted)),
-],
-),
-
-
-);
-}
-Widget _buildTicketRow(String title, String qty, Color color) {
-return Row(
-mainAxisAlignment: MainAxisAlignment.spaceBetween,
-children: [
-Text(title, style: GoogleFonts.dmSans(fontWeight: FontWeight.bold, fontSize: 13)),
-Container(
-padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-decoration: BoxDecoration(color: color.withOpacity(0.12), border: Border.all(color:
-color, width: 1.5)),
-child: Text(qty, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, color:
-color, fontSize: 14)),
-)
-],
-);
-}
-}
-// ── PESTAÑA 2: CRUD DE USUARIOS CONECTADO ───────────────────────────────────
-class _UsuariosTab extends StatefulWidget {
-const _UsuariosTab();
-@override
-State<_UsuariosTab> createState() => _UsuariosTabState();
-}
-class _UsuariosTabState extends State<_UsuariosTab> {
-final _svc = AdminService();
-final _searchCtrl = TextEditingController();
-List<AdminUserModel> _allUsers = [];
-List<AdminUserModel> _filteredUsers = [];
-bool _loading = true;
-@override
-void initState() {
-super.initState();
-_fetchData();
-_searchCtrl.addListener(() {
-final q = _searchCtrl.text.toLowerCase();
-setState(() {
-_filteredUsers = _allUsers.where((u) => u.fullName.toLowerCase().contains(q) ||
-u.email.toLowerCase().contains(q)).toList();
-});
-});
-}
-Future<void> _fetchData() async {
-setState(() => _loading = true);
-try {
-final res = await _svc.getAllUsers();
-setState(() { _allUsers = res; _filteredUsers = res; _loading = false; });
-} catch (_) {
-setState(() {
-_allUsers = [
-AdminUserModel(userId: 1, firstName: 'Carlos', lastName: 'Mendoza', email:
-'carlos@hub.com', roleId: 1, verified: true, accountStatus: 'activo'),
-AdminUserModel(userId: 2, firstName: 'Andrés', lastName: 'Gómez', email:
-'andres@fraude.com', roleId: 2, verified: true, accountStatus: 'bloqueado'),
-];
-_filteredUsers = _allUsers;
-_loading = false;
-});
-}
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+          toolbarHeight: 70,
+          shape: Border(
+            bottom: BorderSide(color: AppColors.border, width: 4),
+          ),
+          title: Text(
+            '⚡ CENTRAL DE MANDO - BACKOFFICE',
+            style: GoogleFonts.spaceGrotesk(
+              color: AppColors.text,
+              fontWeight: FontWeight.w900,
+              fontSize: 20,
+              letterSpacing: 0.5,
+            ),
+          ),
+          bottom: TabBar(
+            indicatorColor: AppColors.primary,
+            indicatorWeight: 5,
+            labelColor: AppColors.text,
+            unselectedLabelColor: AppColors.textMuted,
+            labelStyle: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 13),
+            tabs: const [
+              Tab(text: '📊 MÉTRICAS'),
+              Tab(text: '👥 USUARIOS'),
+              Tab(text: '🔍 AUDIT LOG'),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: [
+            _DashboardTab(),
+            _UserCrudTab(),
+            _AuditLogTab(),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PESTAÑA 1: DASHBOARD — Compliance Report
+// GET /admin/reports/compliance → ComplianceReportModel
+// ─────────────────────────────────────────────────────────────────────────────
+class _DashboardTab extends StatefulWidget {
+  const _DashboardTab();
 
-void _blockUser(int id) async {
-try {
-await _svc.blockUser(id);
-_fetchData();
-ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('ESTADO ACTUALIZADO (CRUD: DELETE/BLOCK)')));
-} catch (e) {
-ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+  @override
+  State<_DashboardTab> createState() => _DashboardTabState();
 }
-}
-void _openForm({AdminUserModel? user}) {
-showModalBottomSheet(
-context: context,
-isScrollControlled: true,
-backgroundColor: Colors.transparent,
-builder: (_) => _UserFormSheet(user: user, onSave: _fetchData),
-);
-}
-@override
-Widget build(BuildContext context) {
-return Column(
-children: [
-Padding(
-padding: const EdgeInsets.all(16),
-child: Row(
-children: [
-Expanded(
-child: TextField(
-controller: _searchCtrl,
-decoration: InputDecoration(
-hintText: 'FILTRAR USUARIOS...',
-filled: true, fillColor: AppColors.surface,
-border: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide:
-BorderSide(color: AppColors.border, width: 2)),
-),
-),
-),
-const SizedBox(width: 12),
-InkWell(
-onTap: () => _openForm(),
-child: Container(
-height: 50, padding: const EdgeInsets.symmetric(horizontal: 16),
-decoration: BoxDecoration(color: AppColors.primary, border: Border.all(color:
-AppColors.text, width: 2)),
-child: Center(child: Text('AÑADIR', style:
-GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900))),
-),
-)
-],
-),
-),
-Expanded(
-child: _loading
-? const Center(child: CircularProgressIndicator())
-: ListView.builder(
-padding: const EdgeInsets.symmetric(horizontal: 16),
-itemCount: _filteredUsers.length,
-itemBuilder: (context, idx) {
-final u = _filteredUsers[idx];
-return Container(
-margin: const EdgeInsets.only(bottom: 10),
-decoration: BoxDecoration(color: AppColors.surface, border:
 
+class _DashboardTabState extends State<_DashboardTab> {
+  late Future<ComplianceReportModel> _future;
 
-Border.all(color: AppColors.border, width: 2)),
-child: ListTile(
-title: Text(u.fullName.toUpperCase(), style:
-GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
-subtitle: Text('${u.email} • ${u.roleName}', style:
-GoogleFonts.dmSans(fontSize: 11)),
-trailing: Row(
-mainAxisSize: MainAxisSize.min,
-children: [
-IconButton(icon: const Icon(Icons.edit_sharp), onPressed: () =>
-_openForm(user: u)),
-IconButton(
-icon: Icon(Icons.block_sharp, color: u.isActive ? AppColors.error :
-Colors.grey),
-onPressed: () => _blockUser(u.userId),
-),
-],
-),
-),
-);
-},
-),
-)
-],
-);
-}
-}
-// ── HOJA FORMULARIO: AJUSTE DINÁMICO DE PANTALLA (INSETS) ────────────────────
-class _UserFormSheet extends StatefulWidget {
-final AdminUserModel? user;
-final VoidCallback onSave;
-const _UserFormSheet({this.user, required this.onSave});
-@override
-State<_UserFormSheet> createState() => _UserFormSheetState();
-}
-class _UserFormSheetState extends State<_UserFormSheet> {
-final _formKey = GlobalKey<FormState>();
-late TextEditingController _fnCtrl;
-late TextEditingController _lnCtrl;
-late TextEditingController _emCtrl;
-@override
-void initState() {
-super.initState();
-_fnCtrl = TextEditingController(text: widget.user?.firstName ?? '');
-_lnCtrl = TextEditingController(text: widget.user?.lastName ?? '');
-_emCtrl = TextEditingController(text: widget.user?.email ?? '');
-}
-@override
-Widget build(BuildContext context) {
-return Container(
-padding: EdgeInsets.only(
-top: 24, left: 24, right: 24,
-bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-),
-decoration: BoxDecoration(color: AppColors.background, border: Border(top:
-BorderSide(color: AppColors.border, width: 4))),
-child: Form(
-key: _formKey,
-child: Column(
-mainAxisSize: MainAxisSize.min,
+  @override
+  void initState() {
+    super.initState();
+    _future = AdminService().getComplianceReport();
+  }
 
+  void _refresh() => setState(() {
+        _future = AdminService().getComplianceReport();
+      });
 
-crossAxisAlignment: CrossAxisAlignment.start,
-children: [
-Text(widget.user == null ? 'CREAR USUARIO' : 'MODIFICAR USUARIO', style:
-GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 16)),
-const SizedBox(height: 16),
-TextFormField(controller: _fnCtrl, decoration: const InputDecoration(labelText:
-'NOMBRE')),
-const SizedBox(height: 12),
-TextFormField(controller: _lnCtrl, decoration: const InputDecoration(labelText:
-'APELLIDO')),
-const SizedBox(height: 12),
-TextFormField(controller: _emCtrl, decoration: const InputDecoration(labelText:
-'EMAIL'), enabled: widget.user == null),
-const SizedBox(height: 20),
-SizedBox(
-width: double.infinity, height: 48,
-child: ElevatedButton(
-style: ElevatedButton.styleFrom(backgroundColor: AppColors.text, shape: const
-RoundedRectangleBorder()),
-onPressed: () async {
-if (!_formKey.currentState!.validate()) return;
-final mockUser = AdminUserModel(
-userId: widget.user?.userId ?? 0,
-firstName: _fnCtrl.text,
-lastName: _lnCtrl.text,
-email: _emCtrl.text,
-roleId: 2, verified: true, accountStatus: 'activo',
-);
-if (widget.user == null) {
-await AdminService().createUser(mockUser);
-}
-widget.onSave();
-Navigator.pop(context);
-},
-child: Text('GUARDAR REGISTRO', style: GoogleFonts.spaceGrotesk(color:
-AppColors.background, fontWeight: FontWeight.bold)),
-),
-)
-],
-),
-),
-);
-}
-}
-// ── PESTAÑA 3: LOGS DE AUDITORÍA GENERALES ──────────────────────────────────
-class _AuditTabGeneral extends StatelessWidget {
-const _AuditTabGeneral();
-@override
-Widget build(BuildContext context) {
-// Al reutilizar la consulta secuencial del timeline sobre el ID de administración (1)
-return FutureBuilder<List<AuditEventModel>>(
-future: AdminService().getUserTimeline(1),
-builder: (context, snapshot) {
-if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-final logs = snapshot.data!;
-if (logs.isEmpty) {
-return Center(child: Text('NO HAY LOGS RECIENTES EN AUDIT_LOG', style:
-GoogleFonts.spaceGrotesk(color: AppColors.textMuted)));
-}
-return ListView.builder(
-padding: const EdgeInsets.all(16),
-itemCount: logs.length,
-itemBuilder: (context, idx) {
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<ComplianceReportModel>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator(color: AppColors.primary));
+        }
 
+        final isMock = snapshot.hasError || !snapshot.hasData;
+        final data = isMock
+            ? ComplianceReportModel(
+                totalUsers: 0,
+                activeUsers: 0,
+                totalTickets: 0,
+                paidTickets: 0,
+                reservedTickets: 0,
+                totalRevenue: 0,
+              )
+            : snapshot.data!;
 
-final log = logs[idx];
-return Container(
-margin: const EdgeInsets.only(bottom: 8),
-padding: const EdgeInsets.all(12),
-decoration: BoxDecoration(color: AppColors.surface, border: Border.all(color:
-AppColors.border, width: 1.5)),
-child: Column(
-crossAxisAlignment: CrossAxisAlignment.start,
-children: [
-Row(
-mainAxisAlignment: MainAxisAlignment.spaceBetween,
-children: [
-Text(log.action.toUpperCase(), style:
-GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, color: AppColors.error)),
-Text(log.result, style: GoogleFonts.spaceGrotesk(fontWeight:
-FontWeight.bold, fontSize: 11, color: log.result.toLowerCase() == 'success' ?
-Colors.green.shade800 : AppColors.text)),
-],
-),
-const SizedBox(height: 4),
-Text('Entidad afectada: ${log.affectedEntity} • CID: ${log.correlationId}',
-style: GoogleFonts.dmSans(fontSize: 11)),
-],
-),
-);
-},
-);
-},
-);
+        return RefreshIndicator(
+          color: AppColors.onPrimary,
+          backgroundColor: AppColors.primary,
+          onRefresh: () async => _refresh(),
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              if (isMock) _buildNetworkAlert(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'ESTADO GLOBAL DEL SISTEMA',
+                    style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.text),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.refresh, color: AppColors.primary),
+                    onPressed: _refresh,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+                childAspectRatio: 1.4,
+                children: [
+                  _buildMetricCard(
+                    'USUARIOS TOTALES',
+                    data.totalUsers.toString(),
+                    'Registrados en la plataforma',
+                    Colors.blueAccent,
+                  ),
+                  _buildMetricCard(
+                    'INGRESOS TOTALES',
+                    '\$${data.totalRevenue.toStringAsFixed(2)}',
+                    'Ventas confirmadas',
+                    ExtendedColors.accentGreen,
+                  ),
+                  _buildMetricCard(
+                    'TIQUETES PAGADOS',
+                    data.paidTickets.toString(),
+                    'Asientos confirmados',
+                    ExtendedColors.accentYellow,
+                  ),
+                  _buildMetricCard(
+                    'RESERVAS ACTIVAS',
+                    data.reservedTickets.toString(),
+                    'Pendientes por pago',
+                    AppColors.error,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Fila extra: usuarios activos vs totales
+              _buildWideCard(
+                'USUARIOS ACTIVOS',
+                '${data.activeUsers} / ${data.totalUsers}',
+                'Cuentas en estado activo',
+                ExtendedColors.accentGreen,
+              ),
+              const SizedBox(height: 12),
+              _buildWideCard(
+                'TIQUETES EN SISTEMA',
+                data.totalTickets.toString(),
+                'Total emitidos (todos los estados)',
+                Colors.blueAccent,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMetricCard(String title, String value, String sub, Color accent) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.border, width: 3),
+        boxShadow: const [BoxShadow(color: ExtendedColors.cardShadow, offset: Offset(6, 6))],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(children: [
+            Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                    color: accent, border: Border.all(color: Colors.black, width: 1.5))),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(title,
+                  style: GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w900, fontSize: 10, color: AppColors.textMuted)),
+            ),
+          ]),
+          Text(value,
+              style: GoogleFonts.spaceGrotesk(
+                  fontWeight: FontWeight.w900, fontSize: 22, color: AppColors.text)),
+          Text(sub,
+              style: GoogleFonts.spaceGrotesk(
+                  fontSize: 10, fontWeight: FontWeight.bold, color: accent)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWideCard(String title, String value, String sub, Color accent) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border.all(color: AppColors.border, width: 3),
+        boxShadow: const [BoxShadow(color: ExtendedColors.cardShadow, offset: Offset(6, 6))],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w900, fontSize: 11, color: AppColors.textMuted)),
+              const SizedBox(height: 4),
+              Text(sub,
+                  style: GoogleFonts.spaceGrotesk(
+                      fontSize: 10, fontWeight: FontWeight.bold, color: accent)),
+            ],
+          ),
+          Text(value,
+              style: GoogleFonts.spaceGrotesk(
+                  fontWeight: FontWeight.w900, fontSize: 26, color: AppColors.text)),
+        ],
+      ),
+    );
+  }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PESTAÑA 2: CRUD USUARIOS
+// GET  /users          → lista todos (solo admin)
+// POST /users          → crea usuario  { firstName, lastName, email, password, roleId }
+// POST /admin/users/:id/block → bloquea usuario
+// ─────────────────────────────────────────────────────────────────────────────
+class _UserCrudTab extends StatefulWidget {
+  const _UserCrudTab();
+
+  @override
+  State<_UserCrudTab> createState() => _UserCrudTabState();
+}
+
+class _UserCrudTabState extends State<_UserCrudTab> {
+  // Clave para forzar rebuild del FutureBuilder al mutar datos
+  int _reloadKey = 0;
+
+  final _formKey = GlobalKey<FormState>();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  int _selectedRoleId = 2;
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  void _reload() => setState(() => _reloadKey++);
+
+  void _openCreationDialog() {
+    // Limpiar campos antes de abrir
+    _firstNameController.clear();
+    _lastNameController.clear();
+    _emailController.clear();
+    _passwordController.clear();
+    _selectedRoleId = 2;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.background,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+                side: BorderSide(color: AppColors.border, width: 4),
+              ),
+              titlePadding: EdgeInsets.zero,
+              title: Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: ExtendedColors.accentYellow,
+                  border: Border(bottom: BorderSide(color: Colors.black, width: 2)),
+                ),
+                child: Text(
+                  'REGISTRAR NUEVO USUARIO',
+                  style: GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w900, fontSize: 14, color: Colors.black),
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildInputField(_firstNameController, 'Nombre(s)', Icons.person),
+                      const SizedBox(height: 12),
+                      _buildInputField(
+                          _lastNameController, 'Apellido(s)', Icons.person_outline),
+                      const SizedBox(height: 12),
+                      _buildInputField(_emailController, 'Correo Electrónico', Icons.email,
+                          isEmail: true),
+                      const SizedBox(height: 12),
+                      // CORREGIDO: password del controller, no hardcodeado
+                      _buildInputField(
+                          _passwordController, 'Contraseña de Acceso', Icons.lock,
+                          isPassword: true),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          border: Border.all(color: AppColors.border, width: 2.5),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            value: _selectedRoleId,
+                            isExpanded: true,
+                            dropdownColor: AppColors.surface,
+                            style: GoogleFonts.spaceGrotesk(
+                                fontWeight: FontWeight.bold, color: AppColors.text),
+                            items: const [
+                              DropdownMenuItem(
+                                  value: 2, child: Text('🧑 USUARIO REGULAR (Rol 2)')),
+                              DropdownMenuItem(
+                                  value: 1,
+                                  child: Text('⚡ ADMINISTRADOR DEL SISTEMA (Rol 1)')),
+                            ],
+                            onChanged: (value) {
+                              if (value != null) {
+                                setDialogState(() => _selectedRoleId = value);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text('CANCELAR',
+                      style: GoogleFonts.spaceGrotesk(
+                          fontWeight: FontWeight.bold, color: AppColors.textMuted)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ExtendedColors.accentGreen,
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.black, width: 2),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                  ),
+                  onPressed: () async {
+                    if (!_formKey.currentState!.validate()) return;
+
+                    // CORREGIDO: se pasa la contraseña real capturada del form
+                    try {
+                      await AdminService().createUser(
+                        firstName: _firstNameController.text.trim(),
+                        lastName: _lastNameController.text.trim(),
+                        email: _emailController.text.trim(),
+                        password: _passwordController.text,
+                        roleId: _selectedRoleId,
+                      );
+                      if (!mounted) return;
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('✅ Usuario creado exitosamente.')),
+                      );
+                      _reload(); // refresca la lista desde la API
+                    } catch (e) {
+                      if (!mounted) return;
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('❌ Error al crear usuario: $e')),
+                      );
+                    }
+                  },
+                  child: Text('CONSOLIDAR REGISTRO',
+                      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildInputField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    bool isPassword = false,
+    bool isEmail = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      keyboardType: isEmail ? TextInputType.emailAddress : TextInputType.text,
+      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.bold, color: AppColors.text),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.spaceGrotesk(color: AppColors.textMuted, fontWeight: FontWeight.bold),
+        prefixIcon: Icon(icon, color: AppColors.text),
+        filled: true,
+        fillColor: AppColors.surface,
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.border, width: 2),
+          borderRadius: BorderRadius.zero,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.primary, width: 3),
+          borderRadius: BorderRadius.zero,
+        ),
+        errorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.error, width: 2),
+          borderRadius: BorderRadius.zero,
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.error, width: 3),
+          borderRadius: BorderRadius.zero,
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) return 'Este campo es obligatorio';
+        if (isEmail && !value.contains('@')) return 'Escribe un correo válido';
+        if (isPassword && value.length < 8) return 'Mínimo 8 caracteres';
+        return null;
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.onPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: const BorderSide(color: Colors.black, width: 2),
+        ),
+        label: Text('AÑADIR USUARIO',
+            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
+        icon: const Icon(Icons.person_add_alt_1),
+        onPressed: _openCreationDialog,
+      ),
+      // CORREGIDO: key numérica fuerza reconstrucción del FutureBuilder al hacer _reload()
+      body: FutureBuilder<List<AdminUserModel>>(
+        key: ValueKey(_reloadKey),
+        future: AdminService().getAllUsers(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator(color: AppColors.primary));
+          }
+
+          final isMock = snapshot.hasError || !snapshot.hasData;
+          final users = isMock ? <AdminUserModel>[] : snapshot.data!;
+
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+            itemCount: users.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return isMock ? _buildNetworkAlert() : const SizedBox.shrink();
+              }
+              final user = users[index - 1];
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border.all(color: AppColors.border, width: 3),
+                  boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(5, 5))],
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(12),
+                  leading: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: user.roleId == 1
+                          ? ExtendedColors.accentYellow
+                          : AppColors.surfaceVariant,
+                      border: Border.all(color: AppColors.border, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        user.roleId == 1 ? '⚡' : '🧑',
+                        style: const TextStyle(fontSize: 22),
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    '${user.firstName.toUpperCase()} ${user.lastName.toUpperCase()}',
+                    style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w900, color: AppColors.text),
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Text(user.email,
+                          style: GoogleFonts.spaceGrotesk(
+                              color: AppColors.textMuted, fontSize: 12)),
+                      const SizedBox(height: 6),
+                      Row(children: [
+                        _buildBadge(
+                          user.roleId == 1 ? 'ADMIN' : 'REGULAR',
+                          user.roleId == 1 ? ExtendedColors.accentYellow : Colors.blueAccent,
+                        ),
+                        const SizedBox(width: 6),
+                        _buildBadge(
+                          user.accountStatus.toUpperCase(),
+                          user.isActive ? ExtendedColors.accentGreen : AppColors.error,
+                        ),
+                        const SizedBox(width: 6),
+                        if (user.verified)
+                          _buildBadge('✓ VERIFICADO', ExtendedColors.accentGreen)
+                        else
+                          _buildBadge('SIN VERIFICAR', AppColors.textMuted),
+                      ]),
+                    ],
+                  ),
+                  // CORREGIDO: botón de bloqueo recarga la lista tras la operación
+                  trailing: user.isActive
+                      ? IconButton(
+                          tooltip: 'Bloquear usuario',
+                          icon: Icon(Icons.block, color: AppColors.error, size: 28),
+                          onPressed: () async {
+                            try {
+                              await AdminService().blockUser(user.userId);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text(
+                                        '🔒 ${user.fullName} bloqueado correctamente.')),
+                              );
+                              _reload(); // actualiza lista desde la API
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('❌ Error al bloquear: $e')),
+                              );
+                            }
+                          },
+                        )
+                      : Tooltip(
+                          message: 'Cuenta bloqueada',
+                          child: Icon(Icons.lock, color: AppColors.textMuted, size: 28),
+                        ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBadge(String text, Color bg) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+          color: bg, border: Border.all(color: Colors.black, width: 1.5)),
+      child: Text(text,
+          style: GoogleFonts.spaceGrotesk(
+              fontSize: 10, fontWeight: FontWeight.w900, color: Colors.black)),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PESTAÑA 3: AUDIT LOG
+// GET /admin/users/:id/timeline → AuditEventModel[]
+// CORREGIDO: permite buscar por userId específico; muestra buscador
+// ─────────────────────────────────────────────────────────────────────────────
+class _AuditLogTab extends StatefulWidget {
+  const _AuditLogTab();
+
+  @override
+  State<_AuditLogTab> createState() => _AuditLogTabState();
+}
+
+class _AuditLogTabState extends State<_AuditLogTab> {
+  final _userIdController = TextEditingController(text: '1');
+  late Future<List<AuditEventModel>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  void _fetch() {
+    final id = int.tryParse(_userIdController.text.trim()) ?? 1;
+    setState(() {
+      _future = AdminService().getUserTimeline(id);
+    });
+  }
+
+  @override
+  void dispose() {
+    _userIdController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // ── Barra de búsqueda por userId ──────────────────────────────
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border(bottom: BorderSide(color: AppColors.border, width: 2)),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: _userIdController,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.bold, color: AppColors.text),
+                  decoration: InputDecoration(
+                    labelText: 'USER ID',
+                    labelStyle: GoogleFonts.spaceGrotesk(
+                        color: AppColors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
+                    prefixIcon: Icon(Icons.manage_search, color: AppColors.text),
+                    filled: true,
+                    fillColor: AppColors.background,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.border, width: 2),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: AppColors.primary, width: 3),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  ),
+                  onFieldSubmitted: (_) => _fetch(),
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.onPrimary,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                  side: const BorderSide(color: Colors.black, width: 2),
+                ),
+                onPressed: _fetch,
+                icon: const Icon(Icons.search, size: 20),
+                label: Text('BUSCAR',
+                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900)),
+              ),
+            ],
+          ),
+        ),
+        // ── Lista de eventos ──────────────────────────────────────────
+        Expanded(
+          child: FutureBuilder<List<AuditEventModel>>(
+            future: _future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator(color: AppColors.primary));
+              }
+
+              final isMock = snapshot.hasError || !snapshot.hasData;
+              final logs = isMock ? <AuditEventModel>[] : snapshot.data!;
+
+              if (isMock) {
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [_buildNetworkAlert()],
+                );
+              }
+
+              if (logs.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.border, width: 2),
+                        ),
+                        child: Icon(Icons.search_off,
+                            size: 32, color: AppColors.textMuted),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('SIN EVENTOS REGISTRADOS',
+                          style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.textMuted,
+                              letterSpacing: 1)),
+                    ],
+                  ),
+                );
+              }
+
+              return RefreshIndicator(
+                color: AppColors.onPrimary,
+                backgroundColor: AppColors.primary,
+                onRefresh: () async => _fetch(),
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: logs.length,
+                  itemBuilder: (context, idx) {
+                    final log = logs[idx];
+                    final isSuccess = log.result.toUpperCase() == 'SUCCESS';
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        border: Border.all(color: AppColors.border, width: 2),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black, offset: Offset(4, 4))
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  log.action.toUpperCase(),
+                                  style: GoogleFonts.spaceGrotesk(
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.primary),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isSuccess
+                                      ? ExtendedColors.accentGreen
+                                      : AppColors.error,
+                                  border:
+                                      Border.all(color: Colors.black, width: 1.5),
+                                ),
+                                child: Text(
+                                  log.result.toUpperCase(),
+                                  style: GoogleFonts.spaceGrotesk(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11,
+                                      color: Colors.black),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Divider(color: AppColors.border, thickness: 1.5, height: 15),
+                          _logRow('ENTIDAD', log.affectedEntity),
+                          const SizedBox(height: 4),
+                          _logRow('CORRELACIÓN', log.correlationId),
+                          const SizedBox(height: 4),
+                          _logRow(
+                            'FECHA',
+                            '${log.createdAt.day.toString().padLeft(2, '0')}/'
+                                '${log.createdAt.month.toString().padLeft(2, '0')}/'
+                                '${log.createdAt.year}  '
+                                '${log.createdAt.hour.toString().padLeft(2, '0')}:'
+                                '${log.createdAt.minute.toString().padLeft(2, '0')}',
+                          ),
+                          const SizedBox(height: 8),
+                          Text('PAYLOAD:',
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 10,
+                                  color: AppColors.textMuted,
+                                  fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            color: const Color(0xFF1A1A1A),
+                            child: Text(
+                              log.payload,
+                              style: GoogleFonts.sourceCodePro(
+                                  color: Colors.greenAccent, fontSize: 11),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _logRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('$label: ',
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textMuted)),
+        Expanded(
+          child: Text(value,
+              style: GoogleFonts.spaceGrotesk(
+                  fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.text)),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Banner reutilizable de advertencia de red
+// ─────────────────────────────────────────────────────────────────────────────
+Widget _buildNetworkAlert() {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 15),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: ExtendedColors.accentYellow,
+      border: Border.all(color: Colors.black, width: 3),
+      boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4))],
+    ),
+    child: Row(
+      children: [
+        const Text('⚠️', style: TextStyle(fontSize: 22)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'SERVIDOR INACTIVO O SIN RED. NO SE PUDO OBTENER DATOS DEL BACKEND.',
+            style: GoogleFonts.spaceGrotesk(
+                fontWeight: FontWeight.w900, fontSize: 11, color: Colors.black),
+          ),
+        ),
+      ],
+    ),
+  );
 }
