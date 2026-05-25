@@ -124,8 +124,14 @@ class FeedService {
   Future<void> deletePost(int postId) async {
     final uid = AuthService().currentUserId;
     if (uid == null) throw Exception('No autenticado');
-    await http.delete(Uri.parse('$_base/feed/$postId'),
-      headers: _h, body: jsonEncode({'userId': uid}));
+    final r = await http.delete(
+      Uri.parse('$_base/feed/$postId?userId=$uid'),
+      headers: _h,
+      body: jsonEncode({'userId': uid}),
+    );
+    if (r.statusCode != 200 && r.statusCode != 204) {
+      throw Exception(jsonDecode(r.body)['error'] ?? 'Error al eliminar la publicación');
+    }
   }
 
   Future<Map<String, dynamic>> toggleLike(int postId) async {
@@ -161,8 +167,14 @@ class FeedService {
   Future<void> deleteComment(int commentId) async {
     final uid = AuthService().currentUserId;
     if (uid == null) throw Exception('No autenticado');
-    await http.delete(Uri.parse('$_base/feed/comments/$commentId'),
-      headers: _h, body: jsonEncode({'userId': uid}));
+    final r = await http.delete(
+      Uri.parse('$_base/feed/comments/$commentId?userId=$uid'),
+      headers: _h,
+      body: jsonEncode({'userId': uid}),
+    );
+    if (r.statusCode != 200 && r.statusCode != 204) {
+      throw Exception(jsonDecode(r.body)['error'] ?? 'Error al eliminar el comentario');
+    }
   }
 
   Future<Map<String, dynamic>> toggleCommentLike(int commentId) async {
