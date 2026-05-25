@@ -1,94 +1,100 @@
+
 import 'dart:convert';
-
-/// Mapea los datos del reporte de compliance del back
-class ComplianceReportModel {
-  final int activeUsers;
-  final int fraudAlerts;
-  final int ticketsSold;
-  final String systemStatus;
-  final Map<String, double> transactionHistory;
-
-  ComplianceReportModel({
-    required this.activeUsers,
-    required this.fraudAlerts,
-    required this.ticketsSold,
-    required this.systemStatus,
-    required this.transactionHistory,
-  });
-
-  factory ComplianceReportModel.fromJson(Map<String, dynamic> json) {
-    final historyData = json['transaction_history'] as Map<String, dynamic>? ?? {};
-    final Map<String, double> history = {};
-    historyData.forEach((key, value) {
-      history[key] = (value as num).toDouble();
-    });
-
-    return ComplianceReportModel(
-      activeUsers: json['active_users'] ?? 0,
-      fraudAlerts: json['fraud_alerts'] ?? 0,
-      ticketsSold: json['tickets_sold'] ?? 0,
-      systemStatus: json['system_status'] ?? 'OPERATIVO',
-      transactionHistory: history,
-    );
-  }
-}
-
-/// Mapea el UserResponseDTO de tu back para la auditoría y control de roles
 class AdminUserModel {
-  final int userId;
-  final String firstName;
-  final String lastName;
-  final String email;
-  final int? roleId;
-  final bool verified;
-  final String? profilePicture;
+final int userId;
+final String firstName;
 
-  AdminUserModel({
-    required this.userId,
-    required this.firstName,
-    required this.lastName,
-    required this.email,
-    this.roleId,
-    required this.verified,
-    this.profilePicture,
-  });
-
-  factory AdminUserModel.fromJson(Map<String, dynamic> json) {
-    return AdminUserModel(
-      userId: json['userId'] ?? 0,
-      firstName: json['firstName'] ?? '',
-      lastName: json['lastName'] ?? '',
-      email: json['email'] ?? '',
-      roleId: json['roleId'],
-      verified: json['verified'] ?? false,
-      profilePicture: json['profilePicture'],
-    );
-  }
-
-  String get fullName => '$firstName $lastName'.trim();
-  String get roleName => roleId == 1 ? 'ADMINISTRADOR' : 'USUARIO HUB';
+final String lastName;
+final String email;
+final int roleId;
+final bool verified;
+final String accountStatus;
+AdminUserModel({
+required this.userId,
+required this.firstName,
+required this.lastName,
+required this.email,
+required this.roleId,
+required this.verified,
+required this.accountStatus,
+});
+String get fullName => '$firstName $lastName';
+String get roleName => roleId == 1 ? 'ADMINISTRADOR NÚCLEO' : 'OPERADOR BACKOFFICE';
+bool get isActive => accountStatus.toLowerCase() == 'activo';
+factory AdminUserModel.fromJson(Map<String, dynamic> json) {
+return AdminUserModel(
+userId: json['userId'] ?? json['idUser'] ?? 0,
+firstName: json['firstName'] ?? json['firstname'] ?? '',
+lastName: json['lastName'] ?? json['lastname'] ?? '',
+email: json['email'] ?? '',
+roleId: json['roleId'] ?? json['idRole'] ?? 2,
+verified: json['verified'] ?? false,
+accountStatus: json['accountStatus'] ?? json['accountstatus'] ?? 'activo',
+);
 }
-
-/// Mapea la línea de tiempo o logs de auditoría
+Map<String, dynamic> toJson() {
+return {
+'password': 'PasswordProvisional123*', // Requerido por UserCreateDTO
+'firstName': firstName,
+'lastName': lastName,
+'email': email,
+'roleId': roleId,
+};
+}
+}
+class ComplianceReportModel {
+final int totalUsers;
+final int activeUsers;
+final int totalTickets;
+final int paidTickets;
+final int reservedTickets;
+final double totalRevenue;
+ComplianceReportModel({
+required this.totalUsers,
+required this.activeUsers,
+required this.totalTickets,
+required this.paidTickets,
+required this.reservedTickets,
+required this.totalRevenue,
+});
+factory ComplianceReportModel.fromJson(Map<String, dynamic> json) {
+return ComplianceReportModel(
+totalUsers: json['total_users'] ?? 0,
+activeUsers: json['active_users'] ?? 0,
+totalTickets: json['total_tickets'] ?? 0,
+paidTickets: json['paid_tickets'] ?? 0,
+reservedTickets: json['reserved_tickets'] ?? 0,
+totalRevenue: (json['total_revenue'] ?? 0).toDouble(),
+);
+}
+}
 class AuditEventModel {
-  final String timestamp;
-  final String action;
-  final String detail;
-  final bool isAlert;
-
-  AuditEventModel({
-    required this.timestamp,
-    required this.action,
-    required this.detail,
-    required this.isAlert,
-  });
-
-  factory AuditEventModel.fromJson(Map<String, dynamic> json) {
-    return AuditEventModel(
-      timestamp: json['timestamp']?.toString() ?? 'AHORA',
-      action: json['action'] ?? 'OPERACIÓN',
-      detail: json['detail'] ?? '',
-      isAlert: json['is_alert'] ?? false,
-    );
-  }
+final int idAudit;
+final String correlationId;
+final DateTime createdAt;
+final String payload;
+final String affectedEntity;
+final String action;
+final String result;
+AuditEventModel({
+required this.idAudit,
+required this.correlationId,
+required this.createdAt,
+required this.payload,
+required this.affectedEntity,
+required this.action,
+required this.result,
+});
+factory AuditEventModel.fromJson(Map<String, dynamic> json) {
+return AuditEventModel(
+idAudit: json['idAudit'] ?? json['id_audit'] ?? 0,
+correlationId: json['correlationId'] ?? json['correlation_id'] ?? '',
+createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) :
+DateTime.now(),
+payload: json['payload'] ?? '',
+affectedEntity: json['affectedEntity'] ?? json['affected_entity'] ?? '',
+action: json['action'] ?? '',
+result: json['result'] ?? '',
+);
+}
 }
