@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import 'package:frontend_proyecto/utils/theme.dart';
 import 'package:frontend_proyecto/models/admin_models.dart';
 import 'package:frontend_proyecto/services/admin_service.dart';
+import 'package:frontend_proyecto/services/auth/auth.dart';
 
 class ExtendedColors {
   static const Color accentYellow = Color(0xFFFFDE4D);
@@ -23,18 +26,39 @@ class AdminScreen extends StatelessWidget {
           backgroundColor: AppColors.surface,
           elevation: 0,
           toolbarHeight: 70,
+          // 🚨 Esto bloquea la aparición de cualquier menú lateral o botón de retroceso
+          automaticallyImplyLeading: false, 
           shape: Border(
             bottom: BorderSide(color: AppColors.border, width: 4),
           ),
           title: Text(
-            '⚡ CENTRAL DE MANDO - BACKOFFICE',
+            '⚡ CENTRAL DE MANDO',
             style: GoogleFonts.spaceGrotesk(
               color: AppColors.text,
               fontWeight: FontWeight.w900,
-              fontSize: 20,
+              fontSize: 18,
               letterSpacing: 0.5,
             ),
           ),
+          // 🚨 Botones exclusivos de Perfil y Cerrar Sesión
+          actions: [
+            TextButton.icon(
+              onPressed: () => context.push('/profile'),
+              icon: Icon(Icons.account_circle, color: AppColors.text),
+              label: Text('PERFIL', style: GoogleFonts.spaceGrotesk(color: AppColors.text, fontWeight: FontWeight.bold)),
+            ),
+            IconButton(
+              icon: Icon(Icons.power_settings_new, color: AppColors.error),
+              tooltip: 'Cerrar Sesión',
+              onPressed: () async {
+                await AuthService().logout();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
           bottom: TabBar(
             indicatorColor: AppColors.primary,
             indicatorWeight: 5,
@@ -62,7 +86,6 @@ class AdminScreen extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PESTAÑA 1: DASHBOARD — Compliance Report
-// GET /admin/reports/compliance → ComplianceReportModel
 // ─────────────────────────────────────────────────────────────────────────────
 class _DashboardTab extends StatefulWidget {
   const _DashboardTab();
@@ -112,7 +135,8 @@ class _DashboardTabState extends State<_DashboardTab> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              if (isMock) _buildNetworkAlert(),
+              // Si hay error, ahora imprimirá el motivo exacto para que sepas por qué fallaron las métricas
+              if (isMock) _buildNetworkAlert(errorMessage: snapshot.error?.toString()),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -254,9 +278,6 @@ class _DashboardTabState extends State<_DashboardTab> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PESTAÑA 2: CRUD USUARIOS
-// GET  /users          → lista todos (solo admin)
-// POST /users          → crea usuario  { firstName, lastName, email, password, roleId }
-// POST /admin/users/:id/block → bloquea usuario
 // ─────────────────────────────────────────────────────────────────────────────
 class _UserCrudTab extends StatefulWidget {
   const _UserCrudTab();
@@ -266,7 +287,6 @@ class _UserCrudTab extends StatefulWidget {
 }
 
 class _UserCrudTabState extends State<_UserCrudTab> {
-  // Clave para forzar rebuild del FutureBuilder al mutar datos
   int _reloadKey = 0;
 
   final _formKey = GlobalKey<FormState>();
@@ -288,7 +308,6 @@ class _UserCrudTabState extends State<_UserCrudTab> {
   void _reload() => setState(() => _reloadKey++);
 
   void _openCreationDialog() {
-    // Limpiar campos antes de abrir
     _firstNameController.clear();
     _lastNameController.clear();
     _emailController.clear();
@@ -333,7 +352,6 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                       _buildInputField(_emailController, 'Correo Electrónico', Icons.email,
                           isEmail: true),
                       const SizedBox(height: 12),
-                      // CORREGIDO: password del controller, no hardcodeado
                       _buildInputField(
                           _passwordController, 'Contraseña de Acceso', Icons.lock,
                           isPassword: true),
@@ -387,8 +405,6 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                   ),
                   onPressed: () async {
                     if (!_formKey.currentState!.validate()) return;
-
-                    // CORREGIDO: se pasa la contraseña real capturada del form
                     try {
                       await AdminService().createUser(
                         firstName: _firstNameController.text.trim(),
@@ -402,7 +418,7 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('✅ Usuario creado exitosamente.')),
                       );
-                      _reload(); // refresca la lista desde la API
+                      _reload(); 
                     } catch (e) {
                       if (!mounted) return;
                       Navigator.pop(dialogContext);
@@ -482,7 +498,6 @@ class _UserCrudTabState extends State<_UserCrudTab> {
         icon: const Icon(Icons.person_add_alt_1),
         onPressed: _openCreationDialog,
       ),
-      // CORREGIDO: key numérica fuerza reconstrucción del FutureBuilder al hacer _reload()
       body: FutureBuilder<List<AdminUserModel>>(
         key: ValueKey(_reloadKey),
         future: AdminService().getAllUsers(),
@@ -499,7 +514,7 @@ class _UserCrudTabState extends State<_UserCrudTab> {
             itemCount: users.length + 1,
             itemBuilder: (context, index) {
               if (index == 0) {
-                return isMock ? _buildNetworkAlert() : const SizedBox.shrink();
+                return isMock ? _buildNetworkAlert(errorMessage: snapshot.error?.toString()) : const SizedBox.shrink();
               }
               final user = users[index - 1];
 
@@ -559,7 +574,6 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                       ]),
                     ],
                   ),
-                  // CORREGIDO: botón de bloqueo recarga la lista tras la operación
                   trailing: user.isActive
                       ? IconButton(
                           tooltip: 'Bloquear usuario',
@@ -572,7 +586,7 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                                     content: Text(
                                         '🔒 ${user.fullName} bloqueado correctamente.')),
                               );
-                              _reload(); // actualiza lista desde la API
+                              _reload(); 
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text('❌ Error al bloquear: $e')),
@@ -607,8 +621,6 @@ class _UserCrudTabState extends State<_UserCrudTab> {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PESTAÑA 3: AUDIT LOG
-// GET /admin/users/:id/timeline → AuditEventModel[]
-// CORREGIDO: permite buscar por userId específico; muestra buscador
 // ─────────────────────────────────────────────────────────────────────────────
 class _AuditLogTab extends StatefulWidget {
   const _AuditLogTab();
@@ -644,7 +656,6 @@ class _AuditLogTabState extends State<_AuditLogTab> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // ── Barra de búsqueda por userId ──────────────────────────────
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -699,7 +710,6 @@ class _AuditLogTabState extends State<_AuditLogTab> {
             ],
           ),
         ),
-        // ── Lista de eventos ──────────────────────────────────────────
         Expanded(
           child: FutureBuilder<List<AuditEventModel>>(
             future: _future,
@@ -714,7 +724,7 @@ class _AuditLogTabState extends State<_AuditLogTab> {
               if (isMock) {
                 return ListView(
                   padding: const EdgeInsets.all(16),
-                  children: [_buildNetworkAlert()],
+                  children: [_buildNetworkAlert(errorMessage: snapshot.error?.toString())],
                 );
               }
 
@@ -812,22 +822,64 @@ class _AuditLogTabState extends State<_AuditLogTab> {
                                 '${log.createdAt.minute.toString().padLeft(2, '0')}',
                           ),
                           const SizedBox(height: 8),
-                          Text('PAYLOAD:',
-                              style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 10,
-                                  color: AppColors.textMuted,
-                                  fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(10),
-                            color: const Color(0xFF1A1A1A),
-                            child: Text(
-                              log.payload,
-                              style: GoogleFonts.sourceCodePro(
-                                  color: Colors.greenAccent, fontSize: 11),
-                            ),
-                          ),
+
+                          // 🚨 AQUÍ ESTÁ EL DECODIFICADOR DEL JSON QUE ME PEDISTE
+                          Builder(builder: (context) {
+                            Map<String, dynamic> payloadData = {};
+                            try {
+                              if (log.payload.isNotEmpty) {
+                                payloadData = jsonDecode(log.payload);
+                              }
+                            } catch (_) {}
+
+                            final eventType = payloadData['event'] ?? '';
+
+                            if (eventType == 'sports_bet_placed') {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('DETALLES DE LA APUESTA:',
+                                      style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 10,
+                                          color: AppColors.textMuted,
+                                          fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(10),
+                                    color: const Color(0xFF1A1A1A),
+                                    child: Text(
+                                      '🎰 ID Apuesta: ${payloadData['bet_id']} | Stake: \$${payloadData['stake']} | Cuota: ${payloadData['odds']}\n👤 Target User ID: ${payloadData['user_id']}',
+                                      style: GoogleFonts.sourceCodePro(
+                                          color: Colors.greenAccent, fontSize: 11),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            } else {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('PAYLOAD RAW:',
+                                      style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 10,
+                                          color: AppColors.textMuted,
+                                          fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(10),
+                                    color: const Color(0xFF1A1A1A),
+                                    child: Text(
+                                      log.payload,
+                                      style: GoogleFonts.sourceCodePro(
+                                          color: Colors.greenAccent, fontSize: 11),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                          }),
                         ],
                       ),
                     );
@@ -861,9 +913,9 @@ class _AuditLogTabState extends State<_AuditLogTab> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Banner reutilizable de advertencia de red
+// Banner reutilizable de advertencia de red (Ahora imprime el error)
 // ─────────────────────────────────────────────────────────────────────────────
-Widget _buildNetworkAlert() {
+Widget _buildNetworkAlert({String? errorMessage}) {
   return Container(
     margin: const EdgeInsets.only(bottom: 15),
     padding: const EdgeInsets.all(12),
@@ -872,17 +924,30 @@ Widget _buildNetworkAlert() {
       border: Border.all(color: Colors.black, width: 3),
       boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(4, 4))],
     ),
-    child: Row(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('⚠️', style: TextStyle(fontSize: 22)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            'SERVIDOR INACTIVO O SIN RED. NO SE PUDO OBTENER DATOS DEL BACKEND.',
-            style: GoogleFonts.spaceGrotesk(
-                fontWeight: FontWeight.w900, fontSize: 11, color: Colors.black),
-          ),
+        Row(
+          children: [
+            const Text('⚠️', style: TextStyle(fontSize: 22)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'NO SE PUDO OBTENER DATOS DEL BACKEND.',
+                style: GoogleFonts.spaceGrotesk(
+                    fontWeight: FontWeight.w900, fontSize: 11, color: Colors.black),
+              ),
+            ),
+          ],
         ),
+        if (errorMessage != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Error: $errorMessage',
+            style: GoogleFonts.sourceCodePro(
+                fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.error),
+          ),
+        ]
       ],
     ),
   );

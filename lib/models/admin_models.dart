@@ -68,33 +68,56 @@ totalRevenue: (json['total_revenue'] ?? 0).toDouble(),
 );
 }
 }
+
 class AuditEventModel {
-final int idAudit;
-final String correlationId;
-final DateTime createdAt;
-final String payload;
-final String affectedEntity;
-final String action;
-final String result;
-AuditEventModel({
-required this.idAudit,
-required this.correlationId,
-required this.createdAt,
-required this.payload,
-required this.affectedEntity,
-required this.action,
-required this.result,
-});
-factory AuditEventModel.fromJson(Map<String, dynamic> json) {
-return AuditEventModel(
-idAudit: json['idAudit'] ?? json['id_audit'] ?? 0,
-correlationId: json['correlationId'] ?? json['correlation_id'] ?? '',
-createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) :
-DateTime.now(),
-payload: json['payload'] ?? '',
-affectedEntity: json['affectedEntity'] ?? json['affected_entity'] ?? '',
-action: json['action'] ?? '',
-result: json['result'] ?? '',
-);
-}
+  final int idAudit;
+  final String correlationId;
+  final DateTime createdAt;
+  final String payload;
+  final String affectedEntity;
+  final String action;
+  final String result;
+
+  AuditEventModel({
+    required this.idAudit,
+    required this.correlationId,
+    required this.createdAt,
+    required this.payload,
+    required this.affectedEntity,
+    required this.action,
+    required this.result,
+  });
+
+  Map<String, dynamic> get decodedPayload {
+    try {
+      if (payload.isEmpty) return {};
+      return jsonDecode(payload);
+    } catch (_) {
+      return {};
+    }
+  }
+
+  int? get embeddedUserId {
+    final map = decodedPayload;
+    return map['user_id'] ?? map['userId'];
+  }
+
+  String get eventName {
+    final map = decodedPayload;
+    return map['event'] ?? action;
+  }
+
+  factory AuditEventModel.fromJson(Map<String, dynamic> json) {
+    return AuditEventModel(
+      idAudit: json['idAudit'] ?? json['id_audit'] ?? 0,
+      correlationId: json['correlationId'] ?? json['correlation_id'] ?? '',
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt']) 
+          : (json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now()),
+      payload: json['payload'] ?? '',
+      affectedEntity: json['affectedEntity'] ?? json['affected_entity'] ?? '',
+      action: json['action'] ?? '',
+      result: json['result'] ?? '',
+    );
+  }
 }
