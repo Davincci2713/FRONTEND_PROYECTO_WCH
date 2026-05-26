@@ -306,6 +306,10 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> updateUserPreferences(Map<String, bool> preferences) async {
+    await updatePreferences(preferences);
+  }
+
+  Future<void> updatePreferences(Map<String, dynamic> preferences) async {
     final uid = currentUserId;
     if (uid == null) return;
     try {
