@@ -1,14 +1,13 @@
 
-import 'dart:convert';
 class AdminUserModel {
 final int userId;
 final String firstName;
-
 final String lastName;
 final String email;
 final int roleId;
 final bool verified;
 final String accountStatus;
+final String? profilePicture;
 AdminUserModel({
 required this.userId,
 required this.firstName,
@@ -17,6 +16,7 @@ required this.email,
 required this.roleId,
 required this.verified,
 required this.accountStatus,
+this.profilePicture,
 });
 String get fullName => '$firstName $lastName';
 String get roleName => roleId == 1 ? 'ADMINISTRADOR NÚCLEO' : 'OPERADOR BACKOFFICE';
@@ -30,11 +30,11 @@ email: json['email'] ?? '',
 roleId: json['roleId'] ?? json['idRole'] ?? 2,
 verified: json['verified'] ?? false,
 accountStatus: json['accountStatus'] ?? json['accountstatus'] ?? 'activo',
+profilePicture: json['profilePicture'] as String?,
 );
 }
 Map<String, dynamic> toJson() {
 return {
-'password': 'PasswordProvisional123*', // Requerido por UserCreateDTO
 'firstName': firstName,
 'lastName': lastName,
 'email': email,
