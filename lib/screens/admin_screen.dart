@@ -66,9 +66,9 @@ class AdminScreen extends StatelessWidget {
             unselectedLabelColor: AppColors.textMuted,
             labelStyle: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w900, fontSize: 13),
             tabs: const [
-              Tab(text: '📊 MÉTRICAS'),
-              Tab(text: '👥 USUARIOS'),
-              Tab(text: '🔍 AUDIT LOG'),
+              Tab(text: 'MÉTRICAS'),
+              Tab(text: 'USUARIOS'),
+              Tab(text: 'AUDIT LOG'),
             ],
           ),
         ),
@@ -135,7 +135,6 @@ class _DashboardTabState extends State<_DashboardTab> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              // Si hay error, ahora imprimirá el motivo exacto para que sepas por qué fallaron las métricas
               if (isMock) _buildNetworkAlert(errorMessage: snapshot.error?.toString()),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -536,12 +535,29 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                           : AppColors.surfaceVariant,
                       border: Border.all(color: AppColors.border, width: 2),
                     ),
-                    child: Center(
-                      child: Text(
-                        user.roleId == 1 ? '⚡' : '🧑',
-                        style: const TextStyle(fontSize: 22),
-                      ),
-                    ),
+                    child: user.profilePicture != null && user.profilePicture!.isNotEmpty
+                        ? ClipRect(
+                            child: Image.network(
+                              user.profilePicture!,
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Center(
+                                child: Icon(
+                                  user.roleId == 1 ? Icons.bolt : Icons.person,
+                                  color: AppColors.text,
+                                  size: 26,
+                                ),
+                              ),
+                            ),
+                          )
+                        : Center(
+                            child: Icon(
+                              user.roleId == 1 ? Icons.bolt : Icons.person,
+                              color: AppColors.text,
+                              size: 26,
+                            ),
+                          ),
                   ),
                   title: Text(
                     '${user.firstName.toUpperCase()} ${user.lastName.toUpperCase()}',
@@ -630,7 +646,7 @@ class _AuditLogTab extends StatefulWidget {
 }
 
 class _AuditLogTabState extends State<_AuditLogTab> {
-  final _userIdController = TextEditingController(text: '1');
+  final _userIdController = TextEditingController();
   late Future<List<AuditEventModel>> _future;
 
   @override
@@ -640,9 +656,9 @@ class _AuditLogTabState extends State<_AuditLogTab> {
   }
 
   void _fetch() {
-    final id = int.tryParse(_userIdController.text.trim()) ?? 1;
+    final id = int.tryParse(_userIdController.text.trim());
     setState(() {
-      _future = AdminService().getUserTimeline(id);
+      _future = AdminService().getAuditLog(userId: id);
     });
   }
 
@@ -671,7 +687,7 @@ class _AuditLogTabState extends State<_AuditLogTab> {
                   style: GoogleFonts.spaceGrotesk(
                       fontWeight: FontWeight.bold, color: AppColors.text),
                   decoration: InputDecoration(
-                    labelText: 'USER ID',
+                    labelText: 'USER ID (vacío = todos)',
                     labelStyle: GoogleFonts.spaceGrotesk(
                         color: AppColors.primary,
                         fontSize: 12,
@@ -947,7 +963,7 @@ Widget _buildNetworkAlert({String? errorMessage}) {
             style: GoogleFonts.sourceCodePro(
                 fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.error),
           ),
-        ]
+        ],
       ],
     ),
   );

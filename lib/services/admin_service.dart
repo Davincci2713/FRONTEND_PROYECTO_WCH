@@ -82,8 +82,6 @@ class AdminService {
   }
 
   // ── GET /admin/users/:id/timeline ─────────────────────────────────────────
-  // Devuelve el historial de eventos de auditoría de un usuario específico.
-  // Mapea a AuditEventModel (campos en snake_case o camelCase según el backend).
   Future<List<AuditEventModel>> getUserTimeline(int userId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/admin/users/$userId/timeline'),
@@ -96,6 +94,21 @@ class AdminService {
     if (response.statusCode == 404) return [];
     throw Exception(
         'Error al obtener timeline del usuario $userId [${response.statusCode}]');
+  }
+
+  // ── GET /admin/audit-log?user_id=&limit= ──────────────────────────────────
+  // Devuelve eventos del audit log. user_id es opcional; sin él retorna los
+  // últimos eventos globales.
+  Future<List<AuditEventModel>> getAuditLog({int? userId, int limit = 100}) async {
+    final queryParams = <String, String>{'limit': limit.toString()};
+    if (userId != null) queryParams['user_id'] = userId.toString();
+    final uri = Uri.parse('$baseUrl/admin/audit-log').replace(queryParameters: queryParams);
+    final response = await http.get(uri, headers: _headers);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((e) => AuditEventModel.fromJson(e)).toList();
+    }
+    throw Exception('Error al obtener audit log [${response.statusCode}]');
   }
 
   // ── GET /admin/reports/compliance ─────────────────────────────────────────
