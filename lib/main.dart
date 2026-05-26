@@ -180,7 +180,10 @@ final GoRouter _router = GoRouter(
     ),
     GoRoute(
       path: '/admin',
-      builder: (context, state) => const AdminScreen(),
+      pageBuilder: (context, state) => const MaterialPage(
+      child: AdminScreen(),
+      fullscreenDialog: true, 
+      ),
     ),
   ],
 );
