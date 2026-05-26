@@ -175,11 +175,12 @@ final GoRouter _router = GoRouter(
           path: '/trades',
           pageBuilder: (context, state) => const MaterialPage(child: TradesScreen()),
         ),
-        GoRoute(
-          path: '/admin',
-          builder: (context, state) => const AdminScreen(),
-        ),
       ],
+      
+    ),
+    GoRoute(
+      path: '/admin',
+      builder: (context, state) => const AdminScreen(),
     ),
   ],
 );

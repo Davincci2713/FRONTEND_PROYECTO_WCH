@@ -22,8 +22,7 @@ class AuthService extends ChangeNotifier {
 
   bool get isAuthenticated => _accessToken != null;
   int?  get currentUserId  => _currentUser?['userId'];
-  // ⚡ GETTER AGREGADO: Expone el rol de manera transparente a toda la app
-  int?  get idRole         => _currentUser?['idRole']; 
+  int? get idRole => _currentUser?['roleId'] ?? _currentUser?['idRole'];
   Map<String, dynamic>? get currentUser => _currentUser;
   bool get hasSeenOnboarding => _hasSeenOnboarding;
 
