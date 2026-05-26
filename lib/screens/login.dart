@@ -175,7 +175,8 @@ class _LoginFormState extends State<LoginForm> {
     if (!context.mounted) return;
 
     if (result['success'] == true) {
-      context.go('/home');
+      final role = AuthService().idRole;
+      context.go(role == 1 ? '/admin' : '/home');
     } else if (result['errorCode'] == 'ERR_UNVERIFIED') {
       _showVerificationDialog(result['email'] as String);
     } else {
