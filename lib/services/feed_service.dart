@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'auth/auth.dart';
-import 'dart:html' as html;
+import '../utils/platform_reload.dart';
 class FeedPost {
   final int id;
   String content;
@@ -109,7 +109,7 @@ class FeedService {
     final r = await http.post(Uri.parse('$_base/feed'),
         headers: _h, body: jsonEncode(body));
     if (r.statusCode == 201) {
-      html.window.location.reload();
+      reloadPlatform(() {});
       return FeedPost.fromJson(jsonDecode(r.body));
     }
     throw Exception(jsonDecode(r.body)['error'] ?? 'Error al publicar');
@@ -135,8 +135,8 @@ class FeedService {
     if (r.statusCode != 200 && r.statusCode != 204) {
       throw Exception(jsonDecode(r.body)['error'] ?? 'Error al eliminar la publicación');
     }
-  html.window.location.reload();
-}
+    reloadPlatform(() {});
+  }
 
   Future<Map<String, dynamic>> toggleLike(int postId) async {
     final uid = AuthService().currentUserId;
