@@ -32,7 +32,7 @@ class AdminScreen extends StatelessWidget {
             bottom: BorderSide(color: AppColors.border, width: 4),
           ),
           title: Text(
-            '⚡ CENTRAL DE MANDO',
+            'CENTRAL DE MANDO',
             style: GoogleFonts.spaceGrotesk(
               color: AppColors.text,
               fontWeight: FontWeight.w900,
@@ -370,10 +370,10 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                                 fontWeight: FontWeight.bold, color: AppColors.text),
                             items: const [
                               DropdownMenuItem(
-                                  value: 2, child: Text('🧑 USUARIO REGULAR (Rol 2)')),
+                                  value: 2, child: Text('USUARIO REGULAR (Rol 2)')),
                               DropdownMenuItem(
                                   value: 1,
-                                  child: Text('⚡ ADMINISTRADOR DEL SISTEMA (Rol 1)')),
+                                  child: Text('ADMINISTRADOR DEL SISTEMA (Rol 1)')),
                             ],
                             onChanged: (value) {
                               if (value != null) {
@@ -415,14 +415,14 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                       if (!mounted) return;
                       Navigator.pop(dialogContext);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('✅ Usuario creado exitosamente.')),
+                        const SnackBar(content: Text('Usuario creado exitosamente.')),
                       );
                       _reload(); 
                     } catch (e) {
                       if (!mounted) return;
                       Navigator.pop(dialogContext);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('❌ Error al crear usuario: $e')),
+                        SnackBar(content: Text('Error al crear usuario: $e')),
                       );
                     }
                   },
@@ -526,39 +526,7 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(12),
-                  leading: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: user.roleId == 1
-                          ? ExtendedColors.accentYellow
-                          : AppColors.surfaceVariant,
-                      border: Border.all(color: AppColors.border, width: 2),
-                    ),
-                    child: user.profilePicture != null && user.profilePicture!.isNotEmpty
-                        ? ClipRect(
-                            child: Image.network(
-                              user.profilePicture!,
-                              width: 48,
-                              height: 48,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Center(
-                                child: Icon(
-                                  user.roleId == 1 ? Icons.bolt : Icons.person,
-                                  color: AppColors.text,
-                                  size: 26,
-                                ),
-                              ),
-                            ),
-                          )
-                        : Center(
-                            child: Icon(
-                              user.roleId == 1 ? Icons.bolt : Icons.person,
-                              color: AppColors.text,
-                              size: 26,
-                            ),
-                          ),
-                  ),
+                  leading: _buildUserAvatar(user),
                   title: Text(
                     '${user.firstName.toUpperCase()} ${user.lastName.toUpperCase()}',
                     style: GoogleFonts.spaceGrotesk(
@@ -584,7 +552,7 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                         ),
                         const SizedBox(width: 6),
                         if (user.verified)
-                          _buildBadge('✓ VERIFICADO', ExtendedColors.accentGreen)
+                          _buildBadge('VERIFICADO', ExtendedColors.accentGreen)
                         else
                           _buildBadge('SIN VERIFICAR', AppColors.textMuted),
                       ]),
@@ -600,12 +568,12 @@ class _UserCrudTabState extends State<_UserCrudTab> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                     content: Text(
-                                        '🔒 ${user.fullName} bloqueado correctamente.')),
+                                        '${user.fullName} bloqueado correctamente.')),
                               );
                               _reload(); 
                             } catch (e) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('❌ Error al bloquear: $e')),
+                                SnackBar(content: Text('Error al bloquear: $e')),
                               );
                             }
                           },
@@ -622,6 +590,43 @@ class _UserCrudTabState extends State<_UserCrudTab> {
       ),
     );
   }
+
+  Widget _buildUserAvatar(AdminUserModel user) {
+    final pic = user.profilePicture;
+    Widget imageChild;
+    if (pic != null && pic.isNotEmpty) {
+      if (pic.startsWith('data:image')) {
+        try {
+          final bytes = base64Decode(pic.split(',').last);
+          imageChild = Image.memory(bytes, width: 48, height: 48, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _avatarFallback(user.roleId));
+        } catch (_) {
+          imageChild = _avatarFallback(user.roleId);
+        }
+      } else if (pic.startsWith('http')) {
+        imageChild = Image.network(pic, width: 48, height: 48, fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _avatarFallback(user.roleId));
+      } else {
+        imageChild = _avatarFallback(user.roleId);
+      }
+    } else {
+      imageChild = _avatarFallback(user.roleId);
+    }
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: user.roleId == 1 ? ExtendedColors.accentYellow : AppColors.surfaceVariant,
+        border: Border.all(color: AppColors.border, width: 2),
+      ),
+      child: ClipRect(child: imageChild),
+    );
+  }
+
+  Widget _avatarFallback(int roleId) => Center(
+        child: Icon(roleId == 1 ? Icons.bolt : Icons.person,
+            color: AppColors.text, size: 26),
+      );
 
   Widget _buildBadge(String text, Color bg) {
     return Container(
@@ -945,7 +950,7 @@ Widget _buildNetworkAlert({String? errorMessage}) {
       children: [
         Row(
           children: [
-            const Text('⚠️', style: TextStyle(fontSize: 22)),
+            const Icon(Icons.warning_amber_rounded, size: 22, color: Colors.black),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
